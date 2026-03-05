@@ -327,10 +327,10 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
   if (!workspaceRoot) {
     return (
       <div className="file-tree-panel">
-        <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Explorer</span>
-          <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)', userSelect: 'none' }}>AUTO SAVE</span>
+      <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px', overflow: 'hidden' }}>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>Explorer</span>
+        <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+            <span className="auto-save-text" style={{ fontSize: '10px', color: 'var(--text-muted)', userSelect: 'none' }}>AUTO SAVE</span>
             <div 
               onClick={(e) => { e.stopPropagation(); onAutoSaveChange(!autoSave); }}
               style={{
@@ -382,9 +382,9 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
 
   return (
     <div ref={panelRef} className="file-tree-panel" onClick={() => setSelectedFolder(workspaceRoot)}>
-      <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>Explorer</span>
-        <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px', overflow: 'hidden' }}>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>Explorer</span>
+        <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             className="tree-action-btn"
             title="New File"
@@ -399,7 +399,7 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
           >
             <FolderPlus size={14} />
           </button>
-          <span style={{ fontSize: '10px', color: 'var(--text-muted)', userSelect: 'none' }}>AUTO SAVE</span>
+          <span className="auto-save-text" style={{ fontSize: '10px', color: 'var(--text-muted)', userSelect: 'none' }}>AUTO SAVE</span>
           <div 
             onClick={(e) => { e.stopPropagation(); onAutoSaveChange(!autoSave); }}
             style={{
