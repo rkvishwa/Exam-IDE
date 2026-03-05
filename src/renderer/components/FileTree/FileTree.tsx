@@ -358,11 +358,9 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
   if (!workspaceRoot) {
     return (
       <div className="file-tree-panel">
-      <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px', overflow: 'hidden' }}>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>Explorer</span>
-        <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
-            
-          </div>
+        <div className="tree-header">
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>Explorer</span>
+          <div className="tree-actions" />
         </div>
         <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
           <p style={{ marginBottom: '10px' }}>No folder opened</p>
@@ -374,7 +372,8 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
                 background: 'var(--accent)',
                 color: 'white',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                border: 'none',
               }}
             >
               Open Folder
@@ -399,9 +398,9 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
         setSelectedFolder(workspaceRoot);
       }}
     >
-      <div className="tree-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px', overflow: 'hidden' }}>
+      <div className="tree-header">
         <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>Explorer</span>
-        <div className="tree-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+        <div className="tree-actions">
           <button
             className="tree-action-btn"
             title="New File"

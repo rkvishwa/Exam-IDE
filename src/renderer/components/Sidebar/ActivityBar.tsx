@@ -117,10 +117,6 @@ export default function ActivityBar({
       </div>
 
       <div className="activity-bottom">
-        <div className="status-indicator" title={`Status: ${isOnline ? 'Online' : 'Offline'}`}>
-          <span className={`status-dot ${isOnline ? 'online' : 'offline'}`} />
-        </div>
-        
         <button className="activity-action" onClick={onOpenSettings} title="Settings">
           <Settings size={22} strokeWidth={1.5} />
         </button>
@@ -129,8 +125,11 @@ export default function ActivityBar({
           {theme === 'dark' ? <Moon size={22} strokeWidth={1.5} /> : theme === 'light' ? <Sun size={22} strokeWidth={1.5} /> : <Monitor size={22} strokeWidth={1.5} />}
         </button>
 
-        <div className="user-avatar" title={`Team: ${teamName}`}>
-          {teamName ? teamName.charAt(0).toUpperCase() : 'U'}
+        <div className="user-profile-container" title={`Team: ${teamName} (${isOnline ? 'Online' : 'Offline'})`}>
+          <div className="user-avatar">
+            {teamName ? teamName.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <span className={`status-dot profile-status ${isOnline ? 'online' : 'offline'}`} />
         </div>
 
         <button className="activity-action" onClick={onLogout} title="Sign Out">

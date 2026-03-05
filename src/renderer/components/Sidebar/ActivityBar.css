@@ -15,7 +15,7 @@
 }
 
 .platform-windows .activity-bar {
-  padding-top: 16px;
+  padding-top: 0;
 }
 
 .activity-top, .activity-bottom {
@@ -36,7 +36,7 @@
 }
 
 .platform-windows .logo-icon {
-  margin-top: 5px;
+  margin-top: 10px;
 }
 
 .activity-action {
@@ -167,6 +167,22 @@
 
 .status-dot.offline {
   background: #ef4444;
+}
+
+.user-profile-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0;
+  -webkit-app-region: no-drag;
+}
+
+.profile-status {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  z-index: 2;
 }
 
 .user-avatar {
