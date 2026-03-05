@@ -4,6 +4,9 @@ import { ChevronRight, ChevronDown, Folder, File, FileCode2, FileJson, FileText,
 import { FileNode } from '../../../shared/types';
 import './FileTree.css';
 
+const isWindows = navigator.userAgent.toLowerCase().includes('win');
+const INDENT_PX = isWindows ? 8 : 16;
+
 function getIcon(node: FileNode) {
   if (node.type === 'directory') return <Folder size={14} color="var(--accent)" />;
   
@@ -46,11 +49,12 @@ interface CreatingItem {
 interface InlineCreateInputProps {
   type: 'file' | 'folder';
   depth: number;
+  hasFolders: boolean;
   onSubmit: (name: string) => void;
   onCancel: () => void;
 }
 
-function InlineCreateInput({ type, depth, onSubmit, onCancel }: InlineCreateInputProps) {
+function InlineCreateInput({ type, depth, hasFolders, onSubmit, onCancel }: InlineCreateInputProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,8 +71,8 @@ function InlineCreateInput({ type, depth, onSubmit, onCancel }: InlineCreateInpu
   };
 
   return (
-    <div className="tree-node inline-create" style={{ paddingLeft: `${depth * 8 + 8}px` }}>
-      <span className="expand-icon"></span>
+    <div className="tree-node inline-create" style={{ paddingLeft: `${depth * INDENT_PX + 8}px` }}>
+      {hasFolders ? <span className="expand-icon"></span> : <span className="expand-icon" style={{ width: '4px' }}></span>}
       <span className="file-icon">{type === 'folder' ? <Folder size={14} color="var(--accent)" /> : <File size={14} />}</span>
       <input
         ref={inputRef}
@@ -89,6 +93,7 @@ function InlineCreateInput({ type, depth, onSubmit, onCancel }: InlineCreateInpu
 interface FileTreeNodeProps {
   node: FileNode;
   depth: number;
+  hasFolders: boolean;
   activeFilePath: string | null;
   onFileClick: (path: string, name: string) => void;
   onRefresh: () => void;
@@ -102,13 +107,15 @@ interface FileTreeNodeProps {
   onFileRenamed?: (oldPath: string, newPath: string) => void;
 }
 
-function FileTreeNode({ node, depth, activeFilePath, onFileClick, onRefresh, workspaceRoot, creatingItem, onSetCreating, selectedFolder, onSelectFolder, onFileOpened, onFileDeleted, onFileRenamed }: FileTreeNodeProps) {
+function FileTreeNode({ node, depth, hasFolders, activeFilePath, onFileClick, onRefresh, workspaceRoot, creatingItem, onSetCreating, selectedFolder, onSelectFolder, onFileOpened, onFileDeleted, onFileRenamed }: FileTreeNodeProps) {
   const [expanded, setExpanded] = useState(depth === 0);
   const [children, setChildren] = useState<FileNode[]>(node.children || []);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(node.name);
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const hasChildFolders = children.some(c => c.type === 'directory');
 
   const isCreatingHere = creatingItem && creatingItem.parentPath === node.path && node.type === 'directory';
 
@@ -213,7 +220,7 @@ function FileTreeNode({ node, depth, activeFilePath, onFileClick, onRefresh, wor
     <div className="tree-node-wrapper">
       <div
         className={`tree-node ${isActive ? 'active' : ''} ${isSelected ? 'selected-folder' : ''}`}
-        style={{ paddingLeft: `${depth * 8 + 8}px` }}
+        style={{ paddingLeft: `${depth * INDENT_PX + 8}px` }}
         onClick={(e) => {
           e.stopPropagation();
           if (node.type === 'file') onFileClick(node.path, node.name);
@@ -224,10 +231,14 @@ function FileTreeNode({ node, depth, activeFilePath, onFileClick, onRefresh, wor
         }}
         onContextMenu={handleContextMenu}
       >
-        {node.type === 'directory' ? (
-          <span className="expand-icon">{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
+        {hasFolders ? (
+          node.type === 'directory' ? (
+            <span className="expand-icon">{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
+          ) : (
+            <span className="expand-icon"></span>
+          )
         ) : (
-          <span className="expand-icon"></span>
+          <span className="expand-icon" style={{ width: '4px' }}></span>
         )}
         <span className="file-icon">
             {getIcon(node)}
@@ -261,19 +272,49 @@ function FileTreeNode({ node, depth, activeFilePath, onFileClick, onRefresh, wor
 
       {expanded && node.type === 'directory' && (
         <div className="tree-children">
-          {isCreatingHere && (
+          {isCreatingHere && creatingItem?.type === 'folder' && (
             <InlineCreateInput
               type={creatingItem.type}
               depth={depth + 1}
+              hasFolders={hasChildFolders}
               onSubmit={handleInlineCreate}
               onCancel={() => onSetCreating(null)}
             />
           )}
-          {children.map((child) => (
+          {children.filter(c => c.type === 'directory').map((child) => (
             <FileTreeNode
               key={child.path}
               node={child}
               depth={depth + 1}
+              hasFolders={hasChildFolders}
+              activeFilePath={activeFilePath}
+              onFileClick={onFileClick}
+              onRefresh={loadChildren}
+              workspaceRoot={workspaceRoot}
+              creatingItem={creatingItem}
+              onSetCreating={onSetCreating}
+              selectedFolder={selectedFolder}
+              onSelectFolder={onSelectFolder}
+              onFileOpened={onFileOpened}
+              onFileDeleted={onFileDeleted}
+              onFileRenamed={onFileRenamed}
+            />
+          ))}
+          {isCreatingHere && creatingItem?.type === 'file' && (
+            <InlineCreateInput
+              type={creatingItem.type}
+              depth={depth + 1}
+              hasFolders={hasChildFolders}
+              onSubmit={handleInlineCreate}
+              onCancel={() => onSetCreating(null)}
+            />
+          )}
+          {children.filter(c => c.type !== 'directory').map((child) => (
+            <FileTreeNode
+              key={child.path}
+              node={child}
+              depth={depth + 1}
+              hasFolders={hasChildFolders}
               activeFilePath={activeFilePath}
               onFileClick={onFileClick}
               onRefresh={loadChildren}
@@ -355,6 +396,8 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
     setCreatingItem(item);
   };
 
+  const hasRootFolders = rootNodes.some(n => n.type === 'directory');
+
   if (!workspaceRoot) {
     return (
       <div className="file-tree-panel">
@@ -418,10 +461,11 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
         </div>
       </div>
       <div className="tree-content">
-        {creatingItem && creatingItem.parentPath === workspaceRoot && (
+        {creatingItem && creatingItem.parentPath === workspaceRoot && creatingItem.type === 'folder' && (
           <InlineCreateInput
             type={creatingItem.type}
             depth={0}
+            hasFolders={hasRootFolders}
             onSubmit={async (name) => {
               const fullPath = `${workspaceRoot}/${name}`;
               if (creatingItem.type === 'file') {
@@ -438,11 +482,52 @@ export default function FileTree({ workspaceRoot, onOpenFolder, onFileClick, act
             onCancel={() => setCreatingItem(null)}
           />
         )}
-        {rootNodes.map((node) => (
+        {rootNodes.filter(n => n.type === 'directory').map((node) => (
           <FileTreeNode
             key={node.path}
             node={node}
             depth={0}
+            hasFolders={hasRootFolders}
+            activeFilePath={activeFilePath}
+            onFileClick={onFileClick}
+            onRefresh={loadRoot}
+            workspaceRoot={workspaceRoot}
+            creatingItem={creatingItem}
+            onSetCreating={handleSetCreating}
+            selectedFolder={selectedFolder}
+            onSelectFolder={setSelectedFolder}
+            onFileOpened={onFileOpened ?? (() => {})}
+            onFileDeleted={onFileDeleted ?? (() => {})}
+            onFileRenamed={onFileRenamed}
+          />
+        ))}
+        {creatingItem && creatingItem.parentPath === workspaceRoot && creatingItem.type === 'file' && (
+          <InlineCreateInput
+            type={creatingItem.type}
+            depth={0}
+            hasFolders={hasRootFolders}
+            onSubmit={async (name) => {
+              const fullPath = `${workspaceRoot}/${name}`;
+              if (creatingItem.type === 'file') {
+                await window.electronAPI.fs.createFile(fullPath);
+                setCreatingItem(null);
+                loadRoot();
+                onFileOpened?.(fullPath, name);
+              } else {
+                await window.electronAPI.fs.createFolder(fullPath);
+                setCreatingItem(null);
+                loadRoot();
+              }
+            }}
+            onCancel={() => setCreatingItem(null)}
+          />
+        )}
+        {rootNodes.filter(n => n.type !== 'directory').map((node) => (
+          <FileTreeNode
+            key={node.path}
+            node={node}
+            depth={0}
+            hasFolders={hasRootFolders}
             activeFilePath={activeFilePath}
             onFileClick={onFileClick}
             onRefresh={loadRoot}
