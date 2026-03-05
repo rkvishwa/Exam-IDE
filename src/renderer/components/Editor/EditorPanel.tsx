@@ -128,7 +128,9 @@ export default function EditorPanel({
           <div
             key={tab.path}
             className={`tab ${tab.path === activeTabPath ? 'active' : ''}`}
-            onClick={() => onTabClick(tab.path)}            onDoubleClick={() => onTabDoubleClick?.(tab.path)}          >
+            onClick={() => onTabClick(tab.path)}
+            onDoubleClick={() => onTabDoubleClick?.(tab.path)}
+          >
             {tab.type === 'preview' && <Monitor size={14} className="tab-icon" />}
             <span className="tab-name" style={{ fontStyle: tab.isPreviewFile && !tab.isDirty ? 'italic' : 'normal' }}>
               {tab.name}

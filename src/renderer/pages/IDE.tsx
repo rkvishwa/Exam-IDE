@@ -226,6 +226,7 @@ export default function IDE() {
 
   return (
     <div className="ide-container">
+      <div className="traffic-light-bg" />
       <ActivityBar
         teamName={user?.teamName || ''}
         isOnline={isOnline}

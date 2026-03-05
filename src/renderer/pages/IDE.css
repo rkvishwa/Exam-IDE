@@ -5,6 +5,20 @@
   width: 100vw;
   overflow: hidden;
   background-color: var(--bg-primary);
+  position: relative;
+}
+
+.traffic-light-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 41px;
+  background: var(--bg-tertiary);
+  -webkit-app-region: drag;
+  z-index: 15;
+  pointer-events: none;
+  border-bottom: 1px solid var(--border);
 }
 
 .ide-body {
@@ -25,7 +39,7 @@
   transition: background 0.15s ease, width 0.15s ease;
   position: relative;
   flex-shrink: 0;
-  z-index: 5;
+  z-index: 17;
 }
 
 .resize-handle::before {

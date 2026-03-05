@@ -5,6 +5,8 @@
   width: 100%;
   background: var(--bg-primary);
   border-left: 1px solid var(--border);
+  position: relative;
+  z-index: 16;
 }
 
 .preview-full-tab {

@@ -6,7 +6,9 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 0;
+  padding-top: 41px;
+  padding-bottom: 16px;
   border-right: 1px solid var(--border);
   flex-shrink: 0;
   z-index: 10;
@@ -21,10 +23,12 @@
 }
 
 .logo-icon {
-  margin-bottom: 12px;
+  margin-top: 14px;
+  margin-bottom: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-app-region: no-drag;
 }
 
 .activity-action {
@@ -38,6 +42,7 @@
   background: transparent;
   transition: all 0.2s ease;
   position: relative;
+  -webkit-app-region: no-drag;
 }
 
 .activity-action:hover {
@@ -112,6 +117,7 @@
   transition: background 0.15s ease;
   border: none;
   font-family: inherit;
+  -webkit-app-region: no-drag;
 }
 
 .activity-popup-item:hover {
@@ -137,6 +143,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-app-region: no-drag;
 }
 
 .status-dot {

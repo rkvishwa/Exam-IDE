@@ -5,6 +5,7 @@
   width: 100%;
   background-color: var(--bg-primary);
   position: relative;
+  z-index: 16;
 }
 
 .editor-panel.empty {
@@ -148,6 +149,10 @@ kbd {
   opacity: 0;
   color: var(--text-muted);
   transition: all 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .tab:hover .tab-close,
@@ -156,7 +161,7 @@ kbd {
 }
 
 .tab-close:hover {
-  background: var(--bg-hover);
+  background: transparent;
   color: var(--text-primary);
 }
 
