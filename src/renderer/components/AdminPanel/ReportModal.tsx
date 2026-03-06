@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Team, ActivityLog, StatusEntry, AppUsageEntry, ReportData } from '../../../shared/types';
-import { getActivityLogsForTeam, saveReport } from '../../services/appwrite';
+import { Team, ActivityLog, ActivitySyncData, StatusEntry, AppUsageEntry, ReportData } from '../../../shared/types';
+import { getActivityLogForTeam, parseSyncData, saveReport } from '../../services/appwrite';
 import { generatePDFReport } from '../../services/reportGenerator';
+import { APP_CONFIG } from '../../../shared/constants';
 import './ReportModal.css';
 
 interface ReportModalProps {
@@ -11,73 +12,63 @@ interface ReportModalProps {
 
 const SUSPICIOUS_APPS = ['chrome', 'firefox', 'safari', 'edge', 'brave', 'opera', 'telegram', 'whatsapp', 'discord', 'slack', 'chatgpt', 'copilot', 'notion', 'word', 'docs'];
 
-function buildReportData(team: Team & { teamId: string }, logs: ActivityLog[]): ReportData {
-  if (logs.length === 0) {
-    return {
-      team,
-      sessionStart: '',
-      sessionEnd: '',
-      statusTimeline: [],
-      appUsage: [],
-      summary: { totalDuration: 0, totalOnlineTime: 0, totalOfflineTime: 0, disconnections: 0, longestOnlineStretch: 0, percentOnline: 0, percentInIDE: 0, appSwitches: 0 }
-    };
-  }
+function buildReportData(team: Team & { teamId: string }, sync: ActivitySyncData): ReportData {
+  const emptyReport: ReportData = {
+    team,
+    sessionStart: '',
+    sessionEnd: '',
+    statusTimeline: [],
+    appUsage: [],
+    summary: { totalDuration: 0, totalOnlineTime: 0, totalOfflineTime: 0, disconnections: 0, longestOnlineStretch: 0, percentOnline: 0, percentInIDE: 0, appSwitches: 0 }
+  };
 
-  const sorted = [...logs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  const sessionStart = sorted[0].timestamp;
-  const sessionEnd = sorted[sorted.length - 1].timestamp;
-  const totalDuration = (new Date(sessionEnd).getTime() - new Date(sessionStart).getTime()) / 1000;
+  if (!sync || sync.heartbeatCount === 0) return emptyReport;
 
+  const sessionStart = sync.sessionStart;
+  const sessionEnd = sync.lastStatusAt;
+  const totalDuration = sync.totalOnlineSec + sync.totalOfflineSec;
+
+  // Build status timeline from offline periods
   const statusTimeline: StatusEntry[] = [];
-  let currentStatus = sorted[0].status;
-  let currentFrom = sorted[0].timestamp;
-  let totalOnline = 0, totalOffline = 0, disconnections = 0, longestOnline = 0;
+  let longestOnline = 0;
+  let prevEnd = sessionStart;
 
-  for (let i = 1; i < sorted.length; i++) {
-    const log = sorted[i];
-    if (log.status !== currentStatus) {
-      const duration = (new Date(log.timestamp).getTime() - new Date(currentFrom).getTime()) / 1000;
-      statusTimeline.push({ status: currentStatus, from: currentFrom, to: log.timestamp, duration });
-      if (currentStatus === 'online') { totalOnline += duration; if (duration > longestOnline) longestOnline = duration; }
-      else { totalOffline += duration; disconnections++; }
-      currentStatus = log.status;
-      currentFrom = log.timestamp;
+  const sortedOffline = [...sync.offlinePeriods].sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+  for (const period of sortedOffline) {
+    // Online period before this offline period
+    const onlineDur = (new Date(period.from).getTime() - new Date(prevEnd).getTime()) / 1000;
+    if (onlineDur > 0) {
+      statusTimeline.push({ status: 'online', from: prevEnd, to: period.from, duration: onlineDur });
+      if (onlineDur > longestOnline) longestOnline = onlineDur;
     }
+    statusTimeline.push({ status: 'offline', from: period.from, to: period.to, duration: period.duration });
+    prevEnd = period.to;
   }
-  const finalDuration = (new Date(sessionEnd).getTime() - new Date(currentFrom).getTime()) / 1000;
-  statusTimeline.push({ status: currentStatus, from: currentFrom, to: sessionEnd, duration: finalDuration });
-  if (currentStatus === 'online') totalOnline += finalDuration;
-  else totalOffline += finalDuration;
-
-  const appMap = new Map<string, AppUsageEntry>();
-  const HEARTBEAT_INTERVAL = 30;
-
-  for (const log of sorted) {
-    const key = `${log.appName || log.currentWindow}`;
-    if (!key) continue;
-    const existing = appMap.get(key);
-    if (existing) {
-      existing.lastSeen = log.timestamp;
-      existing.totalTime += HEARTBEAT_INTERVAL;
-      if (log.currentWindow) existing.windowTitle = log.currentWindow;
-    } else {
-      appMap.set(key, {
-        appName: log.appName || log.currentWindow || 'Unknown',
-        windowTitle: log.currentWindow || '',
-        firstSeen: log.timestamp,
-        lastSeen: log.timestamp,
-        totalTime: HEARTBEAT_INTERVAL,
-      });
-    }
+  // Final online stretch
+  const finalOnline = (new Date(sessionEnd).getTime() - new Date(prevEnd).getTime()) / 1000;
+  if (finalOnline > 0) {
+    statusTimeline.push({ status: 'online', from: prevEnd, to: sessionEnd, duration: finalOnline });
+    if (finalOnline > longestOnline) longestOnline = finalOnline;
+  }
+  if (statusTimeline.length === 0 && totalDuration > 0) {
+    statusTimeline.push({ status: 'online', from: sessionStart, to: sessionEnd, duration: totalDuration });
+    longestOnline = totalDuration;
   }
 
-  const appUsage = Array.from(appMap.values()).sort((a, b) => b.totalTime - a.totalTime);
+  // Build app usage from sync.apps
+  const appUsage: AppUsageEntry[] = Object.entries(sync.apps)
+    .map(([appName, totalSec]) => ({
+      appName,
+      windowTitle: appName,
+      firstSeen: sessionStart,
+      lastSeen: sessionEnd,
+      totalTime: totalSec,
+    }))
+    .sort((a, b) => b.totalTime - a.totalTime);
+
   const ideTime = appUsage.filter((a) => a.appName === 'DevWatch IDE').reduce((acc, a) => acc + a.totalTime, 0);
-  const appSwitches = sorted.reduce((count, log, i) => {
-    if (i === 0) return 0;
-    const prev = sorted[i - 1];
-    return (prev.appName || prev.currentWindow) !== (log.appName || log.currentWindow) ? count + 1 : count;
-  }, 0);
+  const disconnections = sync.offlinePeriods.length;
+  const appSwitches = Object.keys(sync.apps).length > 1 ? sync.heartbeatCount : 0;
 
   return {
     team,
@@ -87,12 +78,12 @@ function buildReportData(team: Team & { teamId: string }, logs: ActivityLog[]): 
     appUsage,
     summary: {
       totalDuration,
-      totalOnlineTime: totalOnline,
-      totalOfflineTime: totalOffline,
+      totalOnlineTime: sync.totalOnlineSec,
+      totalOfflineTime: sync.totalOfflineSec,
       disconnections,
       longestOnlineStretch: longestOnline,
-      percentOnline: totalDuration > 0 ? Math.round((totalOnline / totalDuration) * 100) : 0,
-      percentInIDE: totalOnline > 0 ? Math.round((ideTime / totalOnline) * 100) : 0,
+      percentOnline: totalDuration > 0 ? Math.round((sync.totalOnlineSec / totalDuration) * 100) : 0,
+      percentInIDE: sync.totalOnlineSec > 0 ? Math.round((ideTime / sync.totalOnlineSec) * 100) : 0,
       appSwitches,
     }
   };
@@ -157,15 +148,21 @@ function formatTime(iso: string): string {
 type TabKey = 'summary' | 'timeline' | 'apps' | 'risk';
 
 export default function ReportModal({ team, onClose }: ReportModalProps) {
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
 
   useEffect(() => {
-    getActivityLogsForTeam(team.teamId || team.$id!).then((fetchedLogs) => {
-      setLogs(fetchedLogs);
-      setReportData(buildReportData(team, fetchedLogs));
+    getActivityLogForTeam(team.teamId || team.$id!).then((log) => {
+      if (log) {
+        const sync = parseSyncData(log);
+        setReportData(buildReportData(team, sync));
+      } else {
+        setReportData(buildReportData(team, {
+          sessionStart: '', heartbeatCount: 0, apps: {}, files: [], windows: [],
+          statusChanges: 0, totalOnlineSec: 0, totalOfflineSec: 0, lastStatus: 'offline', lastStatusAt: '', offlinePeriods: [],
+        }));
+      }
       setLoading(false);
     });
   }, [team]);
@@ -251,7 +248,7 @@ export default function ReportModal({ team, onClose }: ReportModalProps) {
             <div className="loading-spinner" />
             Loading activity data...
           </div>
-        ) : !reportData || logs.length === 0 ? (
+        ) : !reportData || !reportData.sessionStart ? (
           <div className="modal-empty">No activity data found for this team.</div>
         ) : (
           <>

@@ -36,6 +36,21 @@ export interface ActivityLog {
   windowTitle?: string;
 }
 
+/** Accumulated sync data stored as JSON in ActivityLog.windowTitle */
+export interface ActivitySyncData {
+  sessionStart: string;
+  heartbeatCount: number;
+  apps: Record<string, number>;       // appName → total seconds
+  files: string[];                     // unique files worked on
+  windows: string[];                   // unique windows seen
+  statusChanges: number;               // number of online↔offline transitions
+  totalOnlineSec: number;
+  totalOfflineSec: number;
+  lastStatus: 'online' | 'offline';
+  lastStatusAt: string;
+  offlinePeriods: Array<{ from: string; to: string; duration: number }>;
+}
+
 export interface StatusEntry {
   status: 'online' | 'offline';
   from: string;

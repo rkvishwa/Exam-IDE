@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Team } from '../../shared/types';
-import { createActivityLog, updateSessionLastSeen, createOfflineSyncLog, OfflineSyncSummary } from '../services/appwrite';
+import { upsertActivityLog, updateSessionLastSeen, mergeOfflineSyncData, OfflineSyncSummary } from '../services/appwrite';
 import { enqueueLog, getQueue, clearQueue, QueuedLog } from '../services/localStore';
 import { HeartbeatPayload } from '../../shared/types';
 
@@ -27,8 +27,8 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
 
     if (eventsAPI) {
       eventsAPI.onHeartbeat(async (payload: HeartbeatPayload) => {
-        // Run independently — session update must not be blocked by activity log failure
-        const logResult = createActivityLog(payload).catch(() => 'failed');
+        // Upsert single activity log row + update session
+        const logResult = upsertActivityLog(payload).catch(() => 'failed');
         const sessionResult = updateSessionLastSeen(payload.teamId).catch(() => 'failed');
         const [logStatus, sessionStatus] = await Promise.all([logResult, sessionResult]);
         if (logStatus === 'failed' && sessionStatus === 'failed') {
@@ -37,8 +37,9 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
       });
 
       eventsAPI.onFlushQueue(async (queue: HeartbeatPayload[]) => {
+        // On flush, just upsert each payload (they merge into the single row)
         for (const item of queue) {
-          await createActivityLog(item).catch(() => {});
+          await upsertActivityLog(item).catch(() => {});
         }
       });
     }
@@ -54,7 +55,7 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
     };
   }, [user]);
 
-  // Flush offline queue on reconnect — compact into a single summary log
+  // Flush offline queue on reconnect — merge into single activity log row
   useEffect(() => {
     if (!isOnline || !user) return;
     const queue = getQueue();
@@ -86,7 +87,7 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
         syncedAt: new Date().toISOString(),
       };
 
-      await createOfflineSyncLog(user.$id!, user.teamName, summary).catch(() => {});
+      await mergeOfflineSyncData(user.$id!, user.teamName, summary).catch(() => {});
       await updateSessionLastSeen(user.$id!).catch(() => {});
       clearQueue();
     })();

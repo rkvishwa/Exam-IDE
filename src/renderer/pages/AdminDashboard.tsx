@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getAllSessions, subscribeToActivityLogs, subscribeToSessions, getAllActivityLogs, getAdminTeamIds, OfflineSyncSummary } from '../services/appwrite';
-import { Session, ActivityLog, Team } from '../../shared/types';
+import { getAllSessions, subscribeToActivityLogs, subscribeToSessions, getAllActivityLogs, getAdminTeamIds, parseSyncData } from '../services/appwrite';
+import { Session, ActivityLog, ActivitySyncData, Team } from '../../shared/types';
 import { APP_CONFIG } from '../../shared/constants';
 import ReportModal from '../components/AdminPanel/ReportModal';
 import './AdminDashboard.css';
@@ -10,7 +10,7 @@ interface TeamStatus extends Session {
   currentWindow?: string;
   currentFile?: string;
   lastActivity?: string;
-  offlineSync?: OfflineSyncSummary;
+  syncData?: ActivitySyncData;
 }
 
 type SortKey = 'teamName' | 'status' | 'lastSeen';
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     const now = Date.now();
     return teamsList.map((s) => {
       const lastSeenMs = new Date(s.lastSeen).getTime();
-      const stale = now - lastSeenMs > APP_CONFIG.HEARTBEAT_INTERVAL_MS * 3;
+      const stale = now - lastSeenMs > APP_CONFIG.HEARTBEAT_INTERVAL_MS * 2;
       if (stale && s.status === 'online') return { ...s, status: 'offline' as const };
       return s;
     });
@@ -46,16 +46,18 @@ export default function AdminDashboard() {
   const loadSessions = useCallback(async () => {
     const [sessions, logs, adminIds] = await Promise.all([
       getAllSessions(),
-      getAllActivityLogs(500),
+      getAllActivityLogs(100),
       getAdminTeamIds(),
     ]);
     adminIdsRef.current = adminIds;
 
-    // Build a map of latest offline_sync per team from loaded logs
-    const syncMap = new Map<string, OfflineSyncSummary>();
+    // Build a map of sync data per team from single-row activity logs
+    const syncMap = new Map<string, ActivitySyncData>();
+    const logMetaMap = new Map<string, { currentWindow?: string; currentFile?: string }>();
     for (const log of logs) {
-      if (log.event === 'offline_sync' && log.windowTitle && !syncMap.has(log.teamId)) {
-        try { syncMap.set(log.teamId, JSON.parse(log.windowTitle)); } catch { /* ignore */ }
+      if (!syncMap.has(log.teamId)) {
+        syncMap.set(log.teamId, parseSyncData(log));
+        logMetaMap.set(log.teamId, { currentWindow: log.currentWindow, currentFile: log.currentFile });
       }
     }
 
@@ -64,11 +66,14 @@ export default function AdminDashboard() {
       .filter((s) => !adminIds.has(s.teamId))
       .map((s) => {
         const lastSeenMs = new Date(s.lastSeen).getTime();
-        const stale = now - lastSeenMs > APP_CONFIG.HEARTBEAT_INTERVAL_MS * 3;
+        const stale = now - lastSeenMs > APP_CONFIG.HEARTBEAT_INTERVAL_MS * 2;
+        const meta = logMetaMap.get(s.teamId);
         return {
           ...s,
           status: stale ? 'offline' : s.status,
-          offlineSync: syncMap.get(s.teamId),
+          syncData: syncMap.get(s.teamId),
+          currentWindow: meta?.currentWindow,
+          currentFile: meta?.currentFile,
         } as TeamStatus;
       });
     setTeams((prev) => {
@@ -80,9 +85,9 @@ export default function AdminDashboard() {
         const fetchedMs = new Date(s.lastSeen).getTime();
         // Preserve more recent realtime data over potentially stale DB data
         if (existingMs > fetchedMs) {
-          return { ...s, lastSeen: existing.lastSeen, status: existing.status, currentWindow: existing.currentWindow, currentFile: existing.currentFile, lastActivity: existing.lastActivity };
+          return { ...s, lastSeen: existing.lastSeen, status: existing.status, currentWindow: existing.currentWindow || s.currentWindow, currentFile: existing.currentFile || s.currentFile, lastActivity: existing.lastActivity };
         }
-        return { ...s, currentWindow: existing.currentWindow, currentFile: existing.currentFile, lastActivity: existing.lastActivity };
+        return { ...s, currentWindow: s.currentWindow || existing.currentWindow, currentFile: s.currentFile || existing.currentFile, lastActivity: existing.lastActivity };
       });
     });
     setActivityLogs(logs);
@@ -95,29 +100,28 @@ export default function AdminDashboard() {
 
     const unsubActivity = subscribeToActivityLogs((log: ActivityLog) => {
       if (adminIdsRef.current.has(log.teamId)) return;
+      const sync = parseSyncData(log);
       setTeams((prev) => {
         const idx = prev.findIndex((t) => t.teamId === log.teamId);
         if (idx === -1) return prev;
         const updated = [...prev];
 
-        // Parse offline sync summary if available
-        let offlineSync: OfflineSyncSummary | undefined;
-        if (log.event === 'offline_sync' && log.windowTitle) {
-          try { offlineSync = JSON.parse(log.windowTitle); } catch { /* ignore */ }
-        }
-
         updated[idx] = {
           ...updated[idx],
-          currentWindow: log.event === 'offline_sync' ? updated[idx].currentWindow : log.currentWindow,
-          currentFile: log.event === 'offline_sync' ? updated[idx].currentFile : log.currentFile,
+          currentWindow: log.currentWindow || updated[idx].currentWindow,
+          currentFile: log.currentFile || updated[idx].currentFile,
           status: 'online',
           lastSeen: log.timestamp,
           lastActivity: log.timestamp,
-          ...(offlineSync ? { offlineSync } : {}),
+          syncData: sync,
         };
         return updated;
       });
-      setActivityLogs((prev) => [log, ...prev].slice(0, 500));
+      setActivityLogs((prev) => {
+        // Replace the existing log for this team rather than accumulating
+        const filtered = prev.filter((l) => l.teamId !== log.teamId);
+        return [log, ...filtered];
+      });
       setLastUpdated(new Date());
     });
 
@@ -136,10 +140,10 @@ export default function AdminDashboard() {
     unsubRefs.current = [unsubActivity, unsubSessions];
     const pollInterval = setInterval(loadSessions, 30000);
 
-    // Frequent stale-check: re-evaluate online→offline every 10s based on lastSeen
+    // Frequent stale-check: re-evaluate online→offline every 5s based on lastSeen
     const staleCheckInterval = setInterval(() => {
       setTeams((prev) => applyStaleCheck(prev));
-    }, 10000);
+    }, 5000);
 
     return () => {
       unsubRefs.current.forEach((fn) => fn());
@@ -153,7 +157,7 @@ export default function AdminDashboard() {
   const offlineCount = teams.filter((t) => t.status === 'offline').length;
   const onlinePercent = teams.length > 0 ? Math.round((onlineCount / teams.length) * 100) : 0;
 
-  // Team-level activity metrics
+  // Team-level activity metrics (derived from syncData on each team)
   const teamMetrics = useMemo(() => {
     const metrics = new Map<string, {
       totalLogs: number;
@@ -163,52 +167,47 @@ export default function AdminDashboard() {
       lastWindow: string;
       firstSeen: string;
       lastSeen: string;
-      onlineLogs: number;
-      offlineLogs: number;
+      onlineSec: number;
+      offlineSec: number;
     }>();
 
-    for (const log of activityLogs) {
-      const existing = metrics.get(log.teamId) || {
-        totalLogs: 0,
-        uniqueApps: new Set<string>(),
-        uniqueWindows: new Set<string>(),
-        lastFile: '',
-        lastWindow: '',
-        firstSeen: log.timestamp,
-        lastSeen: log.timestamp,
-        onlineLogs: 0,
-        offlineLogs: 0,
-      };
-
-      existing.totalLogs++;
-      if (log.appName) existing.uniqueApps.add(log.appName);
-      if (log.currentWindow) existing.uniqueWindows.add(log.currentWindow);
-      if (!existing.lastFile && log.currentFile) existing.lastFile = log.currentFile;
-      if (!existing.lastWindow && log.currentWindow) existing.lastWindow = log.currentWindow;
-      if (new Date(log.timestamp) < new Date(existing.firstSeen)) existing.firstSeen = log.timestamp;
-      if (new Date(log.timestamp) > new Date(existing.lastSeen)) existing.lastSeen = log.timestamp;
-      if (log.status === 'online') existing.onlineLogs++;
-      else existing.offlineLogs++;
-
-      metrics.set(log.teamId, existing);
+    for (const team of teams) {
+      const sync = team.syncData;
+      if (!sync) continue;
+      const apps = Object.keys(sync.apps);
+      metrics.set(team.teamId, {
+        totalLogs: sync.heartbeatCount,
+        uniqueApps: new Set(apps),
+        uniqueWindows: new Set(sync.windows),
+        lastFile: sync.files.length > 0 ? sync.files[sync.files.length - 1] : '',
+        lastWindow: sync.windows.length > 0 ? sync.windows[sync.windows.length - 1] : '',
+        firstSeen: sync.sessionStart,
+        lastSeen: sync.lastStatusAt,
+        onlineSec: sync.totalOnlineSec,
+        offlineSec: sync.totalOfflineSec,
+      });
     }
     return metrics;
-  }, [activityLogs]);
+  }, [teams]);
 
   // Global activity insights
   const globalInsights = useMemo(() => {
     const uniqueApps = new Set<string>();
     const appCounts = new Map<string, number>();
-    let totalOnlineLogs = 0;
-    let totalOfflineLogs = 0;
+    let totalOnlineSec = 0;
+    let totalOfflineSec = 0;
+    let totalHeartbeats = 0;
 
-    for (const log of activityLogs) {
-      if (log.appName) {
-        uniqueApps.add(log.appName);
-        appCounts.set(log.appName, (appCounts.get(log.appName) || 0) + 1);
+    for (const team of teams) {
+      const sync = team.syncData;
+      if (!sync) continue;
+      totalHeartbeats += sync.heartbeatCount;
+      totalOnlineSec += sync.totalOnlineSec;
+      totalOfflineSec += sync.totalOfflineSec;
+      for (const [app, sec] of Object.entries(sync.apps)) {
+        uniqueApps.add(app);
+        appCounts.set(app, (appCounts.get(app) || 0) + Math.round(sec));
       }
-      if (log.status === 'online') totalOnlineLogs++;
-      else totalOfflineLogs++;
     }
 
     const topApps = Array.from(appCounts.entries())
@@ -232,15 +231,15 @@ export default function AdminDashboard() {
     const avgSessionMs = sessionCount > 0 ? totalSessionDuration / sessionCount : 0;
 
     return {
-      totalLogs: activityLogs.length,
+      totalLogs: totalHeartbeats,
       uniqueApps: uniqueApps.size,
       topApps,
-      totalOnlineLogs,
-      totalOfflineLogs,
+      totalOnlineSec,
+      totalOfflineSec,
       recentlyActive,
       avgSessionMs,
     };
-  }, [activityLogs, teams, teamMetrics]);
+  }, [teams, teamMetrics]);
 
   // Filtering & sorting
   const filteredTeams = useMemo(() => {
@@ -422,7 +421,7 @@ export default function AdminDashboard() {
                     <div key={app} className="top-app-item">
                       <div className="top-app-header">
                         <span className={`top-app-name ${isIDE ? '' : 'flagged'}`}>{app}</span>
-                        <span className="top-app-count">{count} hits</span>
+                        <span className="top-app-count">{formatDuration(count * 1000)}</span>
                       </div>
                       <div className="top-app-bar">
                         <div className={`top-app-bar-fill ${isIDE ? 'ide' : 'non-ide'}`} style={{ width: `${pct}%` }} />
@@ -443,7 +442,7 @@ export default function AdminDashboard() {
             <div className="health-grid">
               {teams.slice(0, 8).map((team) => {
                 const m = teamMetrics.get(team.teamId);
-                const uptime = m ? Math.round((m.onlineLogs / (m.totalLogs || 1)) * 100) : 0;
+                const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
                 const healthColor = uptime >= 80 ? 'var(--online)' : uptime >= 50 ? 'var(--warning)' : 'var(--offline)';
                 return (
                   <div key={team.teamId} className="health-item" title={`${team.teamName}: ${uptime}% uptime`}>
@@ -534,7 +533,7 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredTeams.map((team) => {
                   const m = teamMetrics.get(team.teamId);
-                  const uptime = m ? Math.round((m.onlineLogs / (m.totalLogs || 1)) * 100) : 0;
+                  const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
                   return (
                     <tr key={team.teamId} className={`team-row ${team.status === 'online' ? 'row-online' : 'row-offline'}`}>
                       <td>
@@ -566,8 +565,8 @@ export default function AdminDashboard() {
                       </td>
                       <td className="td-time">
                         {timeSince(team.lastSeen)}
-                        {team.offlineSync && (
-                          <span className="sync-badge" title={`Synced offline data: ${formatDuration(team.offlineSync.duration)} offline (${team.offlineSync.logCount} logs, ${team.offlineSync.apps.length} apps)\nOffline: ${new Date(team.offlineSync.offlineFrom).toLocaleTimeString()} - ${new Date(team.offlineSync.offlineTo).toLocaleTimeString()}\nSynced: ${new Date(team.offlineSync.syncedAt).toLocaleTimeString()}`}>
+                        {team.syncData && team.syncData.heartbeatCount > 0 && (
+                          <span className="sync-badge" title={`${team.syncData.heartbeatCount} heartbeats\nOnline: ${formatDuration(team.syncData.totalOnlineSec * 1000)}\nOffline: ${formatDuration(team.syncData.totalOfflineSec * 1000)}\nFiles: ${team.syncData.files.length}\nApps: ${Object.keys(team.syncData.apps).length}`}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             synced
                           </span>
@@ -590,7 +589,7 @@ export default function AdminDashboard() {
             <div className="team-grid">
               {filteredTeams.map((team) => {
                 const m = teamMetrics.get(team.teamId);
-                const uptime = m ? Math.round((m.onlineLogs / (m.totalLogs || 1)) * 100) : 0;
+                const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
                 return (
                   <div key={team.teamId} className={`team-card ${team.status}`}>
                     <div className="team-card-header">
@@ -626,8 +625,8 @@ export default function AdminDashboard() {
                       <span className="team-card-window">{team.currentWindow || 'No window'}</span>
                       <span className="team-card-time">
                         {timeSince(team.lastSeen)}
-                        {team.offlineSync && (
-                          <span className="sync-badge" title={`Synced offline data: ${formatDuration(team.offlineSync.duration)} offline (${team.offlineSync.logCount} logs, ${team.offlineSync.apps.length} apps)\nSynced: ${new Date(team.offlineSync.syncedAt).toLocaleTimeString()}`}>
+                        {team.syncData && team.syncData.heartbeatCount > 0 && (
+                          <span className="sync-badge" title={`${team.syncData.heartbeatCount} heartbeats\nOnline: ${formatDuration(team.syncData.totalOnlineSec * 1000)}\nOffline: ${formatDuration(team.syncData.totalOfflineSec * 1000)}`}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             synced
                           </span>

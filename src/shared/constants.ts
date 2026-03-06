@@ -38,7 +38,7 @@ export const IPC_CHANNELS = {
 } as const;
 
 export const APP_CONFIG = {
-  HEARTBEAT_INTERVAL_MS: 30000,
+  HEARTBEAT_INTERVAL_MS: 15000,
   DB_NAME: 'devwatch_db',
   COLLECTION_TEAMS: 'teams',
   COLLECTION_SESSIONS: 'sessions',
