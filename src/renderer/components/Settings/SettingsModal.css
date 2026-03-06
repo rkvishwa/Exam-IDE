@@ -118,7 +118,8 @@
 }
 
 .vscode-settings-tree li {
-  padding: 4px 14px 4px 34px;
+  padding: 6px 14px 6px 34px;
+  margin-bottom: 2px;
   cursor: pointer;
   font-size: 13px;
   color: var(--text-primary);
@@ -306,4 +307,129 @@
   color: var(--text-muted);
   font-size: 11px;
   margin: 0 1px;
+}
+
+/* Activity Log */
+.activity-log-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.activity-log-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.activity-log-btn.primary {
+  background-color: var(--accent, #007acc);
+  color: #fff;
+  border-color: var(--accent, #007acc);
+}
+
+.activity-log-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.activity-log-btn.secondary {
+  background-color: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.activity-log-btn.secondary:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.activity-log-btn.danger {
+  background-color: transparent;
+  color: #f44747;
+  border-color: #f44747;
+}
+
+.activity-log-btn.danger:hover {
+  background-color: rgba(244, 71, 71, 0.15);
+}
+
+.activity-log-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.activity-log-preview {
+  margin-top: 8px;
+}
+
+.activity-log-preview .shortcuts-header {
+  display: grid;
+  grid-template-columns: 100px 200px 1fr;
+  padding: 8px 16px;
+}
+
+.activity-log-preview .shortcuts-row {
+  display: grid;
+  grid-template-columns: 100px 200px 1fr;
+  padding: 6px 16px;
+}
+
+.activity-log-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-log-type {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.activity-log-type--status_online {
+  color: #f44336;
+}
+
+.activity-log-type--status_offline {
+  color: #4caf50;
+}
+
+.activity-log-type--app_blur {
+  color: #ff9800;
+}
+
+.activity-log-type--app_focus {
+  color: var(--accent, #007acc);
+}
+
+.activity-log-type--clipboard_copy {
+  color: #ab47bc;
+}
+
+.activity-log-type--clipboard_paste_external {
+  color: #f44336;
+}
+
+.activity-log-details {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-log-note {
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
 }

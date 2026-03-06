@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, ChevronDown, Folder, File, FileCode2, FileJson, FileText, FileImage, Terminal, Database, ShieldAlert, FilePlus2, FolderPlus } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, File, FileCode2, FileJson, FileText, FileImage, Terminal, Database, ShieldAlert, FilePlus2, FolderPlus, Braces, Code2, Palette } from 'lucide-react';
 import { FileNode } from '../../../shared/types';
 import './FileTree.css';
 
@@ -16,13 +16,13 @@ function getIcon(node: FileNode) {
     case 'jsx':
     case 'ts':
     case 'tsx':
-      return <FileCode2 size={14} color="#eab308" />;
+      return <Braces size={14} color="#eab308" />;
     case 'json':
       return <FileJson size={14} color="#22c55e" />;
     case 'html':
-      return <FileCode2 size={14} color="#ef4444" />;
+      return <Code2 size={14} color="#ef4444" />;
     case 'css':
-      return <FileCode2 size={14} color="#3b82f6" />;
+      return <Palette size={14} color="#3b82f6" />;
     case 'md':
       return <FileText size={14} color="#a1a1aa" />;
     case 'png':
@@ -32,6 +32,8 @@ function getIcon(node: FileNode) {
     case 'sh':
     case 'bash':
       return <Terminal size={14} color="#10b981" />;
+    case 'php':
+      return <FileCode2 size={14} color="#7b7fb5" />;
     case 'sql':
       return <Database size={14} color="#f97316" />;
     case 'env':
@@ -108,7 +110,7 @@ interface FileTreeNodeProps {
 }
 
 function FileTreeNode({ node, depth, hasFolders, activeFilePath, onFileClick, onRefresh, workspaceRoot, creatingItem, onSetCreating, selectedFolder, onSelectFolder, onFileOpened, onFileDeleted, onFileRenamed }: FileTreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth === 0);
+  const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState<FileNode[]>(node.children || []);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [renaming, setRenaming] = useState(false);

@@ -8,6 +8,7 @@ import ActivityBar from "../components/Sidebar/ActivityBar";
 import SettingsModal from "../components/Settings/SettingsModal";
 import { useMonitoring } from "../hooks/useMonitoring";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { useActivityLogger } from "../hooks/useActivityLogger";
 import "./IDE.css";
 
 export interface OpenTab {
@@ -56,6 +57,7 @@ const LANGUAGE_MAP: Record<string, string> = {
   yaml: "yaml",
   xml: "xml",
   sql: "sql",
+  php: "php",
 };
 
 function getLanguage(filename: string): string {
@@ -167,6 +169,7 @@ export default function IDE() {
   }, []);
 
   useMonitoring(user, isOnline, activeTabPath || "");
+  useActivityLogger(!!user);
 
   const activeTab = tabs.find((t) => t.path === activeTabPath) || null;
 
@@ -334,8 +337,13 @@ export default function IDE() {
     }
   }, []);
 
-  const openPreviewInTab = useCallback(() => {
+  const [previewInitialUrl, setPreviewInitialUrl] = useState<string | null>(null);
+
+  const openPreviewInTab = useCallback((urlFromPanel?: string) => {
     const previewPath = "__preview__";
+    if (urlFromPanel) {
+      setPreviewInitialUrl(urlFromPanel);
+    }
     const existing = tabs.find((t) => t.path === previewPath);
     if (existing) {
       setActiveTabPath(previewPath);
@@ -454,9 +462,19 @@ export default function IDE() {
               onTabClose={closeTab}
               onContentChange={updateContent}
               onSave={saveFile}
+              onReorderTabs={(fromIndex, toIndex) => {
+                setTabs((prev) => {
+                  const next = [...prev];
+                  const [moved] = next.splice(fromIndex, 1);
+                  next.splice(toIndex, 0, moved);
+                  return next;
+                });
+              }}
               workspaceRoot={workspaceRoot}
               onOpenFolder={openFolder}
               theme={theme}
+              activeFilePath={activeTabPath}
+              previewInitialUrl={previewInitialUrl}
             />
           </Panel>
           {showPreview && (
@@ -465,8 +483,10 @@ export default function IDE() {
               <Panel id="preview" order={3} defaultSize={20} minSize={15}>
                 <PreviewPanel
                   workspaceRoot={workspaceRoot}
+                  activeFilePath={activeTabPath}
                   onOpenInTab={openPreviewInTab}
                   onClose={() => setShowPreview(false)}
+                  initialUrl={previewInitialUrl}
                 />
               </Panel>
             </>
@@ -482,6 +502,7 @@ export default function IDE() {
         onHotReloadChange={setHotReload}
         theme={theme}
         onThemeChange={setTheme}
+        teamName={user?.teamName || ''}
       />
     </div>
   );

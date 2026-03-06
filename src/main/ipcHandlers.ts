@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { IpcMain, Dialog, webContents, BrowserView, BrowserWindow } from 'electron';
+import { execSync } from 'child_process';
+import { IpcMain, Dialog, webContents, BrowserView, BrowserWindow, clipboard } from 'electron';
 import { FileNode } from '../shared/types';
 import { IPC_CHANNELS } from '../shared/constants';
 import { startStaticServer, stopStaticServer, getServerUrl } from './staticServer';
@@ -244,5 +245,54 @@ export function registerFsHandlers(ipcMain: IpcMain, dialog: Dialog): void {
       width: Math.round(bounds.width),
       height: Math.round(bounds.height),
     });
+  });
+
+  // Active window title detection
+  // Returns null if the active window is the app itself (any of its windows)
+  ipcMain.handle(IPC_CHANNELS.GET_ACTIVE_WINDOW, async (event) => {
+    try {
+      const platform = process.platform;
+      let title = '';
+
+      // Check if any of the app's own windows are focused
+      const allWindows = BrowserWindow.getAllWindows();
+      const senderWindow = BrowserWindow.fromWebContents(event.sender);
+      const anyOwnWindowFocused = allWindows.some(w => w.isFocused());
+      // Also check if the sender window itself is focused (covers iframe/webview focus changes)
+      if (anyOwnWindowFocused || (senderWindow && senderWindow.isFocused())) {
+        return null; // It's our own app, not an external switch
+      }
+
+      if (platform === 'win32') {
+        // PowerShell: get foreground window title
+        const cmd = 'powershell -NoProfile -Command "(Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow(); [DllImport(\\\"user32.dll\\\", CharSet=CharSet.Auto)] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);\' -Name Win32 -Namespace Native -PassThru)| Out-Null; $h=[Native.Win32]::GetForegroundWindow(); $sb=New-Object System.Text.StringBuilder 256; [Native.Win32]::GetWindowText($h,$sb,256)|Out-Null; $sb.ToString()"';
+        title = execSync(cmd, { timeout: 3000, encoding: 'utf-8' }).trim();
+      } else if (platform === 'darwin') {
+        title = execSync(
+          'osascript -e \'tell application "System Events" to get name of first application process whose frontmost is true\'',
+          { timeout: 3000, encoding: 'utf-8' }
+        ).trim();
+      } else {
+        // Linux
+        title = execSync('xdotool getactivewindow getwindowname 2>/dev/null || echo ""', {
+          timeout: 3000, encoding: 'utf-8'
+        }).trim();
+      }
+
+      // Final check: compare with our own window titles to filter out self-detection
+      const ownTitles = allWindows.map(w => w.getTitle()).filter(Boolean);
+      if (ownTitles.some(ownTitle => title === ownTitle || title.includes(ownTitle) || ownTitle.includes(title))) {
+        return null;
+      }
+
+      return title || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Clipboard read
+  ipcMain.handle(IPC_CHANNELS.CLIPBOARD_READ_TEXT, async () => {
+    return clipboard.readText();
   });
 }

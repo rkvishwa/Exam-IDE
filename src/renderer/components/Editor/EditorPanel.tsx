@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import {
   FileCode2,
@@ -13,6 +13,8 @@ import {
   File,
   FolderOpen,
   Code2,
+  Braces,
+  Palette,
 } from "lucide-react";
 import { OpenTab } from "../../pages/IDE";
 import PreviewPanel from "../Preview/PreviewPanel";
@@ -26,9 +28,12 @@ interface EditorPanelProps {
   onTabClose: (path: string) => void;
   onContentChange: (path: string, content: string) => void;
   onSave: () => void;
+  onReorderTabs?: (fromIndex: number, toIndex: number) => void;
   workspaceRoot: string | null;
   onOpenFolder?: () => void;
   theme?: string;
+  activeFilePath?: string | null;
+  previewInitialUrl?: string | null;
 }
 
 const EDITOR_OPTIONS = {
@@ -70,13 +75,13 @@ function getTabIcon(tab: OpenTab) {
     case "jsx":
     case "ts":
     case "tsx":
-      return <FileCode2 size={14} className="tab-icon" color="#eab308" />;
+      return <Braces size={14} className="tab-icon" color="#eab308" />;
     case "json":
       return <FileJson size={14} className="tab-icon" color="#22c55e" />;
     case "html":
-      return <FileCode2 size={14} className="tab-icon" color="#ef4444" />;
+      return <Code2 size={14} className="tab-icon" color="#ef4444" />;
     case "css":
-      return <FileCode2 size={14} className="tab-icon" color="#3b82f6" />;
+      return <Palette size={14} className="tab-icon" color="#3b82f6" />;
     case "md":
       return <FileText size={14} className="tab-icon" color="#a1a1aa" />;
     case "png":
@@ -89,6 +94,8 @@ function getTabIcon(tab: OpenTab) {
     case "sh":
     case "bash":
       return <Terminal size={14} className="tab-icon" color="#10b981" />;
+    case "php":
+      return <FileCode2 size={14} className="tab-icon" color="#7b7fb5" />;
     case "sql":
       return <Database size={14} className="tab-icon" color="#f97316" />;
     case "env":
@@ -106,12 +113,17 @@ export default function EditorPanel({
   onTabClose,
   onContentChange,
   onSave,
+  onReorderTabs,
   workspaceRoot,
   onOpenFolder,
   theme = "dark",
+  activeFilePath,
+  previewInitialUrl,
 }: EditorPanelProps) {
   const activeTab = tabs.find((t) => t.path === activeTabPath);
   const editorRef = useRef<any>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleEditorMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -289,12 +301,35 @@ export default function EditorPanel({
     <div className="editor-panel">
       {/* Tab Bar */}
       <div className="tab-bar">
-        {tabs.map((tab) => (
+        {tabs.map((tab, index) => (
           <div
             key={tab.path}
-            className={`tab ${tab.path === activeTabPath ? "active" : ""}`}
+            className={`tab ${tab.path === activeTabPath ? "active" : ""}${dragOverIndex === index ? " drag-over" : ""}${dragIndex === index ? " dragging" : ""}`}
             onClick={() => onTabClick(tab.path)}
             onDoubleClick={() => onTabDoubleClick?.(tab.path)}
+            draggable
+            onDragStart={(e) => {
+              setDragIndex(index);
+              e.dataTransfer.effectAllowed = "move";
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setDragOverIndex(index);
+            }}
+            onDragLeave={() => setDragOverIndex(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragIndex !== null && dragIndex !== index) {
+                onReorderTabs?.(dragIndex, index);
+              }
+              setDragIndex(null);
+              setDragOverIndex(null);
+            }}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setDragOverIndex(null);
+            }}
           >
             {getTabIcon(tab)}
             <span
@@ -337,7 +372,7 @@ export default function EditorPanel({
             }}
           >
             {tab.type === "preview" ? (
-              <PreviewPanel workspaceRoot={workspaceRoot} isFullTab />
+              <PreviewPanel workspaceRoot={workspaceRoot} activeFilePath={activeFilePath} initialUrl={previewInitialUrl} isFullTab />
             ) : tab.type === "image" ? (
               <img
                 src={tab.content}

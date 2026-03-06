@@ -25,6 +25,7 @@
     "@radix-ui/colors": "^3.0.0",
     "appwrite": "^16.0.0",
     "electron-store": "^8.1.0",
+    "is-online": "^12.0.2",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.577.0",

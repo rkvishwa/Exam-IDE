@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Download, RefreshCw } from 'lucide-react';
+import { getActivityLog, generateActivityLogPDF, clearActivityLog, ActivityEvent } from '../../services/activityLogger';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -11,6 +12,7 @@ interface SettingsModalProps {
   onHotReloadChange: (val: boolean) => void;
   theme: string;
   onThemeChange: (val: string) => void;
+  teamName: string;
 }
 
 export default function SettingsModal({
@@ -21,10 +23,12 @@ export default function SettingsModal({
   hotReload,
   onHotReloadChange,
   theme,
-  onThemeChange
+  onThemeChange,
+  teamName,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('Text Editor');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activityLog, setActivityLog] = useState<ActivityEvent[]>([]);
 
   // Close on Escape key
   useEffect(() => {
@@ -36,6 +40,13 @@ export default function SettingsModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Refresh activity log when opening the modal or switching to the Activity Log tab
+  useEffect(() => {
+    if (isOpen && (activeTab === 'Activity Log' || searchQuery.trim().length > 0)) {
+      setActivityLog(getActivityLog());
+    }
+  }, [isOpen, activeTab, searchQuery]);
 
   if (!isOpen) return null;
 
@@ -69,6 +80,47 @@ export default function SettingsModal({
     ? activeTab === 'Keyboard Shortcuts' 
     : filteredShortcuts.length > 0;
 
+  const showActivityLog = !isSearching 
+    ? activeTab === 'Activity Log' 
+    : (matchesSearch('Activity Log') || matchesSearch('Download') || matchesSearch('clipboard') || matchesSearch('online') || matchesSearch('offline'));
+
+  const formatEventType = (type: ActivityEvent['type'], details?: string): string => {
+    switch (type) {
+      case 'status_online': return 'Went Online';
+      case 'status_offline': return 'Went Offline';
+      case 'app_focus': return 'Returned to IDE';
+      case 'app_blur': {
+        if (details) {
+          const match = details.match(/^(?:Switched to|Active app):\s*(.+)$/i);
+          if (match) {
+            const raw = match[1].trim();
+            const parts = raw.split(' - ');
+            const appName = parts[parts.length - 1].trim() || raw;
+            return `Switched To ${appName}`;
+          }
+        }
+        return 'Switched Away';
+      }
+      case 'clipboard_copy': return 'Clipboard Copy';
+      case 'clipboard_paste_external': return 'External Copy';
+    }
+  };
+
+  const handleDownloadLog = () => {
+    generateActivityLogPDF(teamName);
+  };
+
+  const handleRefreshLog = () => {
+    setActivityLog(getActivityLog());
+  };
+
+  const handleClearLog = () => {
+    clearActivityLog();
+    setActivityLog([]);
+  };
+
+  const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+
   const isWindows = navigator.userAgent.toLowerCase().includes('win');
 
   return (
@@ -100,6 +152,7 @@ export default function SettingsModal({
              <li className={(isSearching ? showTextEditor : activeTab === 'Text Editor') ? 'active' : ''} onClick={() => setActiveTab('Text Editor')}>Text Editor</li>
              <li className={(isSearching ? showAppearance : activeTab === 'Appearance') ? 'active' : ''} onClick={() => setActiveTab('Appearance')}>Appearance</li>
              <li className={(isSearching ? showKeyboardShortcuts : activeTab === 'Keyboard Shortcuts') ? 'active' : ''} onClick={() => setActiveTab('Keyboard Shortcuts')}>Keyboard Shortcuts</li>
+             <li className={(isSearching ? showActivityLog : activeTab === 'Activity Log') ? 'active' : ''} onClick={() => setActiveTab('Activity Log')}>Activity Log</li>
            </ul>
         </div>
         <div className="vscode-settings-content">
@@ -195,6 +248,65 @@ export default function SettingsModal({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {showActivityLog && (
+            <div className="vscode-settings-section">
+              <h2 className="vscode-settings-section-title">Activity Log</h2>
+              <div className="vscode-setting-description" style={{ marginBottom: 16 }}>
+                Your activity is tracked in the background — online/offline status changes, app switching, and clipboard copies with timestamps.
+              </div>
+              <div className="activity-log-actions">
+                <button className="activity-log-btn primary" onClick={handleDownloadLog}>
+                  <Download size={14} />
+                  Download Log as PDF
+                </button>
+                <button className="activity-log-btn secondary" onClick={handleRefreshLog}>
+                  <RefreshCw size={14} />
+                  Refresh
+                </button>
+                {isDev && (
+                  <button className="activity-log-btn danger" onClick={handleClearLog}>
+                    <X size={14} />
+                    Clear Log (Dev)
+                  </button>
+                )}
+                <span className="activity-log-count">{activityLog.length} events recorded</span>
+              </div>
+              {activityLog.length > 0 && (
+                <div className="activity-log-preview">
+                  <div className="shortcuts-table">
+                    <div className="shortcuts-header">
+                      <span>Time</span>
+                      <span>Event</span>
+                      <span>Details</span>
+                    </div>
+                    {activityLog.slice(-50).reverse().map((event, idx) => (
+                      <div className="shortcuts-row" key={idx}>
+                        <span className="activity-log-time">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </span>
+                        <span className={`activity-log-type activity-log-type--${event.type}`}>
+                          {formatEventType(event.type, event.details)}
+                        </span>
+                        <span className="activity-log-details" title={event.details || ''}>
+                          {event.details
+                            ? event.details.length > 60
+                              ? event.details.substring(0, 60) + '…'
+                              : event.details
+                            : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {activityLog.length > 50 && (
+                    <div className="activity-log-note">
+                      Showing last 50 of {activityLog.length} events. Download the PDF for the full log.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

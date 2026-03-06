@@ -32,6 +32,7 @@ const api: ElectronAPI = {
       ipcRenderer.on(IPC_CHANNELS.NETWORK_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.NETWORK_STATUS, handler);
     },
+    getStatus: () => ipcRenderer.invoke('network:getStatus'),
   },
   dialog: {
     showError: (message) => ipcRenderer.send(IPC_CHANNELS.DIALOG_SHOW_ERROR, message),
@@ -44,6 +45,12 @@ const api: ElectronAPI = {
       ipcRenderer.invoke(IPC_CHANNELS.DEVTOOLS_CLOSE),
     resize: (bounds) =>
       ipcRenderer.invoke(IPC_CHANNELS.DEVTOOLS_RESIZE, bounds),
+  },
+  system: {
+    getActiveWindow: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ACTIVE_WINDOW),
+  },
+  clipboard: {
+    readText: () => ipcRenderer.invoke(IPC_CHANNELS.CLIPBOARD_READ_TEXT),
   },
 };
 

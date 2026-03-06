@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, RotateCw, Home, Terminal, Monitor, XCircle, Ban, AlertTriangle, MonitorPlay, ExternalLink, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RotateCw, Home, Monitor, MonitorPlay, ExternalLink, X, Lock, Unlock } from 'lucide-react';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import './PreviewPanel.css';
 
@@ -14,27 +14,27 @@ interface ConsoleEntry {
 
 interface PreviewPanelProps {
   workspaceRoot: string | null;
-  onOpenInTab?: () => void;
+  activeFilePath?: string | null;
+  initialUrl?: string | null;
+  onOpenInTab?: (currentUrl: string) => void;
   isFullTab?: boolean;
   onClose?: () => void;
 }
 
 let entryIdCounter = 0;
 
-export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, onClose }: PreviewPanelProps) {
+export default function PreviewPanel({ workspaceRoot, activeFilePath, initialUrl, onOpenInTab, isFullTab, onClose }: PreviewPanelProps) {
   const webviewRef = useRef<HTMLWebViewElement>(null);
   const devtoolsContainerRef = useRef<HTMLDivElement>(null);
-  const consoleEndRef = useRef<HTMLDivElement>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string>('');
   const [inputUrl, setInputUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-  const [consoleOpen, setConsoleOpen] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState<ConsoleEntry[]>([]);
-  const [consoleFilter, setConsoleFilter] = useState<string>('all');
   const [devtoolsOpen, setDevtoolsOpen] = useState(false);
+  const [followFile, setFollowFile] = useState(true);
 
   useEffect(() => {
     if (!workspaceRoot) {
@@ -65,8 +65,11 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
     if (!wv) return;
 
     // Set initial src programmatically to avoid React VDOM re-applying it and causing reloads on every render
-    if (serverUrl) {
-      (wv as any).src = serverUrl;
+    const startUrl = initialUrl || serverUrl;
+    if (startUrl) {
+      (wv as any).src = startUrl;
+      setCurrentUrl(startUrl);
+      setInputUrl(startUrl);
     }
 
     const onStartLoading = () => setIsLoading(true);
@@ -81,6 +84,12 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
     };
 
     const onConsoleMessage = (e: any) => {
+      // Intercept copy/cut notifications from injected script
+      if (typeof e.message === 'string' && e.message.startsWith('__PREVIEW_COPY__:')) {
+        const copiedText = e.message.slice('__PREVIEW_COPY__:'.length);
+        document.dispatchEvent(new CustomEvent('webview-copy', { detail: copiedText }));
+        return;
+      }
       const levelMap: Record<number, ConsoleEntry['level']> = {
         0: 'debug', 1: 'log', 2: 'warn', 3: 'error',
       };
@@ -95,11 +104,30 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
       setConsoleLogs((prev) => [...prev.slice(-500), entry]);
     };
 
+    // Inject script into webview to notify host on copy/cut events
+    const injectCopyListener = () => {
+      (wv as any).executeJavaScript(`
+        if (!window.__previewCopyListenerAdded) {
+          window.__previewCopyListenerAdded = true;
+          document.addEventListener('copy', () => {
+            const sel = document.getSelection();
+            if (sel) console.log('__PREVIEW_COPY__:' + sel.toString());
+          }, true);
+          document.addEventListener('cut', () => {
+            const sel = document.getSelection();
+            if (sel) console.log('__PREVIEW_COPY__:' + sel.toString());
+          }, true);
+        }
+      `).catch(() => {});
+    };
+    const onDomReady = () => injectCopyListener();
+
     wv.addEventListener('did-start-loading', onStartLoading);
     wv.addEventListener('did-stop-loading', onStopLoading);
     wv.addEventListener('did-navigate', onNavigate);
     wv.addEventListener('did-navigate-in-page', onNavigate);
     wv.addEventListener('console-message', onConsoleMessage);
+    wv.addEventListener('dom-ready', onDomReady);
 
     return () => {
       wv.removeEventListener('did-start-loading', onStartLoading);
@@ -107,12 +135,9 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
       wv.removeEventListener('did-navigate', onNavigate);
       wv.removeEventListener('did-navigate-in-page', onNavigate);
       wv.removeEventListener('console-message', onConsoleMessage);
+      wv.removeEventListener('dom-ready', onDomReady);
     };
   }, [serverUrl]);
-
-  useEffect(() => {
-    consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [consoleLogs]);
 
   useEffect(() => {
     const handleFileSaved = () => {
@@ -123,6 +148,26 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
       window.removeEventListener('file-saved', handleFileSaved as EventListener);
     };
   }, []);
+
+  // Navigate to selected HTML file, or root if none selected
+  useEffect(() => {
+    if (!followFile) return;
+    if (!serverUrl || !webviewRef.current || !workspaceRoot) return;
+
+    if (activeFilePath && activeFilePath.toLowerCase().endsWith('.html')) {
+      const normalizedRoot = workspaceRoot.replace(/\\/g, '/');
+      const normalizedFile = activeFilePath.replace(/\\/g, '/');
+      if (normalizedFile.startsWith(normalizedRoot)) {
+        const relative = normalizedFile.slice(normalizedRoot.length).replace(/^\//, '');
+        const targetUrl = serverUrl + '/' + relative;
+        if (targetUrl !== currentUrl) {
+          setCurrentUrl(targetUrl);
+          setInputUrl(targetUrl);
+          (webviewRef.current as any).loadURL(targetUrl);
+        }
+      }
+    }
+  }, [activeFilePath, serverUrl, workspaceRoot, followFile]);
 
   const refresh = useCallback(() => {
     (webviewRef.current as any)?.reload();
@@ -141,10 +186,6 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
       (webviewRef.current as any).loadURL(serverUrl);
     }
   }, [serverUrl]);
-
-  const toggleConsole = useCallback(() => {
-    setConsoleOpen((v) => !v);
-  }, []);
 
   const handleUrlSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -182,10 +223,6 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
     setCurrentUrl(targetUrl);
     (webviewRef.current as any).loadURL(targetUrl);
   }, [inputUrl, serverUrl]);
-
-  const clearConsole = useCallback(() => {
-    setConsoleLogs([]);
-  }, []);
 
   const openInspector = useCallback(() => {
     if (devtoolsOpen) {
@@ -241,13 +278,6 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
     };
   }, [devtoolsOpen]);
 
-  const filteredLogs = consoleFilter === 'all'
-    ? consoleLogs
-    : consoleLogs.filter((l) => l.level === consoleFilter);
-
-  const errorCount = consoleLogs.filter((l) => l.level === 'error').length;
-  const warnCount = consoleLogs.filter((l) => l.level === 'warn').length;
-
   if (!serverUrl) {
     return (
       <div className={`preview-panel ${isFullTab ? 'preview-full-tab' : ''}`}>
@@ -288,12 +318,12 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
         </form>
 
         {!isFullTab && onOpenInTab && (
-          <button className="preview-btn preview-btn-hide-small" onClick={onOpenInTab} title="Open in Editor Tab">
+          <button className="preview-btn preview-btn-hide-small" onClick={() => onOpenInTab!(currentUrl)} title="Open in Editor Tab">
             <ExternalLink size={16} />
           </button>
         )}
-        <button className={`preview-btn ${consoleOpen ? 'active' : ''}`} onClick={toggleConsole} title="Toggle Console">
-          <Terminal size={16} />
+        <button className={`preview-btn ${!followFile ? 'active' : ''}`} onClick={() => setFollowFile((v) => !v)} title={followFile ? 'Lock: preview follows selected file. Click to stop following.' : 'Unlocked: preview is free. Click to follow selected file.'}>
+          {followFile ? <Unlock size={16} /> : <Lock size={16} />}
         </button>
         <button className={`preview-btn preview-btn-hide-small ${devtoolsOpen ? 'active' : ''}`} onClick={openInspector} title="Toggle Inspector">
           <Monitor size={16} />
@@ -325,36 +355,6 @@ export default function PreviewPanel({ workspaceRoot, onOpenInTab, isFullTab, on
           )}
         </PanelGroup>
       </div>
-
-      {consoleOpen && !devtoolsOpen && (
-        <div className="preview-console">
-          <div className="console-header">
-            <div className="console-filters">
-              <button className={`filter-btn ${consoleFilter === 'all' ? 'active' : ''}`} onClick={() => setConsoleFilter('all')}>All</button>
-              <button className={`filter-btn ${consoleFilter === 'error' ? 'active' : ''}`} onClick={() => setConsoleFilter('error')}>
-                <XCircle size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'text-bottom' }}/> Errors {errorCount > 0 && `(${errorCount})`}
-              </button>
-              <button className={`filter-btn ${consoleFilter === 'warn' ? 'active' : ''}`} onClick={() => setConsoleFilter('warn')}>
-                <AlertTriangle size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'text-bottom' }}/> Warn {warnCount > 0 && `(${warnCount})`}
-              </button>
-            </div>
-            <div className="console-actions">
-              <button className="preview-btn" onClick={clearConsole} title="Clear Console">
-                <Ban size={14} />
-              </button>
-            </div>
-          </div>
-          <div className="console-logs">
-            {filteredLogs.map((log) => (
-              <div key={log.id} className={`console-entry ${log.level}`}>
-                <span className="console-msg">{log.message}</span>
-                <span className="console-source">{log.source.split('/').pop()}:{log.line}</span>
-              </div>
-            ))}
-            <div ref={consoleEndRef} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

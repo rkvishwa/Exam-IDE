@@ -28,6 +28,10 @@ export const IPC_CHANNELS = {
   DEVTOOLS_OPEN: 'devtools:open',
   DEVTOOLS_CLOSE: 'devtools:close',
   DEVTOOLS_RESIZE: 'devtools:resize',
+  // Active Window
+  GET_ACTIVE_WINDOW: 'system:getActiveWindow',
+  // Clipboard
+  CLIPBOARD_READ_TEXT: 'clipboard:readText',
 } as const;
 
 export const APP_CONFIG = {

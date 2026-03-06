@@ -122,6 +122,7 @@ export interface ElectronAPI {
   };
   network: {
     onStatusChange: (callback: (status: boolean) => void) => () => void;
+    getStatus: () => Promise<boolean>;
   };
   dialog: {
     showError: (message: string) => void;
@@ -131,5 +132,11 @@ export interface ElectronAPI {
     open: (previewContentsId: number) => Promise<void>;
     close: () => Promise<void>;
     resize: (bounds: { x: number; y: number; width: number; height: number }) => Promise<void>;
+  };
+  system: {
+    getActiveWindow: () => Promise<string | null>;
+  };
+  clipboard: {
+    readText: () => Promise<string>;
   };
 }
