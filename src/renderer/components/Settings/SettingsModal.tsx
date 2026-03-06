@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Download, RefreshCw } from 'lucide-react';
+import { Search, X, Download, RefreshCw, UserPlus, LogOut, Users, Lock, Eye, EyeOff } from 'lucide-react';
 import { getActivityLog, generateActivityLogPDF, clearActivityLog, ActivityEvent } from '../../services/activityLogger';
+import { addTeamMember, getTeamById, changeTeamPassword } from '../../services/appwrite';
+import { cacheCredentials } from '../../services/localStore';
+import { Team } from '../../../shared/types';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -13,6 +16,8 @@ interface SettingsModalProps {
   theme: string;
   onThemeChange: (val: string) => void;
   teamName: string;
+  user: Team | null;
+  onLogout: () => void;
 }
 
 export default function SettingsModal({
@@ -25,10 +30,25 @@ export default function SettingsModal({
   theme,
   onThemeChange,
   teamName,
+  user,
+  onLogout,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('Text Editor');
   const [searchQuery, setSearchQuery] = useState('');
   const [activityLog, setActivityLog] = useState<ActivityEvent[]>([]);
+  const [members, setMembers] = useState<string[]>(user?.studentIds || []);
+  const [newMember, setNewMember] = useState('');
+  const [addMemberError, setAddMemberError] = useState('');
+  const [addingMember, setAddingMember] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -48,6 +68,15 @@ export default function SettingsModal({
     }
   }, [isOpen, activeTab, searchQuery]);
 
+  // Refresh members when opening Account tab
+  useEffect(() => {
+    if (isOpen && activeTab === 'Account' && user?.$id) {
+      getTeamById(user.$id).then((team) => {
+        if (team?.studentIds) setMembers(team.studentIds);
+      }).catch(() => {});
+    }
+  }, [isOpen, activeTab, user]);
+
   if (!isOpen) return null;
 
   const matchesSearch = (text: string) => 
@@ -62,6 +91,51 @@ export default function SettingsModal({
   const showAppearance = !isSearching 
     ? activeTab === 'Appearance' 
     : (matchesSearch('Appearance') || matchesSearch('Color Theme') || matchesSearch('interface theme'));
+
+  const showAccount = !isSearching
+    ? activeTab === 'Account'
+    : (matchesSearch('Account') || matchesSearch('Team') || matchesSearch('Members') || matchesSearch('Sign Out'));
+
+  const showSecurity = !isSearching
+    ? activeTab === 'Security'
+    : (matchesSearch('Security') || matchesSearch('Password') || matchesSearch('Change Password'));
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (!oldPassword.trim()) { setPasswordError('Enter your current password'); return; }
+    if (newPassword.length < 4) { setPasswordError('New password must be at least 4 characters'); return; }
+    if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match'); return; }
+    if (!user?.$id) return;
+    setChangingPassword(true);
+    const result = await changeTeamPassword(user.$id, oldPassword, newPassword);
+    if (result.success) {
+      cacheCredentials(user.teamName, newPassword, user.$id, user.role);
+      setPasswordSuccess('Password changed successfully');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } else {
+      setPasswordError(result.error || 'Failed to change password');
+    }
+    setChangingPassword(false);
+  };
+
+  const handleAddMember = async () => {
+    const trimmed = newMember.trim();
+    if (!trimmed) return;
+    if (!user?.$id) return;
+    setAddingMember(true);
+    setAddMemberError('');
+    const result = await addTeamMember(user.$id, trimmed);
+    if (result.success) {
+      setMembers((prev) => [...prev, trimmed]);
+      setNewMember('');
+    } else {
+      setAddMemberError(result.error || 'Failed to add member');
+    }
+    setAddingMember(false);
+  };
 
   const shortcuts = [
     { action: 'Save File', keys: ['Ctrl', 'S'] },
@@ -153,6 +227,8 @@ export default function SettingsModal({
              <li className={(isSearching ? showAppearance : activeTab === 'Appearance') ? 'active' : ''} onClick={() => setActiveTab('Appearance')}>Appearance</li>
              <li className={(isSearching ? showKeyboardShortcuts : activeTab === 'Keyboard Shortcuts') ? 'active' : ''} onClick={() => setActiveTab('Keyboard Shortcuts')}>Keyboard Shortcuts</li>
              <li className={(isSearching ? showActivityLog : activeTab === 'Activity Log') ? 'active' : ''} onClick={() => setActiveTab('Activity Log')}>Activity Log</li>
+             <li className={(isSearching ? showSecurity : activeTab === 'Security') ? 'active' : ''} onClick={() => setActiveTab('Security')}>Security</li>
+             <li className={(isSearching ? showAccount : activeTab === 'Account') ? 'active' : ''} onClick={() => setActiveTab('Account')}>Account</li>
            </ul>
         </div>
         <div className="vscode-settings-content">
@@ -307,6 +383,146 @@ export default function SettingsModal({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {showSecurity && (
+            <div className="vscode-settings-section">
+              <h2 className="vscode-settings-section-title">Security</h2>
+
+              <div className="security-card">
+                <div className="security-header">
+                  <Lock size={16} />
+                  <span>Change Password</span>
+                </div>
+
+                <div className="security-form">
+                  <div className="security-field">
+                    <label className="vscode-setting-title">Current Password</label>
+                    <div className="security-input-wrap">
+                      <input
+                        type={showOldPassword ? 'text' : 'password'}
+                        className="vscode-search-input security-input"
+                        placeholder="Enter current password"
+                        value={oldPassword}
+                        onChange={(e) => { setOldPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                      />
+                      <button className="security-eye-btn" onClick={() => setShowOldPassword(!showOldPassword)} type="button">
+                        {showOldPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="security-field">
+                    <label className="vscode-setting-title">New Password</label>
+                    <div className="security-input-wrap">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        className="vscode-search-input security-input"
+                        placeholder="Enter new password"
+                        value={newPassword}
+                        onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                      />
+                      <button className="security-eye-btn" onClick={() => setShowNewPassword(!showNewPassword)} type="button">
+                        {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="security-field">
+                    <label className="vscode-setting-title">Confirm New Password</label>
+                    <div className="security-input-wrap">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="vscode-search-input security-input"
+                        placeholder="Confirm new password"
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleChangePassword(); }}
+                      />
+                      <button className="security-eye-btn" onClick={() => setShowConfirmPassword(!showConfirmPassword)} type="button">
+                        {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {passwordError && <div className="account-error">{passwordError}</div>}
+                  {passwordSuccess && <div className="security-success">{passwordSuccess}</div>}
+
+                  <button
+                    className="activity-log-btn primary"
+                    onClick={handleChangePassword}
+                    disabled={changingPassword}
+                  >
+                    <Lock size={14} />
+                    {changingPassword ? 'Changing...' : 'Change Password'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showAccount && (
+            <div className="vscode-settings-section">
+              <h2 className="vscode-settings-section-title">Account</h2>
+
+              <div className="account-card">
+                <div className="account-team-name">
+                  <Users size={16} />
+                  <span>{user?.teamName || teamName}</span>
+                </div>
+
+                <div className="account-members-section">
+                  <div className="account-members-header">
+                    <span className="vscode-setting-title">Team Members</span>
+                    <span className="account-members-count">{members.length} / 5</span>
+                  </div>
+
+                  {members.length > 0 ? (
+                    <div className="account-members-list">
+                      {members.map((member, idx) => (
+                        <div className="account-member-row" key={idx}>
+                          <span className="account-member-index">{idx + 1}.</span>
+                          <span className="account-member-id">{member}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="vscode-setting-description">No members added yet.</div>
+                  )}
+
+                  {members.length < 5 && (
+                    <div className="account-add-member">
+                      <input
+                        type="text"
+                        className="vscode-search-input account-member-input"
+                        placeholder="Enter student ID"
+                        value={newMember}
+                        onChange={(e) => { setNewMember(e.target.value); setAddMemberError(''); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddMember(); }}
+                      />
+                      <button
+                        className="activity-log-btn primary"
+                        onClick={handleAddMember}
+                        disabled={addingMember || !newMember.trim()}
+                      >
+                        <UserPlus size={14} />
+                        {addingMember ? 'Adding...' : 'Add'}
+                      </button>
+                    </div>
+                  )}
+                  {addMemberError && (
+                    <div className="account-error">{addMemberError}</div>
+                  )}
+                </div>
+
+                <div className="account-signout">
+                  <button className="activity-log-btn danger" onClick={onLogout}>
+                    <LogOut size={14} />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

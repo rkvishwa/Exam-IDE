@@ -11,6 +11,7 @@ export interface Team {
   teamName: string;
   password?: string;
   role: 'team' | 'admin';
+  studentIds?: string[];
   createdAt?: string;
 }
 

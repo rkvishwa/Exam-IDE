@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Team } from '../../shared/types';
-import { validateTeamCredentials, upsertSession } from '../services/appwrite';
+import { validateTeamCredentials, upsertSession, registerTeam } from '../services/appwrite';
 import { cacheCredentials, validateCachedAuth, clearCache } from '../services/localStore';
 
 interface AuthContextValue {
   user: Team | null;
   loading: boolean;
   login: (teamName: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (teamName: string, password: string, studentIds: string[]) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -30,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (teamName: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true);
     try {
       // Try online auth first
       const team = await validateTeamCredentials(teamName, password);
@@ -39,23 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('devwatch_session', JSON.stringify(team));
         cacheCredentials(teamName, password, team.$id!, team.role);
         await upsertSession(team.$id!, teamName, 'online');
-        setLoading(false);
         return { success: true };
       }
-      // Try offline cache
-      const cached = validateCachedAuth(teamName, password);
-      if (cached) {
-        const offlineUser: Team = {
-          $id: cached.teamId,
-          teamName: cached.teamName,
-          role: cached.role,
-        };
-        setUser(offlineUser);
-        localStorage.setItem('devwatch_session', JSON.stringify(offlineUser));
-        setLoading(false);
-        return { success: true };
-      }
-      setLoading(false);
+      // Online auth returned null = invalid credentials (server reachable)
       return { success: false, error: 'Invalid credentials' };
     } catch (err) {
       // Network error â€” try cached login
@@ -68,10 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         setUser(offlineUser);
         localStorage.setItem('devwatch_session', JSON.stringify(offlineUser));
-        setLoading(false);
         return { success: true };
       }
-      setLoading(false);
       return { success: false, error: 'Login failed. Check your connection.' };
     }
   };
@@ -84,8 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('devwatch_session');
   };
 
+  const register = async (
+    teamName: string,
+    password: string,
+    studentIds: string[]
+  ): Promise<{ success: boolean; error?: string }> => {
+    return registerTeam(teamName, password, studentIds);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

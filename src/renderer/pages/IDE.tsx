@@ -503,6 +503,8 @@ export default function IDE() {
         theme={theme}
         onThemeChange={setTheme}
         teamName={user?.teamName || ''}
+        user={user}
+        onLogout={logout}
       />
     </div>
   );

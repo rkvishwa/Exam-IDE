@@ -4,6 +4,8 @@ import { getAllSessions, subscribeToActivityLogs, subscribeToSessions, getAllAct
 import { Session, ActivityLog, ActivitySyncData, Team } from '../../shared/types';
 import { APP_CONFIG } from '../../shared/constants';
 import ReportModal from '../components/AdminPanel/ReportModal';
+import { Shield, Clock, Activity, LayoutGrid, List, Search, LogOut, RefreshCw, BarChart2, ShieldAlert, Monitor, Users, Zap, CheckCircle2, XCircle, Settings } from 'lucide-react';
+import AdminSettingsModal from '../components/AdminPanel/AdminSettingsModal';
 import './AdminDashboard.css';
 
 interface TeamStatus extends Session {
@@ -30,6 +32,7 @@ export default function AdminDashboard() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'online' | 'offline'>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [showSettings, setShowSettings] = useState(false);
   const unsubRefs = useRef<Array<() => void>>([]);
   const adminIdsRef = useRef<Set<string>>(new Set());
 
@@ -169,12 +172,31 @@ export default function AdminDashboard() {
       lastSeen: string;
       onlineSec: number;
       offlineSec: number;
+      appBlurCount: number;
+      extPasteCount: number;
+      onlineCount: number;
+      clipboardCopyCount: number;
+      totalEvents: number;
     }>();
 
     for (const team of teams) {
       const sync = team.syncData;
       if (!sync) continue;
       const apps = Object.keys(sync.apps);
+
+      // Count activity events
+      let appBlurCount = 0;
+      let extPasteCount = 0;
+      let onlineCount = 0;
+      let clipboardCopyCount = 0;
+      const events = sync.activityEvents || [];
+      for (const e of events) {
+        if (e.type === 'app_blur') appBlurCount++;
+        else if (e.type === 'clipboard_paste_external') extPasteCount++;
+        else if (e.type === 'status_online') onlineCount++;
+        else if (e.type === 'clipboard_copy') clipboardCopyCount++;
+      }
+
       metrics.set(team.teamId, {
         totalLogs: sync.heartbeatCount,
         uniqueApps: new Set(apps),
@@ -185,6 +207,11 @@ export default function AdminDashboard() {
         lastSeen: sync.lastStatusAt,
         onlineSec: sync.totalOnlineSec,
         offlineSec: sync.totalOfflineSec,
+        appBlurCount,
+        extPasteCount,
+        onlineCount,
+        clipboardCopyCount,
+        totalEvents: events.length,
       });
     }
     return metrics;
@@ -192,8 +219,7 @@ export default function AdminDashboard() {
 
   // Global activity insights
   const globalInsights = useMemo(() => {
-    const uniqueApps = new Set<string>();
-    const appCounts = new Map<string, number>();
+    const switchedAppCounts = new Map<string, number>();
     let totalOnlineSec = 0;
     let totalOfflineSec = 0;
     let totalHeartbeats = 0;
@@ -204,13 +230,21 @@ export default function AdminDashboard() {
       totalHeartbeats += sync.heartbeatCount;
       totalOnlineSec += sync.totalOnlineSec;
       totalOfflineSec += sync.totalOfflineSec;
-      for (const [app, sec] of Object.entries(sync.apps)) {
-        uniqueApps.add(app);
-        appCounts.set(app, (appCounts.get(app) || 0) + Math.round(sec));
+      // Count switched-to apps from app_blur events
+      for (const ev of (sync.activityEvents || [])) {
+        if (ev.type === 'app_blur' && ev.details) {
+          const m = ev.details.match(/^(?:Switched to|Active app):\s*(.+)$/i);
+          if (m) {
+            const raw = m[1].trim();
+            const parts = raw.split(' - ');
+            const appName = parts[parts.length - 1].trim() || raw;
+            switchedAppCounts.set(appName, (switchedAppCounts.get(appName) || 0) + 1);
+          }
+        }
       }
     }
 
-    const topApps = Array.from(appCounts.entries())
+    const topApps = Array.from(switchedAppCounts.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
@@ -232,7 +266,7 @@ export default function AdminDashboard() {
 
     return {
       totalLogs: totalHeartbeats,
-      uniqueApps: uniqueApps.size,
+      uniqueApps: switchedAppCounts.size,
       topApps,
       totalOnlineSec,
       totalOfflineSec,
@@ -290,357 +324,298 @@ export default function AdminDashboard() {
     return sortDir === 'asc' ? '\u2191' : '\u2193';
   };
 
+  const handleOpenReport = (team: TeamStatus) => {
+    setSelectedTeam(team);
+    setShowReport(true);
+  };
+
   return (
     <div className="admin-container">
-      {/* Header */}
+      {/* Heavy Glassmorphic Vercel Header */}
       <div className="admin-header">
         <div className="admin-header-left">
           <span className="admin-logo">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <Shield className="logo-icon" size={18} />
             DevWatch Admin
           </span>
           <span className="admin-live-badge">
             <span className="live-dot" />
-            Live
+            Live System
           </span>
         </div>
         <div className="admin-header-right">
           {lastUpdated && (
-            <span className="last-updated">Updated {formatTime(lastUpdated.toISOString())}</span>
+            <span className="last-updated">
+              <Clock className="meta-icon" size={12} />
+              {formatTime(lastUpdated.toISOString())}
+            </span>
           )}
-          <button className="admin-btn icon-btn" onClick={loadSessions} title="Refresh">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <button className="admin-btn icon-btn" onClick={() => setShowSettings(true)} title="Admin Settings">
+            <Settings size={14} />
           </button>
-          <span className="admin-user">{user?.teamName}</span>
-          <button className="admin-btn danger" onClick={logout}>Sign Out</button>
+          <button className="admin-btn icon-btn" onClick={loadSessions} title="Refresh Data">
+            <RefreshCw size={14} className={loading ? 'anim-spin' : ''} />
+          </button>
+          <div className="admin-user-pill">
+            <ShieldAlert size={14} className="user-icon" />
+            {user?.teamName || 'Admin'}
+          </div>
+          <button className="admin-btn danger" onClick={logout}>
+            <LogOut size={14} />
+            Exit
+          </button>
         </div>
       </div>
 
       <div className="admin-content">
-        {/* Overview Metrics */}
+        {/* Top Analytics Row */}
         <div className="admin-metrics-section">
           <div className="metrics-row">
-            <div className="stat-card stat-total">
-              <div className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <div className="stat-icon neutral"><Users size={16} /></div>
+                <span className="stat-label">Total Teams Navigating</span>
               </div>
               <div className="stat-body">
                 <span className="stat-value">{teams.length}</span>
-                <span className="stat-label">Total Teams</span>
               </div>
+              <div className="stat-bar"><div className="stat-bar-fill neutral" style={{ width: '100%', background: 'rgba(255,255,255,0.1)' }} /></div>
             </div>
-            <div className="stat-card stat-online">
-              <div className="stat-icon online">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <div className="stat-icon online"><Zap size={16} /></div>
+                <span className="stat-label">Currently Online</span>
               </div>
               <div className="stat-body">
                 <span className="stat-value online">{onlineCount}</span>
-                <span className="stat-label">Online</span>
               </div>
-              <div className="stat-bar">
-                <div className="stat-bar-fill online" style={{ width: `${onlinePercent}%` }} />
-              </div>
+              <div className="stat-bar"><div className="stat-bar-fill online" style={{ width: `${onlinePercent}%` }} /></div>
             </div>
-            <div className="stat-card stat-offline">
-              <div className="stat-icon offline">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <div className="stat-icon offline"><XCircle size={16} /></div>
+                <span className="stat-label">Offline / Disconnected</span>
               </div>
               <div className="stat-body">
                 <span className="stat-value offline">{offlineCount}</span>
-                <span className="stat-label">Offline</span>
               </div>
-              <div className="stat-bar">
-                <div className="stat-bar-fill offline" style={{ width: `${teams.length > 0 ? Math.round((offlineCount / teams.length) * 100) : 0}%` }} />
-              </div>
+              <div className="stat-bar"><div className="stat-bar-fill offline" style={{ width: `${teams.length ? (offlineCount/teams.length)*100 : 0}%` }} /></div>
             </div>
-            <div className="stat-card stat-active">
-              <div className="stat-icon accent">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <div className="stat-icon accent"><Activity size={16} /></div>
+                <span className="stat-label">Total Events Caught</span>
               </div>
               <div className="stat-body">
-                <span className="stat-value accent">{globalInsights.recentlyActive}</span>
-                <span className="stat-label">Active (5 min)</span>
+                <span className="stat-value accent">{globalInsights.totalLogs}</span>
               </div>
-            </div>
-            <div className="stat-card stat-session">
-              <div className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <div className="stat-body">
-                <span className="stat-value">{formatDuration(globalInsights.avgSessionMs)}</span>
-                <span className="stat-label">Avg Session</span>
-              </div>
-            </div>
-            <div className="stat-card stat-logs">
-              <div className="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              </div>
-              <div className="stat-body">
-                <span className="stat-value">{globalInsights.totalLogs}</span>
-                <span className="stat-label">Activity Logs</span>
-              </div>
+              <div className="stat-bar"><div className="stat-bar-fill" style={{ width: '100%', background: 'var(--accent)' }} /></div>
             </div>
           </div>
         </div>
 
-        {/* Insights Row */}
+        {/* Global Action Insights */}
         <div className="admin-insights-row">
-          {/* Online/Offline ratio ring */}
-          <div className="insight-card">
-            <h3 className="insight-title">Team Status Distribution</h3>
-            <div className="donut-chart-container">
-              <svg viewBox="0 0 36 36" className="donut-chart">
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--bg-tertiary)" strokeWidth="3" />
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--online)" strokeWidth="3"
-                  strokeDasharray={`${onlinePercent} ${100 - onlinePercent}`}
-                  strokeDashoffset="25" strokeLinecap="round" />
-              </svg>
-              <div className="donut-center">
-                <span className="donut-value">{onlinePercent}%</span>
-                <span className="donut-label">Online</span>
+           <div className="insight-card">
+              <div className="insight-card-header">
+                <div className="insight-title"><Monitor size={16} /> Top Distracting Apps Detected</div>
+                <span className="insight-stat-pill">Platform Wide</span>
               </div>
-            </div>
-            <div className="insight-legend">
-              <div className="legend-item"><span className="legend-dot online" /> Online: {onlineCount}</div>
-              <div className="legend-item"><span className="legend-dot offline" /> Offline: {offlineCount}</div>
-            </div>
-          </div>
-
-          {/* Top Apps */}
-          <div className="insight-card">
-            <h3 className="insight-title">Top Applications</h3>
-            {globalInsights.topApps.length === 0 ? (
-              <div className="insight-empty">No app data yet</div>
-            ) : (
-              <div className="top-apps-list">
-                {globalInsights.topApps.map(([app, count]) => {
-                  const maxCount = globalInsights.topApps[0][1];
-                  const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                  const isIDE = app === 'DevWatch IDE';
-                  return (
-                    <div key={app} className="top-app-item">
-                      <div className="top-app-header">
-                        <span className={`top-app-name ${isIDE ? '' : 'flagged'}`}>{app}</span>
-                        <span className="top-app-count">{formatDuration(count * 1000)}</span>
+              {globalInsights.topApps.length > 0 ? (
+                <div className="top-apps-list">
+                  {globalInsights.topApps.map(([app, count], idx) => {
+                    const isFlagged = app.toLowerCase().includes('discord') || app.toLowerCase().includes('youtube') || app.toLowerCase().includes('whatsapp');
+                    const maxCount = globalInsights.topApps[0][1];
+                    const pct = Math.round((count / maxCount) * 100);
+                    return (
+                      <div key={idx} className="top-app-item">
+                        <div className="top-app-header">
+                          <span className={`top-app-name ${isFlagged ? 'flagged' : ''}`}>{app}</span>
+                          <span className="top-app-count">{count} switches</span>
+                        </div>
+                        <div className="top-app-bar">
+                          <div className={`top-app-bar-fill ${isFlagged ? 'non-ide' : ''}`} style={{ width: `${pct}%`, background: isFlagged ? '#f59e0b' : 'rgba(255,255,255,0.2)' }} />
+                        </div>
                       </div>
-                      <div className="top-app-bar">
-                        <div className={`top-app-bar-fill ${isIDE ? 'ide' : 'non-ide'}`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="insight-footer">
-              <span className="insight-stat">{globalInsights.uniqueApps} unique apps detected</span>
-            </div>
-          </div>
-
-          {/* Quick Team Health */}
-          <div className="insight-card">
-            <h3 className="insight-title">Team Health Overview</h3>
-            <div className="health-grid">
-              {teams.slice(0, 8).map((team) => {
-                const m = teamMetrics.get(team.teamId);
-                const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
-                const healthColor = uptime >= 80 ? 'var(--online)' : uptime >= 50 ? 'var(--warning)' : 'var(--offline)';
-                return (
-                  <div key={team.teamId} className="health-item" title={`${team.teamName}: ${uptime}% uptime`}>
-                    <div className="health-avatar" style={{ borderColor: healthColor }}>
-                      {team.teamName.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="health-name">{team.teamName}</span>
-                    <span className="health-pct" style={{ color: healthColor }}>{uptime}%</span>
-                  </div>
-                );
-              })}
-            </div>
-            {teams.length > 8 && (
-              <div className="insight-footer">
-                <span className="insight-stat">+{teams.length - 8} more teams</span>
-              </div>
-            )}
-          </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="insight-empty">
+                  <span style={{opacity: 0.5}}>No off-IDE app switches detected yet</span>
+                </div>
+              )}
+           </div>
         </div>
 
-        {/* Controls Bar */}
+        {/* Sticky Toolbar */}
         <div className="admin-controls-bar">
           <div className="controls-left">
-            <input
-              type="text"
-              placeholder="Search teams..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="admin-search-input"
-            />
+            <div className="search-wrapper">
+              <Search className="search-icon" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search candidates..." 
+                className="admin-search-input"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
             <div className="filter-group">
-              {(['all', 'online', 'offline'] as const).map((f) => (
-                <button
-                  key={f}
-                  className={`filter-btn ${statusFilter === f ? 'active' : ''} ${f}`}
-                  onClick={() => setStatusFilter(f)}
-                >
-                  {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-                  {f === 'all' ? ` (${teams.length})` : f === 'online' ? ` (${onlineCount})` : ` (${offlineCount})`}
-                </button>
-              ))}
+              <button className={`filter-btn ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>
+                All <span className="filter-badge">{teams.length}</span>
+              </button>
+              <button className={`filter-btn ${statusFilter === 'online' ? 'active' : ''}`} onClick={() => setStatusFilter('online')}>
+                Online <span className="filter-badge">{onlineCount}</span>
+              </button>
+              <button className={`filter-btn ${statusFilter === 'offline' ? 'active' : ''}`} onClick={() => setStatusFilter('offline')}>
+                Offline <span className="filter-badge">{offlineCount}</span>
+              </button>
             </div>
           </div>
           <div className="controls-right">
-            <button
-              className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
-              onClick={() => setViewMode('table')}
-              title="Table view"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-            </button>
-            <button
-              className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setViewMode('grid')}
-              title="Card view"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            </button>
+             <div className="view-toggle">
+                <button className={`view-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')} title="List View"><List size={16} /></button>
+                <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid View"><LayoutGrid size={16} /></button>
+             </div>
           </div>
         </div>
 
-        {/* Teams Content */}
-        <div className="admin-table-container">
+        {/* Dynamic Display Area */}
+        <div className="admin-content-area">
           {loading ? (
-            <div className="admin-loading">
-              <div className="loading-spinner" />
-              <span>Loading teams...</span>
+            <div className="state-container">
+              <RefreshCw className="anim-spin spinner-glow" size={32} />
+              <span>Syncing telemetry stream...</span>
             </div>
           ) : filteredTeams.length === 0 ? (
-            <div className="admin-empty">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>No teams match your filters</span>
+            <div className="state-container">
+              <ShieldAlert size={32} style={{opacity: 0.3}} />
+              <span>No candidates match parameters.</span>
             </div>
           ) : viewMode === 'table' ? (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th className="th-sortable" onClick={() => handleSort('status')}>Status {sortIcon('status')}</th>
-                  <th className="th-sortable" onClick={() => handleSort('teamName')}>Team {sortIcon('teamName')}</th>
-                  <th>Current Window</th>
-                  <th>Current File</th>
-                  <th>Apps Used</th>
-                  <th>Uptime</th>
-                  <th className="th-sortable" onClick={() => handleSort('lastSeen')}>Last Seen {sortIcon('lastSeen')}</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTeams.map((team) => {
-                  const m = teamMetrics.get(team.teamId);
-                  const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
-                  return (
-                    <tr key={team.teamId} className={`team-row ${team.status === 'online' ? 'row-online' : 'row-offline'}`}>
-                      <td>
-                        <span className={`status-badge ${team.status}`}>
-                          <span className={`status-dot ${team.status}`} />
-                          {team.status}
-                        </span>
-                      </td>
-                      <td className="td-name">{team.teamName}</td>
-                      <td className="td-window">{team.currentWindow || '\u2014'}</td>
-                      <td className="td-file">
-                        {team.currentFile ? (
-                          <code className="file-path">{team.currentFile.split(/[/\\]/).pop()}</code>
-                        ) : '\u2014'}
-                      </td>
-                      <td className="td-apps">
-                        <span className="apps-count">{m?.uniqueApps.size ?? 0}</span>
-                      </td>
-                      <td>
-                        <div className="uptime-cell">
-                          <div className="mini-bar">
-                            <div
-                              className={`mini-bar-fill ${uptime >= 80 ? 'good' : uptime >= 50 ? 'warn' : 'bad'}`}
-                              style={{ width: `${uptime}%` }}
-                            />
+            /* Table View */
+            <div className="glass-panel">
+              <table className="modern-table">
+                <thead>
+                  <tr>
+                    <th className="th-sortable" onClick={() => handleSort('teamName')}>
+                      <div className="th-content">Candidate {sortKey === 'teamName' && (sortDir === 'asc' ? '↑' : '↓')}</div>
+                    </th>
+                    <th className="th-sortable" onClick={() => handleSort('status')}>
+                      <div className="th-content">Status {sortKey === 'status' && (sortDir === 'asc' ? '↑' : '↓')}</div>
+                    </th>
+                    <th>Engagement Metrics</th>
+                    <th className="th-sortable" onClick={() => handleSort('lastSeen')}>
+                      <div className="th-content">Ping {sortKey === 'lastSeen' && (sortDir === 'asc' ? '↑' : '↓')}</div>
+                    </th>
+                    <th className="th-actions">Generate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTeams.map((team) => {
+                    const metrics = teamMetrics.get(team.teamId);
+                    const riskLevel = metrics && metrics.appBlurCount > 10 ? 'high' : (metrics && metrics.appBlurCount > 3 ? 'medium' : 'low');
+                    
+                    return (
+                      <tr key={team.teamId} className={`team-row ${team.status}`}>
+                        <td>
+                          <div className="team-identity">
+                            <div className="team-avatar">{team.teamName.charAt(0).toUpperCase()}</div>
+                            <div className="team-info">
+                              <span className="team-name">{team.teamName}</span>
+                              <span className="team-window" title={team.currentWindow || 'Idle'}>
+                                {team.currentWindow || 'Awaiting window context'}
+                              </span>
+                            </div>
                           </div>
-                          <span className="uptime-pct">{uptime}%</span>
-                        </div>
-                      </td>
-                      <td className="td-time">
-                        {timeSince(team.lastSeen)}
-                        {team.syncData && team.syncData.heartbeatCount > 0 && (
-                          <span className="sync-badge" title={`${team.syncData.heartbeatCount} heartbeats\nOnline: ${formatDuration(team.syncData.totalOnlineSec * 1000)}\nOffline: ${formatDuration(team.syncData.totalOfflineSec * 1000)}\nFiles: ${team.syncData.files.length}\nApps: ${Object.keys(team.syncData.apps).length}`}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            synced
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <button
-                          className="admin-btn small accent"
-                          onClick={() => { setSelectedTeam(team); setShowReport(true); }}
-                        >
-                          Report
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td>
+                          <div className={`status-indicator ${team.status}`}>
+                            <span className="pulse-disc" />
+                            {team.status === 'online' ? 'Active' : 'Disconnected'}
+                          </div>
+                        </td>
+                        <td>
+                          {metrics ? (
+                            <div className="metrics-cluster">
+                              <span className={`metric-chip ${metrics.appBlurCount > 0 ? 'warn' : 'clean'}`} title="App Switches">
+                                <Monitor size={12} /> {metrics.appBlurCount}
+                              </span>
+                              <span className="metric-chip neutral" title="Total Events">
+                                <Activity size={12} /> {metrics.totalEvents}
+                              </span>
+                              <span className={`risk-badge ${riskLevel}`}>
+                                {riskLevel === 'high' ? 'High Risk' : (riskLevel === 'medium' ? 'Review' : 'Secure')}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="metric-chip clean">Assimilating...</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="time-display">
+                            <Clock size={12} />
+                            {formatTime(team.lastSeen)}
+                          </div>
+                        </td>
+                        <td className="td-actions">
+                          <button className="action-btn" onClick={() => handleOpenReport(team)}>
+                            <BarChart2 size={13} />
+                            Report
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div className="team-grid">
-              {filteredTeams.map((team) => {
-                const m = teamMetrics.get(team.teamId);
-                const uptime = m ? Math.round((m.onlineSec / Math.max(m.onlineSec + m.offlineSec, 1)) * 100) : 0;
+            /* Grid View */
+            <div className="modern-grid">
+              {filteredTeams.map(team => {
+                const metrics = teamMetrics.get(team.teamId);
                 return (
-                  <div key={team.teamId} className={`team-card ${team.status}`}>
-                    <div className="team-card-header">
-                      <div className="team-card-avatar" style={{ borderColor: team.status === 'online' ? 'var(--online)' : 'var(--offline)' }}>
-                        {team.teamName.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="team-card-info">
-                        <span className="team-card-name">{team.teamName}</span>
-                        <span className={`status-badge ${team.status}`}>
-                          <span className={`status-dot ${team.status}`} />
+                  <div key={team.teamId} className={`grid-card ${team.status}`}>
+                    <div className="grid-card-glow" />
+                    <div className="gc-header">
+                      <div className="gc-avatar">{team.teamName.charAt(0).toUpperCase()}</div>
+                      <div className="gc-title">
+                        <h4>{team.teamName}</h4>
+                        <div className={`status-sm ${team.status}`}>
+                          <span className="dot" />
                           {team.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="team-card-metrics">
-                      <div className="team-card-metric">
-                        <span className="metric-label">Uptime</span>
-                        <div className="mini-bar">
-                          <div className={`mini-bar-fill ${uptime >= 80 ? 'good' : uptime >= 50 ? 'warn' : 'bad'}`} style={{ width: `${uptime}%` }} />
                         </div>
-                        <span className="metric-value">{uptime}%</span>
-                      </div>
-                      <div className="team-card-metric">
-                        <span className="metric-label">Apps</span>
-                        <span className="metric-value">{m?.uniqueApps.size ?? 0}</span>
-                      </div>
-                      <div className="team-card-metric">
-                        <span className="metric-label">Activity</span>
-                        <span className="metric-value">{m?.totalLogs ?? 0} logs</span>
                       </div>
                     </div>
-                    <div className="team-card-detail">
-                      <span className="team-card-window">{team.currentWindow || 'No window'}</span>
-                      <span className="team-card-time">
-                        {timeSince(team.lastSeen)}
-                        {team.syncData && team.syncData.heartbeatCount > 0 && (
-                          <span className="sync-badge" title={`${team.syncData.heartbeatCount} heartbeats\nOnline: ${formatDuration(team.syncData.totalOnlineSec * 1000)}\nOffline: ${formatDuration(team.syncData.totalOfflineSec * 1000)}`}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            synced
-                          </span>
-                        )}
-                      </span>
+                    
+                    <div className="gc-body">
+                      <div className="gc-stat-row">
+                        <span className="gc-label">Active Window</span>
+                        <span className="gc-val truncate" title={team.currentWindow || 'N/A'}>{team.currentWindow || 'N/A'}</span>
+                      </div>
+                      <div className="gc-stat-row">
+                        <span className="gc-label">Active File</span>
+                        <span className="gc-val truncate" title={team.currentFile || 'N/A'}>{team.currentFile || 'N/A'}</span>
+                      </div>
+                      {metrics && (
+                         <div className="gc-stat-row mt-4">
+                           <span className="gc-label">Away / Focus Loss</span>
+                           <span className={`gc-val ${metrics.appBlurCount > 3 ? 'warn' : ''}`}>{metrics.appBlurCount} events</span>
+                         </div>
+                      )}
                     </div>
-                    <button
-                      className="admin-btn small accent team-card-btn"
-                      onClick={() => { setSelectedTeam(team); setShowReport(true); }}
-                    >
-                      View Report
-                    </button>
+                    
+                    <div className="gc-footer">
+                      <span className="gc-time"><Clock size={12}/> {formatTime(team.lastSeen)}</span>
+                      <button className="gc-btn" onClick={() => handleOpenReport(team)}>Report</button>
+                    </div>
                   </div>
-                );
+                )
               })}
             </div>
           )}
@@ -649,10 +624,22 @@ export default function AdminDashboard() {
 
       {showReport && selectedTeam && (
         <ReportModal
-          team={selectedTeam as unknown as Team & { teamId: string }}
+          team={selectedTeam as unknown as (Team & { teamId: string })}
           onClose={() => setShowReport(false)}
         />
       )}
+
+      <AdminSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        user={user}
+        onLogout={logout}
+        onTeamNameUpdated={(newName) => {
+          const updated = { ...user!, teamName: newName };
+          localStorage.setItem('devwatch_session', JSON.stringify(updated));
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

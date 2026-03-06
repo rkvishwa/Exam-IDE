@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Team } from '../../shared/types';
-import { upsertActivityLog, updateSessionLastSeen, mergeOfflineSyncData, OfflineSyncSummary } from '../services/appwrite';
+import { upsertActivityLog, updateSessionLastSeen, mergeOfflineSyncData, OfflineSyncSummary, subscribeToActivityLogDeletes } from '../services/appwrite';
 import { enqueueLog, getQueue, clearQueue, QueuedLog } from '../services/localStore';
-import { getActivityLog } from '../services/activityLogger';
+import { getActivityLog, clearActivityLog } from '../services/activityLogger';
 import { HeartbeatPayload } from '../../shared/types';
 
 export function useMonitoring(user: Team | null, isOnline: boolean, currentFile: string) {
@@ -68,6 +68,15 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
         window.electronAPI.monitoring.stop();
       }
     };
+  }, [user]);
+
+  // Subscribe to activity log deletes (admin flush) and clear local logs
+  useEffect(() => {
+    if (!user?.$id) return;
+    const unsub = subscribeToActivityLogDeletes(() => {
+      clearActivityLog();
+    });
+    return unsub;
   }, [user]);
 
   // Flush offline queue on reconnect — merge into single activity log row

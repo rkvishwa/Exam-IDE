@@ -433,3 +433,219 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* Account Section */
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.account-team-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.account-members-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-members-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-members-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.account-members-list {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.account-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.account-member-row:last-child {
+  border-bottom: none;
+}
+
+.account-member-index {
+  color: var(--text-muted);
+  min-width: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-member-id {
+  color: var(--text-primary);
+}
+
+.account-add-member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-member-input {
+  flex: 1;
+  max-width: 300px;
+  padding-left: 10px !important;
+}
+
+.account-error {
+  font-size: 12px;
+  color: #f44747;
+}
+
+.account-signout {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.account-success {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4caf50;
+}
+
+/* Admin Password Form */
+.admin-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.admin-password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-password-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.admin-password-input {
+  padding-left: 10px !important;
+  padding-right: 32px !important;
+  width: 100%;
+}
+
+.admin-password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.admin-password-eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.admin-password-eye:hover {
+  color: var(--text-primary);
+}
+
+/* Security Section */
+.security-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.security-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.security-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 380px;
+}
+
+.security-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.security-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.security-input {
+  width: 100%;
+  padding-left: 10px !important;
+  padding-right: 34px !important;
+}
+
+.security-eye-btn {
+  position: absolute;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 3px;
+}
+
+.security-eye-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.security-success {
+  font-size: 12px;
+  color: #4caf50;
+}
