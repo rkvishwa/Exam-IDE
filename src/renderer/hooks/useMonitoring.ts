@@ -28,10 +28,19 @@ export function useMonitoring(user: Team | null, isOnline: boolean, currentFile:
 
     if (eventsAPI) {
       eventsAPI.onHeartbeat(async (payload: HeartbeatPayload) => {
-        // Attach all local activity events from localStorage
-        const localEvents = getActivityLog();
-        if (localEvents.length > 0) {
-          payload.activityEvents = localEvents;
+        // Attach local activity events from localStorage
+        // Events are stored compactly to fit within Appwrite's windowTitle field
+        try {
+          const localEvents = getActivityLog();
+          if (localEvents.length > 0) {
+            payload.activityEvents = localEvents.map(e => ({
+              type: e.type,
+              timestamp: e.timestamp,
+              ...(e.details ? { details: e.details.substring(0, 80) } : {}),
+            }));
+          }
+        } catch (err) {
+          console.warn('Failed to attach activity events to heartbeat:', err);
         }
         // Upsert single activity log row + update session
         const logResult = upsertActivityLog(payload).catch(() => 'failed');
