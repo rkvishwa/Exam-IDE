@@ -484,6 +484,7 @@ export default function EditorPanel({
                 // When collaboration is active, don't pass value prop - let y-monaco control content
                 // This prevents cursor jumping when multiple users edit the same line
                 {...(!collaborationActive && { value: tab.content })}
+                defaultValue={tab.content}
                 theme={theme === "light" ? "vs-light" : "vs-dark"}
                 options={getEditorOptions(wordWrap)}
                 onMount={isActive ? handleEditorMount : undefined}

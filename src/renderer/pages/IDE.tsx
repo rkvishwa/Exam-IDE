@@ -318,7 +318,7 @@ function IDEContent() {
               : entry.name;
             const fullPath = `${dirPath}/${entry.name}`;
 
-            if (entry.isDirectory) {
+            if (entry.type === "directory") {
               files.push({
                 relativePath: entryRelativePath,
                 content: "",
