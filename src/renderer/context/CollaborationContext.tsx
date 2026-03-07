@@ -49,6 +49,7 @@ interface CollaborationContextValue {
     workspaceRoot?: string,
   ) => void;
   unbindEditor: () => void;
+  getCurrentEditorContent: () => string | null;
   ydoc: Y.Doc | null;
   provider: WebsocketProvider | null;
   // Shared file methods
@@ -115,6 +116,7 @@ export function CollaborationProvider({
   const providerRef = useRef<WebsocketProvider | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const currentFileRef = useRef<string | null>(null);
+  const currentEditorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const userColorRef = useRef<string>(generateUserColor());
 
@@ -199,6 +201,7 @@ export function CollaborationProvider({
     }
 
     currentFileRef.current = null;
+    currentEditorRef.current = null;
   }, []);
 
   const initializeYjs = useCallback(
@@ -550,6 +553,7 @@ export function CollaborationProvider({
 
       bindingRef.current = binding;
       currentFileRef.current = filePath;
+      currentEditorRef.current = monacoEditor;
 
       console.log(`Bound editor to collaborative document: ${docName}`);
     },
@@ -562,6 +566,14 @@ export function CollaborationProvider({
       bindingRef.current = null;
     }
     currentFileRef.current = null;
+    currentEditorRef.current = null;
+  }, []);
+
+  // Get current editor content (for saving during collaboration)
+  const getCurrentEditorContent = useCallback((): string | null => {
+    if (!currentEditorRef.current) return null;
+    const model = currentEditorRef.current.getModel();
+    return model ? model.getValue() : null;
   }, []);
 
   // Share a file with all connected users
@@ -706,6 +718,7 @@ export function CollaborationProvider({
     stopSession,
     bindEditor,
     unbindEditor,
+    getCurrentEditorContent,
     ydoc: ydocRef.current,
     provider: providerRef.current,
     // Shared file methods

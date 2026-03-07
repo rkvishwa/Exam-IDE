@@ -39,6 +39,7 @@ export default function CollaborationPanel({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"join" | "host">("join");
 
   // Load initial data
   useEffect(() => {
@@ -151,99 +152,111 @@ export default function CollaborationPanel({
 
       {!isActive ? (
         <div className="collaboration-setup">
-          {/* User Name Input */}
-          <div className="input-group">
-            <label>
-              <User size={14} />
-              Your Name
-            </label>
-            <input
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-            />
-          </div>
-
-          {/* Network Info */}
-          <div className="network-info">
-            <div className="info-row">
-              <Globe size={14} />
-              <span>Your IP: </span>
-              <code>{localIp || "Loading..."}</code>
-              <button
-                className="copy-btn"
-                onClick={copyIpToClipboard}
-                title="Copy IP"
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
-            </div>
-            {networkInterfaces.length > 1 && (
-              <div className="network-list">
-                {networkInterfaces.map((iface, idx) => (
-                  <div key={idx} className="network-item">
-                    <span className="network-name">{iface.name}:</span>
-                    <code>{iface.ip}</code>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Host Mode */}
-          <div className="mode-section">
-            <h4>
-              <Wifi size={14} />
-              Start as Host
-            </h4>
-            <p className="mode-description">
-              Others can connect to your session using your IP address.
-            </p>
+          <div className="tab-container">
             <button
-              className="action-btn primary"
-              onClick={handleStartHost}
-              disabled={loading || !userName.trim()}
+              className={`tab-btn ${activeTab === "join" ? "active" : ""}`}
+              onClick={() => setActiveTab("join")}
             >
-              {loading ? (
-                <Loader2 size={14} className="spin" />
-              ) : (
-                <Play size={14} />
-              )}
-              Start Hosting
+              <Users size={14} /> Join Session
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "host" ? "active" : ""}`}
+              onClick={() => setActiveTab("host")}
+            >
+              <Wifi size={14} /> Host Session
             </button>
           </div>
 
-          {/* Client Mode */}
-          <div className="mode-section">
-            <h4>
-              <WifiOff size={14} />
-              Join Session
-            </h4>
-            <p className="mode-description">
-              Connect to another host's IP address.
-            </p>
+          <div className="setup-content">
+            {/* User Name Input */}
             <div className="input-group">
+              <label>
+                <User size={14} />
+                Your Name
+              </label>
               <input
                 type="text"
-                value={hostIp}
-                onChange={(e) => setHostIp(e.target.value)}
-                placeholder="Host IP (e.g., 192.168.1.100)"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name"
+                maxLength={20}
               />
             </div>
-            <button
-              className="action-btn secondary"
-              onClick={handleJoinSession}
-              disabled={loading || !userName.trim() || !hostIp.trim()}
-            >
-              {loading ? (
-                <Loader2 size={14} className="spin" />
-              ) : (
-                <Play size={14} />
-              )}
-              Join Session
-            </button>
+
+            {activeTab === "join" ? (
+              <div className="mode-section join-mode animated-fade-in">
+                <p className="mode-description">
+                  Connect to a shared session. Enter the host's IP address.
+                </p>
+                <div className="input-group">
+                  <label>
+                    <Globe size={14} /> Host IP Address
+                  </label>
+                  <input
+                    type="text"
+                    value={hostIp}
+                    onChange={(e) => setHostIp(e.target.value)}
+                    placeholder="e.g., 192.168.1.100"
+                  />
+                </div>
+                <button
+                  className="action-btn secondary full-width"
+                  onClick={handleJoinSession}
+                  disabled={loading || !userName.trim() || !hostIp.trim()}
+                >
+                  {loading ? (
+                    <Loader2 size={14} className="spin" />
+                  ) : (
+                    <Play size={14} />
+                  )}
+                  {loading ? "Joining..." : "Join Session"}
+                </button>
+              </div>
+            ) : (
+              <div className="mode-section host-mode animated-fade-in">
+                <p className="mode-description">
+                  Host a session for others to join. Share your IP.
+                </p>
+                
+                {/* Network Info */}
+                <div className="network-info">
+                  <div className="info-row">
+                    <span>Your IP:</span>
+                    <code>{localIp || "Loading..."}</code>
+                    <button
+                      className="copy-btn"
+                      onClick={copyIpToClipboard}
+                      title="Copy IP"
+                    >
+                      {copied ? <Check size={14} className="success" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                  {networkInterfaces.length > 1 && (
+                    <div className="network-list">
+                      {networkInterfaces.map((iface, idx) => (
+                        <div key={idx} className="network-item">
+                          <span className="network-name">{iface.name}:</span>
+                          <code>{iface.ip}</code>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  className="action-btn primary full-width"
+                  onClick={handleStartHost}
+                  disabled={loading || !userName.trim()}
+                >
+                  {loading ? (
+                    <Loader2 size={14} className="spin" />
+                  ) : (
+                    <Play size={14} />
+                  )}
+                  {loading ? "Starting..." : "Start Hosting"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : (

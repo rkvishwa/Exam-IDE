@@ -44,9 +44,10 @@ interface EditorPanelProps {
     workspaceRoot?: string,
   ) => void;
   onEditorUnmount?: () => void;
+  wordWrap?: boolean;
 }
 
-const EDITOR_OPTIONS = {
+const getEditorOptions = (wordWrap: boolean) => ({
   suggestOnTriggerCharacters: false,
   quickSuggestions: false,
   parameterHints: { enabled: false },
@@ -71,7 +72,8 @@ const EDITOR_OPTIONS = {
   autoClosingQuotes: "always" as const,
   autoSurround: "languageDefined" as const,
   autoClosingOvertype: "always" as const,
-};
+  wordWrap: wordWrap ? "on" as const : "off" as const,
+});
 
 function getTabIcon(tab: OpenTab) {
   if (tab.type === "preview")
@@ -132,6 +134,7 @@ export default function EditorPanel({
   collaborationActive = false,
   onEditorMount,
   onEditorUnmount,
+  wordWrap = true,
 }: EditorPanelProps) {
   const activeTab = tabs.find((t) => t.path === activeTabPath);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -277,7 +280,7 @@ export default function EditorPanel({
         <div className="welcome-screen">
           <div className="welcome-hero">
             <div className="welcome-logo-container">
-              <Code2 size={48} className="welcome-logo" />
+              <Radar size={48} className="welcome-logo" />
             </div>
             <h1 className="welcome-title">Sonar Code Editor</h1>
             <p className="welcome-subtitle">
@@ -474,12 +477,17 @@ export default function EditorPanel({
               <MonacoEditor
                 height="100%"
                 language={tab.language}
-                value={tab.content}
+                // When collaboration is active, don't pass value prop - let y-monaco control content
+                // This prevents cursor jumping when multiple users edit the same line
+                {...(!collaborationActive && { value: tab.content })}
                 theme={theme === "light" ? "vs-light" : "vs-dark"}
-                options={EDITOR_OPTIONS}
+                options={getEditorOptions(wordWrap)}
                 onMount={isActive ? handleEditorMount : undefined}
                 onChange={(value) => {
-                  if (value !== undefined) onContentChange(tab.path, value);
+                  // Skip React state updates during collaboration - y-monaco handles content sync
+                  if (value !== undefined && !collaborationActive) {
+                    onContentChange(tab.path, value);
+                  }
                 }}
                 path={tab.path}
               />

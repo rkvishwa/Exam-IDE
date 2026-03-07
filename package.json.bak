@@ -56,14 +56,12 @@
   "build": {
     "appId": "com.sonar.editor",
     "productName": "Sonar Code Editor",
-    "icon": "build/icon.png",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "!dist/renderer",
-      "assets/**/*"
+      "!dist/renderer"
     ],
     "extraResources": [
       {
@@ -72,7 +70,6 @@
       }
     ],
     "mac": {
-      "icon": "build/icon.icns",
       "category": "public.app-category.developer-tools",
       "target": [
         "dmg",
@@ -80,7 +77,6 @@
       ]
     },
     "win": {
-      "icon": "build/icon.png",
       "target": [
         "nsis"
       ]

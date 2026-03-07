@@ -11,7 +11,7 @@
 /* Left Hero Section */
 .login-hero {
   flex: 1;
-  background: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+  background-color: var(--bg-primary);
   border-right: 1px solid var(--border);
   position: relative;
   display: flex;
@@ -67,13 +67,18 @@
 
 .hero-decoration {
   position: absolute;
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
-  top: 50%;
+  width: 1400px;
+  height: 1400px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, var(--accent-transparent) 20%, transparent 65%);
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  z-index: 1;
+}
+
+[data-theme="light"] .hero-decoration {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(59, 130, 246, 0.15) 30%, transparent 65%);
 }
 
 /* Right Panel Section */
@@ -230,7 +235,7 @@
 }
 
 /* Tabs */
-.tab-bar {
+.login-tab-bar {
   display: flex;
   gap: 0;
   border: 1px solid var(--border);
@@ -240,7 +245,7 @@
   background: var(--bg-secondary);
 }
 
-.tab-btn {
+.login-tab-btn {
   flex: 1;
   padding: 14px 0;
   font-size: 14px;
@@ -252,13 +257,13 @@
   transition: background 0.2s, color 0.2s;
 }
 
-.tab-btn.active {
+.login-tab-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: #ffffff;
 }
 
-.tab-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
+.login-tab-btn:hover:not(.active) {
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
@@ -407,4 +412,28 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+.theme-toggle-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  transform: scale(1.05);
 }

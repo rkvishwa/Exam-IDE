@@ -15,6 +15,12 @@ interface SettingsModalProps {
   onHotReloadChange: (val: boolean) => void;
   theme: string;
   onThemeChange: (val: string) => void;
+  wordWrap: boolean;
+  onWordWrapChange: (val: boolean) => void;
+  showCollabUsernames: boolean;
+  onShowCollabUsernamesChange: (val: boolean) => void;
+  collabUsernameOpacity: number;
+  onCollabUsernameOpacityChange: (val: number) => void;
   teamName: string;
   user: Team | null;
   onLogout: () => void;
@@ -29,6 +35,12 @@ export default function SettingsModal({
   onHotReloadChange,
   theme,
   onThemeChange,
+  wordWrap,
+  onWordWrapChange,
+  showCollabUsernames,
+  onShowCollabUsernamesChange,
+  collabUsernameOpacity,
+  onCollabUsernameOpacityChange,
   teamName,
   user,
   onLogout,
@@ -86,11 +98,15 @@ export default function SettingsModal({
 
   const showTextEditor = !isSearching 
     ? activeTab === 'Text Editor' 
-    : (matchesSearch('Text Editor') || matchesSearch('Auto Save') || matchesSearch('Hot Reload') || matchesSearch('Controls auto save') || matchesSearch('Instantly refresh'));
+    : (matchesSearch('Text Editor') || matchesSearch('Auto Save') || matchesSearch('Hot Reload') || matchesSearch('Word Wrap') || matchesSearch('Controls auto save') || matchesSearch('Instantly refresh') || matchesSearch('wrap long lines'));
 
   const showAppearance = !isSearching 
     ? activeTab === 'Appearance' 
     : (matchesSearch('Appearance') || matchesSearch('Color Theme') || matchesSearch('interface theme'));
+
+  const showCollaboration = !isSearching
+    ? activeTab === 'Collaboration'
+    : (matchesSearch('Collaboration') || matchesSearch('Show Usernames') || matchesSearch('cursor') || matchesSearch('Username Opacity') || matchesSearch('collaborator'));
 
   const showAccount = !isSearching
     ? activeTab === 'Account'
@@ -228,6 +244,7 @@ export default function SettingsModal({
              <li className={(isSearching ? showTextEditor : activeTab === 'Text Editor') ? 'active' : ''} onClick={() => setActiveTab('Text Editor')}>Text Editor</li>
              <li className={(isSearching ? showAppearance : activeTab === 'Appearance') ? 'active' : ''} onClick={() => setActiveTab('Appearance')}>Appearance</li>
              <li className={(isSearching ? showKeyboardShortcuts : activeTab === 'Keyboard Shortcuts') ? 'active' : ''} onClick={() => setActiveTab('Keyboard Shortcuts')}>Keyboard Shortcuts</li>
+             <li className={(isSearching ? showCollaboration : activeTab === 'Collaboration') ? 'active' : ''} onClick={() => setActiveTab('Collaboration')}>Collaboration</li>
              <li className={(isSearching ? showActivityLog : activeTab === 'Activity Log') ? 'active' : ''} onClick={() => setActiveTab('Activity Log')}>Activity Log</li>
              <li className={(isSearching ? showSecurity : activeTab === 'Security') ? 'active' : ''} onClick={() => setActiveTab('Security')}>Security</li>
              <li className={(isSearching ? showAccount : activeTab === 'Account') ? 'active' : ''} onClick={() => setActiveTab('Account')}>Account</li>
@@ -270,6 +287,25 @@ export default function SettingsModal({
                         className="vscode-checkbox" 
                         checked={hotReload} 
                         onChange={(e) => onHotReloadChange(e.target.checked)} 
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {(isSearching ? (matchesSearch('Word Wrap') || matchesSearch('wrap long lines') || matchesSearch('Text Editor')) : true) && (
+                <div className="vscode-setting-item">
+                  <div className="vscode-setting-header">
+                    <span className="vscode-setting-title">Editor: <span className="highlight">Word Wrap</span></span>
+                    <div className="vscode-setting-description">Wrap long lines in the editor to fit within the viewport.</div>
+                  </div>
+                  <div className="vscode-setting-control">
+                    <label className="vscode-checkbox-label">
+                      <input 
+                        type="checkbox" 
+                        className="vscode-checkbox" 
+                        checked={wordWrap} 
+                        onChange={(e) => onWordWrapChange(e.target.checked)} 
                       />
                     </label>
                   </div>
@@ -326,6 +362,55 @@ export default function SettingsModal({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {showCollaboration && (
+            <div className="vscode-settings-section">
+              <h2 className="vscode-settings-section-title">Collaboration</h2>
+
+              {(isSearching ? (matchesSearch('Show Usernames') || matchesSearch('cursor') || matchesSearch('collaborator') || matchesSearch('Collaboration')) : true) && (
+                <div className="vscode-setting-item">
+                  <div className="vscode-setting-header">
+                    <span className="vscode-setting-title">Collaboration: <span className="highlight">Show Usernames</span></span>
+                    <div className="vscode-setting-description">Display collaborator usernames near their cursor in the editor.</div>
+                  </div>
+                  <div className="vscode-setting-control">
+                    <label className="vscode-checkbox-label">
+                      <input
+                        type="checkbox"
+                        className="vscode-checkbox"
+                        checked={showCollabUsernames}
+                        onChange={(e) => onShowCollabUsernamesChange(e.target.checked)}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {(isSearching ? (matchesSearch('Username Opacity') || matchesSearch('opacity') || matchesSearch('Collaboration')) : true) && (
+                <div className="vscode-setting-item">
+                  <div className="vscode-setting-header">
+                    <span className="vscode-setting-title">Collaboration: <span className="highlight">Username Opacity</span></span>
+                    <div className="vscode-setting-description">Control the opacity of collaborator username labels near the cursor (0 = fully transparent, 100 = fully opaque).</div>
+                  </div>
+                  <div className="vscode-setting-control">
+                    <div className="vscode-range-control">
+                      <input
+                        type="range"
+                        className="vscode-range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={collabUsernameOpacity}
+                        onChange={(e) => onCollabUsernameOpacityChange(Number(e.target.value))}
+                        disabled={!showCollabUsernames}
+                      />
+                      <span className="vscode-range-value">{collabUsernameOpacity}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

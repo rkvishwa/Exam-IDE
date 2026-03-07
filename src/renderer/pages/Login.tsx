@@ -1,33 +1,67 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Eye, EyeOff, Radar } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import './Login.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { Eye, EyeOff, Radar, Sun, Moon } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import "./Login.css";
 
-type Tab = 'login' | 'register';
+type Tab = "login" | "register";
 
 export default function Login() {
   const { login, register } = useAuth();
-  const [tab, setTab] = useState<Tab>('login');
+  const [tab, setTab] = useState<Tab>("login");
 
   // Login state
-  const [loginTeam, setLoginTeam] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginTeam, setLoginTeam] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Register state
-  const [regTeam, setRegTeam] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [studentIds, setStudentIds] = useState<string[]>(['']);
+  const [regTeam, setRegTeam] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [studentIds, setStudentIds] = useState<string[]>([""]);
 
   const [loading, setLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
 
   // Toast state
-  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "error" | "success";
+  } | null>(null);
 
-  const showToast = useCallback((message: string, type: 'error' | 'success') => {
-    setToast({ message, type });
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: light)").matches
+    ) {
+      return "light";
+    }
+    return "dark";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: light)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? "light" : "dark");
+    };
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  const showToast = useCallback(
+    (message: string, type: "error" | "success") => {
+      setToast({ message, type });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!toast) return;
@@ -43,14 +77,17 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginTeam.trim() || !loginPassword.trim()) {
-      showToast('Please fill in all fields', 'error');
+      showToast("Please fill in all fields", "error");
       return;
     }
     setLoading(true);
     const result = await login(loginTeam.trim(), loginPassword);
     setLoading(false);
     if (!result.success) {
-      showToast(result.error || 'Account not found or invalid credentials', 'error');
+      showToast(
+        result.error || "Account not found or invalid credentials",
+        "error",
+      );
     }
   };
 
@@ -61,35 +98,35 @@ export default function Login() {
     const ids = studentIds.map((s) => s.trim()).filter(Boolean);
 
     if (!name || !pass) {
-      showToast('Team name and password are required', 'error');
+      showToast("Team name and password are required", "error");
       return;
     }
     if (ids.length === 0) {
-      showToast('Add at least one student ID', 'error');
+      showToast("Add at least one student ID", "error");
       return;
     }
     const uniqueIds = new Set(ids);
     if (uniqueIds.size !== ids.length) {
-      showToast('Duplicate student IDs are not allowed', 'error');
+      showToast("Duplicate student IDs are not allowed", "error");
       return;
     }
     setLoading(true);
     const result = await register(name, pass, ids);
     setLoading(false);
     if (result.success) {
-      showToast('Registration successful! Please sign in.', 'success');
-      setRegTeam('');
-      setRegPassword('');
-      setStudentIds(['']);
-      setTab('login');
+      showToast("Registration successful! Please sign in.", "success");
+      setRegTeam("");
+      setRegPassword("");
+      setStudentIds([""]);
+      setTab("login");
     } else {
-      showToast(result.error || 'Registration failed', 'error');
+      showToast(result.error || "Registration failed", "error");
     }
   };
 
   const addStudentId = () => {
     if (studentIds.length < 5) {
-      setStudentIds([...studentIds, '']);
+      setStudentIds([...studentIds, ""]);
     }
   };
 
@@ -107,18 +144,36 @@ export default function Login() {
 
   return (
     <div className="login-layout">
+      <button
+        className="theme-toggle-btn"
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+      >
+        {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+      </button>
+
       {toast && (
-        <div className={`toast toast-${toast.type}`} onClick={() => setToast(null)}>
-          <span className="toast-icon">{toast.type === 'error' ? '✕' : '✓'}</span>
+        <div
+          className={`toast toast-${toast.type}`}
+          onClick={() => setToast(null)}
+        >
+          <span className="toast-icon">
+            {toast.type === "error" ? "✕" : "✓"}
+          </span>
           <span>{toast.message}</span>
         </div>
       )}
 
       <div className="login-hero">
         <div className="hero-content">
-          <div className="hero-icon"><Radar size={64} className="radar-icon" /></div>
+          <div className="hero-icon">
+            <Radar size={64} className="radar-icon" />
+          </div>
           <h1>Sonar Code Editor</h1>
-          <p>The secure, monitored environment for coding exams and team assessments.</p>
+          <p>
+            The secure, monitored environment for coding exams and team
+            assessments.
+          </p>
         </div>
         <div className="hero-decoration"></div>
       </div>
@@ -126,29 +181,35 @@ export default function Login() {
       <div className="login-panel">
         <div className="login-panel-inner">
           <div className="login-header">
-            <div className="login-logo-mobile"><Radar size={32} className="radar-icon" /></div>
-            <h2>{tab === 'login' ? 'Welcome back' : 'Create an account'}</h2>
-            <p>{tab === 'login' ? 'Sign in to your team account to continue' : 'Register a new team to get started'}</p>
+            <div className="login-logo-mobile">
+              <Radar size={32} className="radar-icon" />
+            </div>
+            <h2>{tab === "login" ? "Welcome back" : "Create an account"}</h2>
+            <p>
+              {tab === "login"
+                ? "Sign in to your team account to continue"
+                : "Register a new team to get started"}
+            </p>
           </div>
 
-          <div className="tab-bar">
+          <div className="login-tab-bar">
             <button
-              className={`tab-btn ${tab === 'login' ? 'active' : ''}`}
-              onClick={() => switchTab('login')}
+              className={`login-tab-btn ${tab === "login" ? "active" : ""}`}
+              onClick={() => switchTab("login")}
               type="button"
             >
               Sign In
             </button>
             <button
-              className={`tab-btn ${tab === 'register' ? 'active' : ''}`}
-              onClick={() => switchTab('register')}
+              className={`login-tab-btn ${tab === "register" ? "active" : ""}`}
+              onClick={() => switchTab("register")}
               type="button"
             >
               Register
             </button>
           </div>
 
-          {tab === 'login' ? (
+          {tab === "login" ? (
             <form onSubmit={handleLogin} className="login-form">
               <div className="form-group">
                 <label htmlFor="loginTeam">Team Name</label>
@@ -168,7 +229,7 @@ export default function Login() {
                 <div className="password-wrapper">
                   <input
                     id="loginPassword"
-                    type={showLoginPassword ? 'text' : 'password'}
+                    type={showLoginPassword ? "text" : "password"}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="Enter your password"
@@ -180,14 +241,20 @@ export default function Login() {
                     className="password-toggle"
                     onClick={() => setShowLoginPassword(!showLoginPassword)}
                     tabIndex={-1}
-                    aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showLoginPassword ? "Hide password" : "Show password"
+                    }
                   >
-                    {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showLoginPassword ? (
+                      <EyeOff size={16} />
+                    ) : (
+                      <Eye size={16} />
+                    )}
                   </button>
                 </div>
               </div>
               <button type="submit" className="login-btn" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
           ) : (
@@ -210,7 +277,7 @@ export default function Login() {
                 <div className="password-wrapper">
                   <input
                     id="regPassword"
-                    type={showRegPassword ? 'text' : 'password'}
+                    type={showRegPassword ? "text" : "password"}
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="Choose a password"
@@ -222,7 +289,9 @@ export default function Login() {
                     className="password-toggle"
                     onClick={() => setShowRegPassword(!showRegPassword)}
                     tabIndex={-1}
-                    aria-label={showRegPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showRegPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -267,14 +336,17 @@ export default function Login() {
                 </div>
               </div>
               <button type="submit" className="login-btn" disabled={loading}>
-                {loading ? 'Registering...' : 'Register Team'}
+                {loading ? "Registering..." : "Register Team"}
               </button>
             </form>
           )}
 
           <div className="login-footer">
             <div className="offline-note">
-              <span className="dot offline" style={{ display: 'inline-block', marginRight: 6 }} />
+              <span
+                className="dot offline"
+                style={{ display: "inline-block", marginRight: 6 }}
+              />
               Offline mode available with cached credentials
             </div>
           </div>

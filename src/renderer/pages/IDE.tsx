@@ -98,6 +98,15 @@ function IDEContent() {
   const [hotReload, setHotReload] = useState(
     () => localStorage.getItem("ide-hotreload") !== "false",
   );
+  const [wordWrap, setWordWrap] = useState(
+    () => localStorage.getItem("ide-wordwrap") !== "false",
+  );
+  const [showCollabUsernames, setShowCollabUsernames] = useState(
+    () => localStorage.getItem("ide-collab-usernames") !== "false",
+  );
+  const [collabUsernameOpacity, setCollabUsernameOpacity] = useState(
+    () => Number(localStorage.getItem("ide-collab-username-opacity") ?? 80),
+  );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
   const [newFileTrigger, setNewFileTrigger] = useState(0);
@@ -144,8 +153,20 @@ function IDEContent() {
   }, [autoSave]);
 
   useEffect(() => {
+    localStorage.setItem("ide-collab-usernames", String(showCollabUsernames));
+  }, [showCollabUsernames]);
+
+  useEffect(() => {
+    localStorage.setItem("ide-collab-username-opacity", String(collabUsernameOpacity));
+  }, [collabUsernameOpacity]);
+
+  useEffect(() => {
     localStorage.setItem("ide-hotreload", String(hotReload));
   }, [hotReload]);
+
+  useEffect(() => {
+    localStorage.setItem("ide-wordwrap", String(wordWrap));
+  }, [wordWrap]);
 
   useEffect(() => {
     const dirtyTabs = tabs.filter(
@@ -206,14 +227,14 @@ function IDEContent() {
         }
 
         // Ask user where to save the workspace
-        const selectedPath = await window.electronAPI.fs.openFolderDialog();
-        if (!selectedPath) {
+        const selectedFolder = await window.electronAPI.fs.openFolderDialog();
+        if (!selectedFolder) {
           console.log("User cancelled workspace download");
           return;
         }
 
         // Create the workspace folder
-        const targetPath = `${selectedPath}/${metadata.folderName}`;
+        const targetPath = `${selectedFolder.path}/${metadata.folderName}`;
         console.log("Creating workspace at:", targetPath);
 
         try {
@@ -411,11 +432,17 @@ function IDEContent() {
   const saveFile = useCallback(async () => {
     if (!activeTab) return;
     try {
-      await window.electronAPI.fs.writeFile(activeTab.path, activeTab.content);
+      // During collaboration, get content from editor model (not React state)
+      // since React state isn't updated during collaborative editing
+      const content = collaboration.isActive
+        ? collaboration.getCurrentEditorContent() ?? activeTab.content
+        : activeTab.content;
+      
+      await window.electronAPI.fs.writeFile(activeTab.path, content);
       setTabs((prev) =>
         prev.map((t) =>
           t.path === activeTab.path
-            ? { ...t, isDirty: false, isPreviewFile: false }
+            ? { ...t, content, isDirty: false, isPreviewFile: false }
             : t,
         ),
       );
@@ -425,7 +452,7 @@ function IDEContent() {
     } catch (err) {
       console.error("Failed to save file:", err);
     }
-  }, [activeTab, hotReload]);
+  }, [activeTab, hotReload, collaboration]);
 
   const updateContent = useCallback((path: string, content: string) => {
     setTabs((prev) =>
@@ -662,6 +689,7 @@ function IDEContent() {
               collaborationActive={collaboration.isActive}
               onEditorMount={collaboration.bindEditor}
               onEditorUnmount={collaboration.unbindEditor}
+              wordWrap={wordWrap}
             />
           </Panel>
           {showPreview && (
@@ -689,6 +717,12 @@ function IDEContent() {
         onHotReloadChange={setHotReload}
         theme={theme}
         onThemeChange={setTheme}
+        wordWrap={wordWrap}
+        onWordWrapChange={setWordWrap}
+        showCollabUsernames={showCollabUsernames}
+        onShowCollabUsernamesChange={setShowCollabUsernames}
+        collabUsernameOpacity={collabUsernameOpacity}
+        onCollabUsernameOpacityChange={setCollabUsernameOpacity}
         teamName={user?.teamName || ""}
         user={user}
         onLogout={logout}

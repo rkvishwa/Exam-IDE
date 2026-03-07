@@ -303,3 +303,61 @@
 .spin {
   animation: spin 1s linear infinite;
 }
+
+/* Tab Styles */
+.tab-container {
+  display: flex;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary, #ccc);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tab-btn.active {
+  color: var(--accent-color, #007acc);
+  border-bottom-color: var(--accent-color, #007acc);
+}
+
+.setup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.animated-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.action-btn.full-width {
+  margin-top: 8px;
+}
+
+.copy-btn .success {
+  color: #22c55e;
+}

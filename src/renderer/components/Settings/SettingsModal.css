@@ -177,6 +177,51 @@
   margin-top: 8px;
 }
 
+/* Range / slider control */
+.vscode-range-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vscode-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 220px;
+  height: 4px;
+  background: var(--border, #3c3c3c);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.vscode-range:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vscode-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent, #0078d4);
+  cursor: pointer;
+}
+
+.vscode-range:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+.vscode-range-value {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .vscode-select {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
