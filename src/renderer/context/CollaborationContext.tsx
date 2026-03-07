@@ -35,7 +35,7 @@ export interface WorkspaceMetadata {
 }
 
 export interface FileOperation {
-  type: 'create-file' | 'create-folder' | 'delete' | 'rename';
+  type: "create-file" | "create-folder" | "delete" | "rename";
   relativePath: string;
   newRelativePath?: string;
   content?: string;
@@ -80,7 +80,7 @@ interface CollaborationContextValue {
     callback: (metadata: WorkspaceMetadata | null) => void,
   ) => () => void;
   // File operation sync
-  broadcastFileOp: (op: Omit<FileOperation, 'timestamp' | 'clientId'>) => void;
+  broadcastFileOp: (op: Omit<FileOperation, "timestamp" | "clientId">) => void;
   onFileOperation: (callback: (op: FileOperation) => void) => () => void;
 }
 
@@ -705,10 +705,9 @@ export function CollaborationProvider({
 
   // Broadcast a file operation to all connected peers
   const broadcastFileOp = useCallback(
-    (op: Omit<FileOperation, 'timestamp' | 'clientId'>) => {
+    (op: Omit<FileOperation, "timestamp" | "clientId">) => {
       if (!ydocRef.current || !providerRef.current) return;
-      const fileOpsArray =
-        ydocRef.current.getArray<FileOperation>("fileOps");
+      const fileOpsArray = ydocRef.current.getArray<FileOperation>("fileOps");
       const fullOp: FileOperation = {
         ...op,
         timestamp: Date.now(),

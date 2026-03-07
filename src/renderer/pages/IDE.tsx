@@ -105,8 +105,8 @@ function IDEContent() {
   const [showCollabUsernames, setShowCollabUsernames] = useState(
     () => localStorage.getItem("ide-collab-usernames") !== "false",
   );
-  const [collabUsernameOpacity, setCollabUsernameOpacity] = useState(
-    () => Number(localStorage.getItem("ide-collab-username-opacity") ?? 80),
+  const [collabUsernameOpacity, setCollabUsernameOpacity] = useState(() =>
+    Number(localStorage.getItem("ide-collab-username-opacity") ?? 80),
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCollaborationOpen, setIsCollaborationOpen] = useState(false);
@@ -159,7 +159,10 @@ function IDEContent() {
   }, [showCollabUsernames]);
 
   useEffect(() => {
-    localStorage.setItem("ide-collab-username-opacity", String(collabUsernameOpacity));
+    localStorage.setItem(
+      "ide-collab-username-opacity",
+      String(collabUsernameOpacity),
+    );
   }, [collabUsernameOpacity]);
 
   useEffect(() => {
@@ -373,10 +376,7 @@ function IDEContent() {
           switch (op.type) {
             case "create-file": {
               // Ensure parent directory exists
-              const parentDir = absPath.substring(
-                0,
-                absPath.lastIndexOf("/"),
-              );
+              const parentDir = absPath.substring(0, absPath.lastIndexOf("/"));
               try {
                 await window.electronAPI.fs.createFolder(parentDir);
               } catch {
@@ -505,9 +505,9 @@ function IDEContent() {
       // During collaboration, get content from editor model (not React state)
       // since React state isn't updated during collaborative editing
       const content = collaboration.isActive
-        ? collaboration.getCurrentEditorContent() ?? activeTab.content
+        ? (collaboration.getCurrentEditorContent() ?? activeTab.content)
         : activeTab.content;
-      
+
       await window.electronAPI.fs.writeFile(activeTab.path, content);
       setTabs((prev) =>
         prev.map((t) =>
@@ -583,63 +583,66 @@ function IDEContent() {
     [collaboration.isActive, collaboration.broadcastFileOp, workspaceRoot],
   );
 
-  const handleFileRenamed = useCallback((oldPath: string, newPath: string) => {
-    // Broadcast to collaboration peers
-    if (collaboration.isActive && workspaceRoot) {
-      const normalizedOld = oldPath.replace(/\\/g, "/");
-      const normalizedNew = newPath.replace(/\\/g, "/");
-      const normalizedRoot = workspaceRoot.replace(/\\/g, "/");
-      if (
-        normalizedOld.startsWith(normalizedRoot) &&
-        normalizedNew.startsWith(normalizedRoot)
-      ) {
-        const relOld = normalizedOld
-          .substring(normalizedRoot.length)
-          .replace(/^\//, "");
-        const relNew = normalizedNew
-          .substring(normalizedRoot.length)
-          .replace(/^\//, "");
-        collaboration.broadcastFileOp({
-          type: "rename",
-          relativePath: relOld,
-          newRelativePath: relNew,
-        });
-      }
-    }
-
-    setTabs((prev) => {
-      let updated = false;
-      const next = prev.map((t) => {
-        // If it was a directory renamed, we should update paths inside it
+  const handleFileRenamed = useCallback(
+    (oldPath: string, newPath: string) => {
+      // Broadcast to collaboration peers
+      if (collaboration.isActive && workspaceRoot) {
+        const normalizedOld = oldPath.replace(/\\/g, "/");
+        const normalizedNew = newPath.replace(/\\/g, "/");
+        const normalizedRoot = workspaceRoot.replace(/\\/g, "/");
         if (
-          t.path === oldPath ||
-          t.path.startsWith(oldPath + "/") ||
-          t.path.startsWith(oldPath + "\\")
+          normalizedOld.startsWith(normalizedRoot) &&
+          normalizedNew.startsWith(normalizedRoot)
         ) {
-          updated = true;
-          const newFilePath = newPath + t.path.slice(oldPath.length);
-          const newName = newFilePath.split(/[\\/]/).pop() || "";
-          return { ...t, path: newFilePath, name: newName };
+          const relOld = normalizedOld
+            .substring(normalizedRoot.length)
+            .replace(/^\//, "");
+          const relNew = normalizedNew
+            .substring(normalizedRoot.length)
+            .replace(/^\//, "");
+          collaboration.broadcastFileOp({
+            type: "rename",
+            relativePath: relOld,
+            newRelativePath: relNew,
+          });
         }
-        return t;
-      });
-
-      if (updated) {
-        setActiveTabPath((current) => {
-          if (!current) return null;
-          if (
-            current === oldPath ||
-            current.startsWith(oldPath + "/") ||
-            current.startsWith(oldPath + "\\")
-          ) {
-            return newPath + current.slice(oldPath.length);
-          }
-          return current;
-        });
       }
-      return next;
-    });
-  }, [collaboration.isActive, collaboration.broadcastFileOp, workspaceRoot]);
+
+      setTabs((prev) => {
+        let updated = false;
+        const next = prev.map((t) => {
+          // If it was a directory renamed, we should update paths inside it
+          if (
+            t.path === oldPath ||
+            t.path.startsWith(oldPath + "/") ||
+            t.path.startsWith(oldPath + "\\")
+          ) {
+            updated = true;
+            const newFilePath = newPath + t.path.slice(oldPath.length);
+            const newName = newFilePath.split(/[\\/]/).pop() || "";
+            return { ...t, path: newFilePath, name: newName };
+          }
+          return t;
+        });
+
+        if (updated) {
+          setActiveTabPath((current) => {
+            if (!current) return null;
+            if (
+              current === oldPath ||
+              current.startsWith(oldPath + "/") ||
+              current.startsWith(oldPath + "\\")
+            ) {
+              return newPath + current.slice(oldPath.length);
+            }
+            return current;
+          });
+        }
+        return next;
+      });
+    },
+    [collaboration.isActive, collaboration.broadcastFileOp, workspaceRoot],
+  );
 
   const handleFileCreated = useCallback(
     (path: string, name: string) => {
