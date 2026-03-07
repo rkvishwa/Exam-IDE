@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import {
   CollaborationProvider,
   useCollaboration,
+  WorkspaceFile,
+  WorkspaceMetadata,
 } from "../context/CollaborationContext";
 import FileTree from "../components/FileTree/FileTree";
 import EditorPanel from "../components/Editor/EditorPanel";
@@ -177,36 +179,162 @@ function IDEContent() {
     return () => clearTimeout(timer);
   }, [tabs, autoSave, hotReload]);
 
-  // Listen for shared workspace from collaboration (for clients joining)
+  // Listen for shared workspace metadata from collaboration (for clients joining)
   useEffect(() => {
     if (!collaboration.isActive) return;
+    if (collaboration.status?.mode === "host") return; // Host doesn't need to receive
 
-    const unsubWorkspace = collaboration.onWorkspaceChange((path) => {
-      if (path && path !== workspaceRoot) {
-        console.log("Received shared workspace:", path);
-        setWorkspaceRoot(path);
-      }
-    });
+    const unsubMetadata = collaboration.onWorkspaceMetadataChange(
+      async (metadata: WorkspaceMetadata | null) => {
+        if (!metadata) return;
+
+        console.log(
+          "Received workspace metadata:",
+          metadata.folderName,
+          `(${metadata.files.length} files)`,
+        );
+
+        // Check if workspace already exists locally at same path
+        try {
+          await window.electronAPI.fs.readDirectory(metadata.hostPath);
+          // Path exists, just use it
+          setWorkspaceRoot(metadata.hostPath);
+          console.log("Using existing workspace at:", metadata.hostPath);
+          return;
+        } catch {
+          // Path doesn't exist, need to create it
+        }
+
+        // Ask user where to save the workspace
+        const selectedPath = await window.electronAPI.fs.openFolderDialog();
+        if (!selectedPath) {
+          console.log("User cancelled workspace download");
+          return;
+        }
+
+        // Create the workspace folder
+        const targetPath = `${selectedPath}/${metadata.folderName}`;
+        console.log("Creating workspace at:", targetPath);
+
+        try {
+          await window.electronAPI.fs.createFolder(targetPath);
+
+          // Create all files and folders
+          for (const file of metadata.files) {
+            const filePath = `${targetPath}/${file.relativePath}`;
+
+            if (file.isDirectory) {
+              await window.electronAPI.fs.createFolder(filePath);
+            } else {
+              // Ensure parent directory exists
+              const parentDir = filePath.substring(
+                0,
+                filePath.lastIndexOf("/"),
+              );
+              try {
+                await window.electronAPI.fs.createFolder(parentDir);
+              } catch {
+                // Parent might already exist
+              }
+              await window.electronAPI.fs.writeFile(filePath, file.content);
+            }
+          }
+
+          console.log(`Created workspace with ${metadata.files.length} files`);
+          setWorkspaceRoot(targetPath);
+        } catch (err) {
+          console.error("Failed to create workspace:", err);
+          window.electronAPI.dialog.showError(
+            `Failed to create workspace: ${err}`,
+          );
+        }
+      },
+    );
 
     return () => {
-      unsubWorkspace();
+      unsubMetadata();
     };
-  }, [collaboration.isActive, collaboration.onWorkspaceChange, workspaceRoot]);
+  }, [
+    collaboration.isActive,
+    collaboration.status?.mode,
+    collaboration.onWorkspaceMetadataChange,
+  ]);
 
-  // Share workspace when host opens a folder
+  // Share workspace with files when host opens a folder
   useEffect(() => {
-    if (
-      collaboration.isActive &&
-      workspaceRoot &&
-      collaboration.status?.mode === "host"
-    ) {
-      collaboration.setSharedWorkspace(workspaceRoot);
-    }
+    if (!collaboration.isActive) return;
+    if (collaboration.status?.mode !== "host") return;
+    if (!workspaceRoot) return;
+
+    // Scan and share all files in the workspace
+    const scanAndShareWorkspace = async () => {
+      console.log("Scanning workspace to share:", workspaceRoot);
+
+      const files: WorkspaceFile[] = [];
+      const scanDir = async (dirPath: string, relativePath: string = "") => {
+        try {
+          const entries = await window.electronAPI.fs.readDirectory(dirPath);
+
+          for (const entry of entries) {
+            // Skip hidden files and common ignored directories
+            if (
+              entry.name.startsWith(".") ||
+              entry.name === "node_modules" ||
+              entry.name === "dist" ||
+              entry.name === "build" ||
+              entry.name === ".git"
+            ) {
+              continue;
+            }
+
+            const entryRelativePath = relativePath
+              ? `${relativePath}/${entry.name}`
+              : entry.name;
+            const fullPath = `${dirPath}/${entry.name}`;
+
+            if (entry.isDirectory) {
+              files.push({
+                relativePath: entryRelativePath,
+                content: "",
+                isDirectory: true,
+              });
+              await scanDir(fullPath, entryRelativePath);
+            } else {
+              // Skip binary/large files
+              const ext = entry.name.split(".").pop()?.toLowerCase() || "";
+              if (IMAGE_EXTENSIONS.has(ext)) continue;
+
+              try {
+                const content = await window.electronAPI.fs.readFile(fullPath);
+                // Skip files larger than 1MB
+                if (content.length > 1024 * 1024) continue;
+
+                files.push({
+                  relativePath: entryRelativePath,
+                  content,
+                  isDirectory: false,
+                });
+              } catch {
+                // Skip unreadable files
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error scanning directory:", dirPath, err);
+        }
+      };
+
+      await scanDir(workspaceRoot);
+      console.log(`Sharing workspace with ${files.length} files`);
+      collaboration.shareWorkspaceWithFiles(workspaceRoot, files);
+    };
+
+    scanAndShareWorkspace();
   }, [
     collaboration.isActive,
     collaboration.status?.mode,
     workspaceRoot,
-    collaboration.setSharedWorkspace,
+    collaboration.shareWorkspaceWithFiles,
   ]);
 
   const toggleTheme = useCallback(() => {

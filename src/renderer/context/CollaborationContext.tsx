@@ -21,6 +21,19 @@ export interface SharedFile {
   type?: "file" | "image";
 }
 
+// Workspace sync metadata
+export interface WorkspaceFile {
+  relativePath: string;
+  content: string;
+  isDirectory: boolean;
+}
+
+export interface WorkspaceMetadata {
+  folderName: string;
+  hostPath: string;
+  files: WorkspaceFile[];
+}
+
 interface CollaborationContextValue {
   isActive: boolean;
   status: CollaborationStatus | null;
@@ -48,6 +61,12 @@ interface CollaborationContextValue {
   sharedWorkspace: string | null;
   setSharedWorkspace: (path: string) => void;
   onWorkspaceChange: (callback: (path: string | null) => void) => () => void;
+  // Workspace sync (with files)
+  shareWorkspaceWithFiles: (path: string, files: WorkspaceFile[]) => void;
+  workspaceMetadata: WorkspaceMetadata | null;
+  onWorkspaceMetadataChange: (
+    callback: (metadata: WorkspaceMetadata | null) => void,
+  ) => () => void;
 }
 
 const CollaborationContext = createContext<CollaborationContextValue | null>(
@@ -87,6 +106,8 @@ export function CollaborationProvider({
   const [sharedWorkspace, setSharedWorkspaceState] = useState<string | null>(
     null,
   );
+  const [workspaceMetadata, setWorkspaceMetadataState] =
+    useState<WorkspaceMetadata | null>(null);
 
   // Refs to store Yjs instances (persist across renders)
   const ydocRef = useRef<Y.Doc | null>(null);
@@ -106,6 +127,9 @@ export function CollaborationProvider({
   const workspaceCallbacksRef = useRef<Set<(path: string | null) => void>>(
     new Set(),
   );
+  const workspaceMetadataCallbacksRef = useRef<
+    Set<(metadata: WorkspaceMetadata | null) => void>
+  >(new Set());
 
   // Save username to localStorage when it changes
   useEffect(() => {
@@ -198,6 +222,16 @@ export function CollaborationProvider({
       const sharedFilesMap = ydoc.getMap<SharedFile>("sharedFiles");
       const activeFileText = ydoc.getText("activeFile");
       const workspaceText = ydoc.getText("sharedWorkspace");
+      const workspaceMetadataMap =
+        ydoc.getMap<WorkspaceMetadata>("workspaceMetadata");
+
+      // Observe workspace metadata changes (for file sync)
+      workspaceMetadataMap.observe(() => {
+        const metadata = workspaceMetadataMap.get("current") || null;
+        console.log("Workspace metadata updated:", metadata?.folderName);
+        setWorkspaceMetadataState(metadata);
+        workspaceMetadataCallbacksRef.current.forEach((cb) => cb(metadata));
+      });
 
       // Observe workspace changes
       workspaceText.observe(() => {
@@ -286,6 +320,17 @@ export function CollaborationProvider({
           if (workspacePath) {
             setSharedWorkspaceState(workspacePath);
             workspaceCallbacksRef.current.forEach((cb) => cb(workspacePath));
+          }
+          // Notify about workspace metadata (for file sync)
+          const metadata = workspaceMetadataMap.get("current") || null;
+          if (metadata) {
+            console.log(
+              "Synced workspace metadata:",
+              metadata.folderName,
+              `(${metadata.files.length} files)`,
+            );
+            setWorkspaceMetadataState(metadata);
+            workspaceMetadataCallbacksRef.current.forEach((cb) => cb(metadata));
           }
         }
       });
@@ -517,6 +562,44 @@ export function CollaborationProvider({
     [sharedWorkspace],
   );
 
+  // Share workspace with files (for syncing entire folder to clients)
+  const shareWorkspaceWithFiles = useCallback(
+    (path: string, files: WorkspaceFile[]) => {
+      if (!ydocRef.current) {
+        console.warn("Cannot share workspace with files: No Yjs document");
+        return;
+      }
+      const workspaceMetadataMap =
+        ydocRef.current.getMap<WorkspaceMetadata>("workspaceMetadata");
+      const folderName = path.split(/[/\\]/).pop() || "workspace";
+      const metadata: WorkspaceMetadata = {
+        folderName,
+        hostPath: path,
+        files,
+      };
+      workspaceMetadataMap.set("current", metadata);
+      console.log(
+        `Shared workspace "${folderName}" with ${files.length} files`,
+      );
+    },
+    [],
+  );
+
+  // Subscribe to workspace metadata changes
+  const onWorkspaceMetadataChange = useCallback(
+    (callback: (metadata: WorkspaceMetadata | null) => void) => {
+      workspaceMetadataCallbacksRef.current.add(callback);
+      // Immediately call with current metadata if available
+      if (workspaceMetadata) {
+        callback(workspaceMetadata);
+      }
+      return () => {
+        workspaceMetadataCallbacksRef.current.delete(callback);
+      };
+    },
+    [workspaceMetadata],
+  );
+
   const value: CollaborationContextValue = {
     isActive: status?.isActive || false,
     status,
@@ -541,6 +624,10 @@ export function CollaborationProvider({
     sharedWorkspace,
     setSharedWorkspace,
     onWorkspaceChange,
+    // Workspace sync (with files)
+    shareWorkspaceWithFiles,
+    workspaceMetadata,
+    onWorkspaceMetadataChange,
   };
 
   return (
