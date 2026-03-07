@@ -1,24 +1,30 @@
-import React, { useCallback } from 'react';
-import { X } from 'lucide-react';
-import CollaborationPanel from './CollaborationPanel';
-import { useCollaboration } from '../../context/CollaborationContext';
-import './CollaborationModal.css';
+import React, { useCallback } from "react";
+import { X } from "lucide-react";
+import CollaborationPanel from "./CollaborationPanel";
+import { useCollaboration } from "../../context/CollaborationContext";
+import "./CollaborationModal.css";
 
 interface CollaborationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CollaborationModal({ isOpen, onClose }: CollaborationModalProps) {
+export default function CollaborationModal({
+  isOpen,
+  onClose,
+}: CollaborationModalProps) {
   const collaboration = useCollaboration();
 
-  const handleSessionStart = useCallback(async (mode: 'host' | 'client', hostIp?: string) => {
-    if (mode === 'host') {
-      await collaboration.startHost();
-    } else if (hostIp) {
-      await collaboration.joinSession(hostIp);
-    }
-  }, [collaboration]);
+  const handleSessionStart = useCallback(
+    async (mode: "host" | "client", hostIp?: string) => {
+      if (mode === "host") {
+        await collaboration.startHost();
+      } else if (hostIp) {
+        await collaboration.joinSession(hostIp);
+      }
+    },
+    [collaboration],
+  );
 
   const handleSessionStop = useCallback(async () => {
     await collaboration.stopSession();

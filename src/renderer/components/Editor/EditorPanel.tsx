@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
-import { Radar,
+import {
+  Radar,
   FileCode2,
   X,
   Monitor,
@@ -16,7 +17,7 @@ import { Radar,
   Braces,
   Palette,
 } from "lucide-react";
-import type { editor } from 'monaco-editor';
+import type { editor } from "monaco-editor";
 import { OpenTab } from "../../pages/IDE";
 import PreviewPanel from "../Preview/PreviewPanel";
 import "./EditorPanel.css";
@@ -37,7 +38,10 @@ interface EditorPanelProps {
   previewInitialUrl?: string | null;
   // Collaboration props
   collaborationActive?: boolean;
-  onEditorMount?: (editor: editor.IStandaloneCodeEditor, filePath: string) => void;
+  onEditorMount?: (
+    editor: editor.IStandaloneCodeEditor,
+    filePath: string,
+  ) => void;
   onEditorUnmount?: () => void;
 }
 
@@ -136,8 +140,13 @@ export default function EditorPanel({
 
   // Bind editor to collaboration when collaboration becomes active or file changes
   useEffect(() => {
-    if (collaborationActive && editorRef.current && activeTabPath && activeTabPath !== '__preview__') {
-      // Only bind if the file has changed or wasn't bound before  
+    if (
+      collaborationActive &&
+      editorRef.current &&
+      activeTabPath &&
+      activeTabPath !== "__preview__"
+    ) {
+      // Only bind if the file has changed or wasn't bound before
       if (boundFileRef.current !== activeTabPath) {
         onEditorMount?.(editorRef.current, activeTabPath);
         boundFileRef.current = activeTabPath;
@@ -166,7 +175,11 @@ export default function EditorPanel({
     editorRef.current = editor;
 
     // Bind to collaboration if active
-    if (collaborationActive && activeTabPath && activeTabPath !== '__preview__') {
+    if (
+      collaborationActive &&
+      activeTabPath &&
+      activeTabPath !== "__preview__"
+    ) {
       onEditorMount?.(editor, activeTabPath);
       boundFileRef.current = activeTabPath;
     }
@@ -415,7 +428,12 @@ export default function EditorPanel({
             }}
           >
             {tab.type === "preview" ? (
-              <PreviewPanel workspaceRoot={workspaceRoot} activeFilePath={activeFilePath} initialUrl={previewInitialUrl} isFullTab />
+              <PreviewPanel
+                workspaceRoot={workspaceRoot}
+                activeFilePath={activeFilePath}
+                initialUrl={previewInitialUrl}
+                isFullTab
+              />
             ) : tab.type === "image" ? (
               <img
                 src={tab.content}

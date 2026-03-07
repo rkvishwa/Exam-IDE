@@ -30,7 +30,7 @@ interface ActivityBarProps {
   theme?: string;
   onToggleTheme?: () => void;
   onOpenSettings?: () => void;
-  
+
   // Collaboration
   isCollaborating?: boolean;
   onToggleCollaboration?: () => void;

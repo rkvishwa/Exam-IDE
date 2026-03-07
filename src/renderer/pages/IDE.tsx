@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { useAuth } from "../context/AuthContext";
-import { CollaborationProvider, useCollaboration } from "../context/CollaborationContext";
+import {
+  CollaborationProvider,
+  useCollaboration,
+} from "../context/CollaborationContext";
 import FileTree from "../components/FileTree/FileTree";
 import EditorPanel from "../components/Editor/EditorPanel";
 import PreviewPanel from "../components/Preview/PreviewPanel";
@@ -349,29 +352,34 @@ function IDEContent() {
     }
   }, []);
 
-  const [previewInitialUrl, setPreviewInitialUrl] = useState<string | null>(null);
+  const [previewInitialUrl, setPreviewInitialUrl] = useState<string | null>(
+    null,
+  );
 
-  const openPreviewInTab = useCallback((urlFromPanel?: string) => {
-    const previewPath = "__preview__";
-    if (urlFromPanel) {
-      setPreviewInitialUrl(urlFromPanel);
-    }
-    const existing = tabs.find((t) => t.path === previewPath);
-    if (existing) {
+  const openPreviewInTab = useCallback(
+    (urlFromPanel?: string) => {
+      const previewPath = "__preview__";
+      if (urlFromPanel) {
+        setPreviewInitialUrl(urlFromPanel);
+      }
+      const existing = tabs.find((t) => t.path === previewPath);
+      if (existing) {
+        setActiveTabPath(previewPath);
+        return;
+      }
+      const tab: OpenTab = {
+        path: previewPath,
+        name: "Preview",
+        content: "",
+        isDirty: false,
+        language: "",
+        type: "preview",
+      };
+      setTabs((prev) => [...prev, tab]);
       setActiveTabPath(previewPath);
-      return;
-    }
-    const tab: OpenTab = {
-      path: previewPath,
-      name: "Preview",
-      content: "",
-      isDirty: false,
-      language: "",
-      type: "preview",
-    };
-    setTabs((prev) => [...prev, tab]);
-    setActiveTabPath(previewPath);
-  }, [tabs]);
+    },
+    [tabs],
+  );
 
   const openPreviewInTabToggle = useCallback(() => {
     const previewPath = "__preview__";
@@ -519,7 +527,7 @@ function IDEContent() {
         onHotReloadChange={setHotReload}
         theme={theme}
         onThemeChange={setTheme}
-        teamName={user?.teamName || ''}
+        teamName={user?.teamName || ""}
         user={user}
         onLogout={logout}
       />

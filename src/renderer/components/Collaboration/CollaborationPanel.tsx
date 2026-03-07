@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Users, 
-  Wifi, 
-  WifiOff, 
-  Play, 
-  Square, 
-  Copy, 
-  Check, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Users,
+  Wifi,
+  WifiOff,
+  Play,
+  Square,
+  Copy,
+  Check,
   Globe,
   User,
   AlertCircle,
-  Loader2
-} from 'lucide-react';
-import { CollaborationStatus, CollaborationUser } from '../../../shared/types';
-import './CollaborationPanel.css';
+  Loader2,
+} from "lucide-react";
+import { CollaborationStatus, CollaborationUser } from "../../../shared/types";
+import "./CollaborationPanel.css";
 
 interface CollaborationPanelProps {
-  onSessionStart: (mode: 'host' | 'client', hostIp?: string) => void;
+  onSessionStart: (mode: "host" | "client", hostIp?: string) => void;
   onSessionStop: () => void;
   collaborationStatus: CollaborationStatus | null;
 }
@@ -26,10 +26,12 @@ export default function CollaborationPanel({
   onSessionStop,
   collaborationStatus,
 }: CollaborationPanelProps) {
-  const [userName, setUserName] = useState('');
-  const [hostIp, setHostIp] = useState('');
-  const [localIp, setLocalIp] = useState<string>('');
-  const [networkInterfaces, setNetworkInterfaces] = useState<{ name: string; ip: string }[]>([]);
+  const [userName, setUserName] = useState("");
+  const [hostIp, setHostIp] = useState("");
+  const [localIp, setLocalIp] = useState<string>("");
+  const [networkInterfaces, setNetworkInterfaces] = useState<
+    { name: string; ip: string }[]
+  >([]);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,20 +42,21 @@ export default function CollaborationPanel({
       try {
         const ip = await window.electronAPI.collaboration.getLocalIp();
         setLocalIp(ip);
-        
-        const interfaces = await window.electronAPI.collaboration.getNetworkInterfaces();
+
+        const interfaces =
+          await window.electronAPI.collaboration.getNetworkInterfaces();
         setNetworkInterfaces(interfaces);
       } catch (err) {
-        console.error('Failed to get network info:', err);
+        console.error("Failed to get network info:", err);
       }
     };
-    
+
     loadNetworkInfo();
   }, []);
 
   // Load saved username from localStorage
   useEffect(() => {
-    const savedName = localStorage.getItem('collaborationUserName');
+    const savedName = localStorage.getItem("collaborationUserName");
     if (savedName) {
       setUserName(savedName);
     }
@@ -61,16 +64,16 @@ export default function CollaborationPanel({
 
   const handleStartHost = useCallback(async () => {
     if (!userName.trim()) {
-      setError('Please enter your name');
+      setError("Please enter your name");
       return;
     }
-    
+
     setError(null);
     setLoading(true);
-    localStorage.setItem('collaborationUserName', userName);
-    
+    localStorage.setItem("collaborationUserName", userName);
+
     try {
-      await onSessionStart('host');
+      await onSessionStart("host");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -80,20 +83,20 @@ export default function CollaborationPanel({
 
   const handleJoinSession = useCallback(async () => {
     if (!userName.trim()) {
-      setError('Please enter your name');
+      setError("Please enter your name");
       return;
     }
     if (!hostIp.trim()) {
-      setError('Please enter the host IP address');
+      setError("Please enter the host IP address");
       return;
     }
-    
+
     setError(null);
     setLoading(true);
-    localStorage.setItem('collaborationUserName', userName);
-    
+    localStorage.setItem("collaborationUserName", userName);
+
     try {
-      await onSessionStart('client', hostIp);
+      await onSessionStart("client", hostIp);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -130,7 +133,7 @@ export default function CollaborationPanel({
         <span>Collaboration</span>
         {isActive && (
           <span className={`status-badge ${collaborationStatus?.mode}`}>
-            {collaborationStatus?.mode === 'host' ? 'Hosting' : 'Connected'}
+            {collaborationStatus?.mode === "host" ? "Hosting" : "Connected"}
           </span>
         )}
       </div>
@@ -164,8 +167,8 @@ export default function CollaborationPanel({
             <div className="info-row">
               <Globe size={14} />
               <span>Your IP: </span>
-              <code>{localIp || 'Loading...'}</code>
-              <button 
+              <code>{localIp || "Loading..."}</code>
+              <button
                 className="copy-btn"
                 onClick={copyIpToClipboard}
                 title="Copy IP"
@@ -194,7 +197,7 @@ export default function CollaborationPanel({
             <p className="mode-description">
               Others can connect to your session using your IP address.
             </p>
-            <button 
+            <button
               className="action-btn primary"
               onClick={handleStartHost}
               disabled={loading || !userName.trim()}
@@ -225,7 +228,7 @@ export default function CollaborationPanel({
                 placeholder="Host IP (e.g., 192.168.1.100)"
               />
             </div>
-            <button 
+            <button
               className="action-btn secondary"
               onClick={handleJoinSession}
               disabled={loading || !userName.trim() || !hostIp.trim()}
@@ -246,10 +249,9 @@ export default function CollaborationPanel({
             <div className="info-row">
               <Wifi size={14} className="connected" />
               <span>
-                {collaborationStatus?.mode === 'host' 
+                {collaborationStatus?.mode === "host"
                   ? `Hosting on ${collaborationStatus.hostIp}:${collaborationStatus.port}`
-                  : `Connected to ${collaborationStatus?.hostIp}:${collaborationStatus?.port}`
-                }
+                  : `Connected to ${collaborationStatus?.hostIp}:${collaborationStatus?.port}`}
               </span>
             </div>
           </div>
@@ -263,17 +265,17 @@ export default function CollaborationPanel({
             <div className="users-list">
               {connectedUsers.map((user) => (
                 <div key={user.id} className="user-item">
-                  <div 
+                  <div
                     className="user-avatar"
                     style={{ backgroundColor: user.color }}
                   >
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="user-name">{user.name}</span>
-                  {user.id === 'host' && (
+                  {user.id === "host" && (
                     <span className="user-badge">Host</span>
                   )}
-                  {user.id === 'self' && (
+                  {user.id === "self" && (
                     <span className="user-badge you">You</span>
                   )}
                 </div>
@@ -282,7 +284,7 @@ export default function CollaborationPanel({
           </div>
 
           {/* Stop Button */}
-          <button 
+          <button
             className="action-btn danger"
             onClick={handleStopSession}
             disabled={loading}
@@ -292,7 +294,9 @@ export default function CollaborationPanel({
             ) : (
               <Square size={14} />
             )}
-            {collaborationStatus?.mode === 'host' ? 'Stop Hosting' : 'Leave Session'}
+            {collaborationStatus?.mode === "host"
+              ? "Stop Hosting"
+              : "Leave Session"}
           </button>
         </div>
       )}
