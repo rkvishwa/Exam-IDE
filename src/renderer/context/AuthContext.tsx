@@ -1,13 +1,34 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Team } from '../../shared/types';
-import { validateTeamCredentials, upsertSession, registerTeam } from '../services/appwrite';
-import { cacheCredentials, validateCachedAuth, clearCache } from '../services/localStore';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { Team } from "../../shared/types";
+import {
+  validateTeamCredentials,
+  upsertSession,
+  registerTeam,
+} from "../services/appwrite";
+import {
+  cacheCredentials,
+  validateCachedAuth,
+  clearCache,
+} from "../services/localStore";
 
 interface AuthContextValue {
   user: Team | null;
   loading: boolean;
-  login: (teamName: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (teamName: string, password: string, studentIds: string[]) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    teamName: string,
+    password: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    teamName: string,
+    password: string,
+    studentIds: string[],
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -19,32 +40,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Attempt to restore session from cache
-    const cached = JSON.parse(localStorage.getItem('sonar_session') || 'null');
+    const cached = JSON.parse(localStorage.getItem("sonar_session") || "null");
     if (cached) {
       setUser(cached);
       // Mark session as online in DB on restore (fire-and-forget)
       if (cached.$id && cached.teamName) {
-        upsertSession(cached.$id, cached.teamName, 'online').catch(() => {});
+        upsertSession(cached.$id, cached.teamName, "online").catch(() => {});
       }
     }
     setLoading(false);
   }, []);
 
-  const login = async (teamName: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (
+    teamName: string,
+    password: string,
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       // Try online auth first
       const team = await validateTeamCredentials(teamName, password);
       if (team) {
         setUser(team);
-        localStorage.setItem('sonar_session', JSON.stringify(team));
+        localStorage.setItem("sonar_session", JSON.stringify(team));
         cacheCredentials(teamName, password, team.$id!, team.role);
-        await upsertSession(team.$id!, teamName, 'online');
+        await upsertSession(team.$id!, teamName, "online");
         return { success: true };
       }
       // Online auth returned null = invalid credentials (server reachable)
-      return { success: false, error: 'Invalid credentials' };
+      return { success: false, error: "Invalid credentials" };
     } catch (err) {
-      // Network error â€” try cached login
+      // Network error - try cached login
       const cached = validateCachedAuth(teamName, password);
       if (cached) {
         const offlineUser: Team = {
@@ -53,25 +77,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: cached.role,
         };
         setUser(offlineUser);
-        localStorage.setItem('sonar_session', JSON.stringify(offlineUser));
+        localStorage.setItem("sonar_session", JSON.stringify(offlineUser));
         return { success: true };
       }
-      return { success: false, error: 'Login failed. Check your connection.' };
+      return { success: false, error: "Login failed. Check your connection." };
     }
   };
 
   const logout = () => {
     if (user) {
-      upsertSession(user.$id!, user.teamName, 'offline').catch(() => {});
+      upsertSession(user.$id!, user.teamName, "offline").catch(() => {});
     }
     setUser(null);
-    localStorage.removeItem('sonar_session');
+    localStorage.removeItem("sonar_session");
   };
 
   const register = async (
     teamName: string,
     password: string,
-    studentIds: string[]
+    studentIds: string[],
   ): Promise<{ success: boolean; error?: string }> => {
     return registerTeam(teamName, password, studentIds);
   };
@@ -85,6 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
