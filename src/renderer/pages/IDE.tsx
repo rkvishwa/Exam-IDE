@@ -74,13 +74,23 @@ function getLanguage(filename: string): string {
 }
 
 /**
+ * Collapse repeated slashes and strip trailing slash for stable comparison.
+ */
+function normalizePath(p: string): string {
+  return p
+    .replace(/\\/g, "/")
+    .replace(/\/{2,}/g, "/")
+    .replace(/\/+$/, "");
+}
+
+/**
  * Convert an absolute path to a relative path against a workspace root.
  * Handles Windows/Mac path separator differences and case-insensitive
  * drive letters for cross-platform collaboration sync.
  */
 function toRelativePath(fullPath: string, wsRoot: string): string {
-  const normFull = fullPath.replace(/\\/g, "/");
-  const normRoot = wsRoot.replace(/\\/g, "/").replace(/\/+$/, ""); // strip trailing slash
+  const normFull = normalizePath(fullPath);
+  const normRoot = normalizePath(wsRoot);
 
   // Case-insensitive startsWith for Windows drive letter compatibility (D: vs d:)
   if (normFull.toLowerCase().startsWith(normRoot.toLowerCase())) {
@@ -88,6 +98,30 @@ function toRelativePath(fullPath: string, wsRoot: string): string {
     if (rel.startsWith("/")) rel = rel.slice(1);
     return rel;
   }
+
+  // Second attempt: compare just the last N segments (handles different mount
+  // points for the same logical folder, e.g. host has D:/proj, client has
+  // /Users/mac/proj).  Extract a common suffix of path segments.
+  const fullSegs = normFull.split("/");
+  const rootSegs = normRoot.split("/");
+  // Find how many trailing segments of normRoot match the corresponding segments
+  // in normFull (case-insensitive for cross-platform safety).
+  let matchCount = 0;
+  for (
+    let i = rootSegs.length - 1, j = fullSegs.length - 1;
+    i >= 0 && j >= 0;
+    i--, j--
+  ) {
+    if (rootSegs[i].toLowerCase() !== fullSegs[j].toLowerCase()) break;
+    matchCount++;
+  }
+  if (matchCount > 0 && matchCount === rootSegs.length) {
+    // The entire rootSegs matched a suffix of fullSegs – remaining segments
+    // after that suffix are the relative path.
+    const rel = fullSegs.slice(fullSegs.length - matchCount + rootSegs.length);
+    if (rel.length > 0) return rel.join("/");
+  }
+
   // Fallback: return the normalized full path (sanitizeRelPath on receiver will strip drive prefix)
   return normFull;
 }
@@ -369,7 +403,15 @@ function IDEContent() {
 
         try {
           await syncWorkspaceTo(targetPath);
-          setWorkspaceRoot(targetPath);
+          // Normalize the workspace root so path comparisons in
+          // toRelativePath never fail due to double-slashes or
+          // mixed separators.
+          setWorkspaceRoot(
+            targetPath
+              .replace(/\\/g, "/")
+              .replace(/\/{2,}/g, "/")
+              .replace(/\/+$/, ""),
+          );
         } catch (err) {
           console.error("Failed to sync workspace:", err);
           window.electronAPI.dialog.showError(
@@ -703,6 +745,7 @@ function IDEContent() {
     const sanitizeRelPath = (p: string) =>
       p
         .replace(/\\/g, "/")
+        .replace(/\/{2,}/g, "/")
         .replace(/^[A-Za-z]:[\/]/, "")
         .replace(/^\/+/, "");
 
@@ -825,7 +868,7 @@ function IDEContent() {
     if (result) {
       setTabs([]);
       setActiveTabPath(null);
-      setWorkspaceRoot(result.path);
+      setWorkspaceRoot(normalizePath(result.path));
     }
   }, []);
 

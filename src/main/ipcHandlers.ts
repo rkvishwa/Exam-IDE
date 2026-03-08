@@ -157,7 +157,23 @@ export function registerFsHandlers(ipcMain: IpcMain, dialog: Dialog): void {
       if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });
       }
-      fs.renameSync(oldPath, newPath);
+
+      // Detect case-only rename (e.g. File.txt → file.txt).  On case-insensitive
+      // file systems (Windows, default macOS) fs.renameSync silently succeeds but
+      // may not actually change the on-disk name.  Use a two-step rename via a
+      // temporary name to force the change.
+      const oldBase = path.basename(oldPath);
+      const newBase = path.basename(newPath);
+      const isCaseOnlyRename =
+        oldBase !== newBase && oldBase.toLowerCase() === newBase.toLowerCase();
+
+      if (isCaseOnlyRename) {
+        const tmpPath = oldPath + '.__rename_tmp__';
+        fs.renameSync(oldPath, tmpPath);
+        fs.renameSync(tmpPath, newPath);
+      } else {
+        fs.renameSync(oldPath, newPath);
+      }
     } catch (err) {
       throw new Error(`Failed to rename item: ${(err as Error).message}`);
     }

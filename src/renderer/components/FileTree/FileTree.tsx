@@ -267,7 +267,15 @@ function FileTreeNode({
     if (newName !== node.name && newName.trim()) {
       const dir = node.path.split(/[\\/]/).slice(0, -1).join("/");
       const newPath = `${dir}/${newName.trim()}`;
-      await window.electronAPI.fs.renameItem(node.path, newPath);
+      try {
+        await window.electronAPI.fs.renameItem(node.path, newPath);
+      } catch (err) {
+        console.error("Local rename failed:", err);
+        onRefresh();
+        return;
+      }
+      // Broadcast the rename to collaboration peers even if the tab update
+      // below encounters an issue – this is the critical sync step.
       onFileRenamed?.(node.path, newPath);
       onRefresh();
     }
