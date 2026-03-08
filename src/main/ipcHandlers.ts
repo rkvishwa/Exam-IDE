@@ -140,6 +140,7 @@ export function registerFsHandlers(ipcMain: IpcMain, dialog: Dialog): void {
         fs.unlinkSync(itemPath);
       }
     } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return;
       throw new Error(`Failed to delete item: ${(err as Error).message}`);
     }
   });
