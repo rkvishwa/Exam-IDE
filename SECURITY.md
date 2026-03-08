@@ -4,10 +4,10 @@
 
 Currently, only the latest release of Sonar Code Editor receives security updates.
 
-| Version | Supported |
-| ------- | --------- |
-| 1.0.x   | ✅        |
-| < 1.0   | ❌        |
+| Version    | Supported |
+| ---------- | --------- |
+| 1.0.x-beta | ✅        |
+| < 1.0-beta | ❌        |
 
 ## 🛡️ IDE Security Restrictions
 

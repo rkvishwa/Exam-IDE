@@ -1,6 +1,6 @@
 {
   "name": "sonar-ide",
-  "version": "1.0.0",
+  "version": "1.0.0-beta",
   "description": "Sonar Code Editor & Monitoring System",
   "main": "dist/main/main/main.js",
   "author": "Sonar",
