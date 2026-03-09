@@ -27,6 +27,17 @@ jobs:
       - name: Set App Version dynamic
         run: npm --no-git-tag-version version 1.0.0-beta.${{ github.run_number }}
 
+      - name: Create .env file
+        shell: bash
+        run: |
+          echo "VITE_APPWRITE_ENDPOINT=${{ secrets.VITE_APPWRITE_ENDPOINT }}" >> .env
+          echo "VITE_APPWRITE_PROJECT_ID=${{ secrets.VITE_APPWRITE_PROJECT_ID }}" >> .env
+          echo "VITE_APPWRITE_DB_NAME=${{ secrets.VITE_APPWRITE_DB_NAME }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_TEAMS=${{ secrets.VITE_APPWRITE_COLLECTION_TEAMS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_SESSIONS=${{ secrets.VITE_APPWRITE_COLLECTION_SESSIONS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS=${{ secrets.VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_REPORTS=${{ secrets.VITE_APPWRITE_COLLECTION_REPORTS }}" >> .env
+
       - name: Build macOS app (DMG)
         run: npm run package:mac
         env:
@@ -56,6 +67,17 @@ jobs:
 
       - name: Set App Version dynamic
         run: npm --no-git-tag-version version 1.0.0-beta.${{ github.run_number }}
+
+      - name: Create .env file
+        shell: bash
+        run: |
+          echo "VITE_APPWRITE_ENDPOINT=${{ secrets.VITE_APPWRITE_ENDPOINT }}" >> .env
+          echo "VITE_APPWRITE_PROJECT_ID=${{ secrets.VITE_APPWRITE_PROJECT_ID }}" >> .env
+          echo "VITE_APPWRITE_DB_NAME=${{ secrets.VITE_APPWRITE_DB_NAME }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_TEAMS=${{ secrets.VITE_APPWRITE_COLLECTION_TEAMS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_SESSIONS=${{ secrets.VITE_APPWRITE_COLLECTION_SESSIONS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS=${{ secrets.VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_REPORTS=${{ secrets.VITE_APPWRITE_COLLECTION_REPORTS }}" >> .env
 
       - name: Build Windows app (EXE)
         run: npm run package:win
