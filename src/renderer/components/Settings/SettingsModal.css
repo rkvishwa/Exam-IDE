@@ -30,11 +30,14 @@
 .vscode-settings-tab {
   padding: 0 16px;
   line-height: 35px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
   border-top: 1px solid transparent;
   cursor: default;
   -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .vscode-settings-tab.active {
@@ -43,24 +46,25 @@
   background-color: var(--bg-primary);
 }
 
-.vscode-settings-back {
-  margin-left: 8px;
+.vscode-settings-tab-close {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-primary, #ccc);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  width: 28px;
+  height: 22px;
+  width: 22px;
   border-radius: 4px;
-  -webkit-app-region: no-drag;
+  padding: 0;
+  margin-left: 4px;
+  opacity: 0.8;
 }
 
-.vscode-settings-back:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
+.vscode-settings-tab-close:hover {
+  background-color: var(--bg-hover, #2a2d2e);
+  opacity: 1;
 }
 
 .vscode-settings-searchbar-container {
