@@ -287,10 +287,12 @@ export default function SettingsModal({
         className="vscode-settings-header-tabs"
         style={{ paddingLeft: isWindows ? "0px" : "75px" }}
       >
-        <button className="vscode-settings-back" onClick={onClose} title="Back">
-          <ArrowLeft size={16} />
-        </button>
-        <div className="vscode-settings-tab active">Settings</div>
+        <div className="vscode-settings-tab active">
+          Settings
+          <button className="vscode-settings-tab-close" onClick={onClose} title="Close">
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="vscode-settings-searchbar-container">

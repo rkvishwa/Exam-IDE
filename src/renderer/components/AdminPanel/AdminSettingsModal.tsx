@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Users, LogOut, Settings, Key, CheckCircle2, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Search, ArrowLeft, X, Users, LogOut, Settings, Key, CheckCircle2, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { updateTeamName, updateTeamPassword, flushAllActivityLogs, getGlobalInternetRestriction, setGlobalInternetRestriction } from '../../services/appwrite';
 import { cacheCredentials } from '../../services/localStore';
 import { Team } from '../../../shared/types';
@@ -182,8 +182,12 @@ export default function AdminSettingsModal({
         className="vscode-settings-header-tabs"
         style={{ paddingLeft: isWindows ? '0px' : '75px' }}
       >
-        <div className="vscode-settings-tab active">Admin Settings</div>
-        <button className="vscode-settings-close" onClick={onClose}><X size={16} /></button>
+        <div className="vscode-settings-tab active">
+          Admin Settings
+          <button className="vscode-settings-tab-close" onClick={onClose} title="Close">
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="vscode-settings-searchbar-container">
