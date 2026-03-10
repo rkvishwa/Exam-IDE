@@ -10,7 +10,7 @@
 </script>
 
 <div class="min-h-screen flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-50 font-sans selection:bg-blue-500/30 transition-colors duration-200">
-	<header class="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl">
+	<header class="fixed top-0 z-[100] w-full border-b border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-[#0a0a0f]/70 backdrop-blur-[12px]">
 		<div class="container mx-auto px-6 h-16 flex items-center justify-between">
 			<a href="/" class="flex items-center space-x-3 text-xl font-bold">
 				<img src="/favicon.png" alt="Sonar Code Editor Icon" class="w-7 h-7 drop-shadow-sm" />
@@ -69,3 +69,4 @@
 		</div>
 	</footer>
 </div>
+
