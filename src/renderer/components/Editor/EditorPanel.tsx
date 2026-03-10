@@ -142,6 +142,8 @@ const EditorPanel = React.memo(function EditorPanel({
 }: EditorPanelProps) {
   const activeTab = tabs.find((t) => t.path === activeTabPath);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  // Guard to prevent auto-close handler from re-triggering on its own executeEdits
+  const isLocalAutoCloseRef = useRef(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const boundFileRef = useRef<string | null>(null);
@@ -213,6 +215,12 @@ const EditorPanel = React.memo(function EditorPanel({
     // For HTML-like languages, auto-insert closing tag when typing '>'
     const htmlLanguages = ["html", "xml", "php", "handlebars", "razor"];
     editor.onDidChangeModelContent((e) => {
+      // Skip if this is our own auto-close edit (prevents re-entrancy)
+      if (isLocalAutoCloseRef.current) return;
+      // Skip remote collaboration changes — y-monaco applies bulk syncs
+      // with isFlush=true, which would otherwise trigger a duplicate
+      // closing tag on every remote peer.
+      if (e.isFlush) return;
       const model = editor.getModel();
       if (!model) return;
       const lang = model.getLanguageId();
@@ -251,6 +259,7 @@ const EditorPanel = React.memo(function EditorPanel({
             if (voidElements.includes(tagName.toLowerCase())) return;
 
             const closingTag = `</${tagName}>`;
+            isLocalAutoCloseRef.current = true;
             editor.executeEdits("auto-close-tag", [
               {
                 range: new monaco.Range(
@@ -264,6 +273,7 @@ const EditorPanel = React.memo(function EditorPanel({
             ]);
             // Keep cursor between opening and closing tags
             editor.setPosition(position);
+            isLocalAutoCloseRef.current = false;
           }
         }
       }
