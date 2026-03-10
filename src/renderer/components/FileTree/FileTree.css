@@ -109,6 +109,11 @@
   transition: background 0.1s;
   color: var(--text-secondary);
   min-height: 26px;
+  outline: none;
+}
+
+.tree-node:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .platform-windows .tree-node {

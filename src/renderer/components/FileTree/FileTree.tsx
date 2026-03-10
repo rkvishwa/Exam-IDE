@@ -544,8 +544,27 @@ function FileTreeNode({
       <div
         className={`tree-node ${isActive ? "active" : ""} ${isSelected ? "selected-folder" : ""}`}
         style={{ paddingLeft: `${depth * INDENT_PX + 8}px` }}
+        onKeyDown={(e) => {
+          if (renaming) return;
+          if (e.key === "F2") {
+            e.preventDefault();
+            startRename();
+          } else if (e.key === "Delete" || e.key === "Del") {
+            e.preventDefault();
+            handleDeleteMenuClick();
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (node.type === "file") onFileClick(node.path, node.name);
+            else {
+              onSelectFolder(node.path);
+              toggleExpanded();
+            }
+          }
+        }}
+        tabIndex={0}
         onClick={(e) => {
           e.stopPropagation();
+          (e.currentTarget as HTMLElement).focus();
           if (node.type === "file") onFileClick(node.path, node.name);
           else {
             onSelectFolder(node.path);
