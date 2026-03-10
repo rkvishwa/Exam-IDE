@@ -838,22 +838,42 @@ function IDEContent() {
           };
         })
       );
-      try {
-        const wsRoot = workspaceRootRef.current;
-        if (collabActiveRef.current && wsRoot) {
-          const relativePath = toRelativePath(fullPath, wsRoot);
-          const existingTab = tabsRef.current.find((t) => t.path === fullPath);
-          const broadcastContent = isRestore ? (existingTab?.content ?? "") : "";
+      
+      const asyncBroadcast = async () => {
+        try {
+          const wsRoot = workspaceRootRef.current;
+          if (collabActiveRef.current && wsRoot) {
+            const relativePath = toRelativePath(fullPath, wsRoot);
+            let broadcastContent = "";
+            
+            if (isRestore) {
+              try {
+                broadcastContent = await window.electronAPI.fs.readFile(fullPath);
+                
+                setTabs((prev) =>
+                  prev.map((t) =>
+                    t.path === fullPath ? { ...t, content: broadcastContent } : t
+                  )
+                );
+              } catch (readErr) {
+                console.warn("Failed to read restored file:", readErr);
+                const existingTab = tabsRef.current.find((t) => t.path === fullPath);
+                broadcastContent = existingTab?.content ?? "";
+              }
+            }
 
-          broadcastFileOpRef.current({
-            type: "create-file",
-            relativePath,
-            content: broadcastContent,
-          });
+            broadcastFileOpRef.current({
+              type: "create-file",
+              relativePath,
+              content: broadcastContent,
+            });
+          }
+        } catch (err) {
+          console.error('broadcastFileOp create-file failed:', err);
         }
-      } catch (err) {
-        console.error('broadcastFileOp create-file failed:', err);
-      }
+      };
+      
+      asyncBroadcast();
     },
     [],
   );
