@@ -530,12 +530,17 @@ const EditorPanel = React.memo(function EditorPanel({
               />
             ) : (
               <MonacoEditor
+                key={`${tab.path}-${collaborationActive ? 'collab' : 'solo'}`}
                 height="100%"
                 language={tab.language}
                 // When collaboration is active, don't pass value prop - let y-monaco control content
                 // This prevents cursor jumping when multiple users edit the same line
                 {...(!collaborationActive && { value: tab.content })}
-                defaultValue={tab.content}
+                defaultValue={
+                  collaborationActive && getCollaborativeContent
+                    ? (getCollaborativeContent(tab.path) ?? tab.content)
+                    : tab.content
+                }
                 theme={theme === "light" ? "vs-light" : "vs-dark"}
                 options={getEditorOptions(wordWrap)}
                 onMount={(mountedEditor, mountedMonaco) => {
@@ -546,9 +551,11 @@ const EditorPanel = React.memo(function EditorPanel({
                   if (value !== undefined) {
                     if (!collaborationActive) {
                       onContentChange(tab.path, value);
-                    } else if (tab.isPreviewFile) {
-                      // Pin the tab when editing in collaboration mode
-                      onTabDoubleClick?.(tab.path);
+                    } else {
+                      // During collaboration, pin preview tabs on edit
+                      if (tab.isPreviewFile) {
+                        onTabDoubleClick?.(tab.path);
+                      }
                     }
                   }
                 }}
