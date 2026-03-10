@@ -826,48 +826,25 @@ function IDEContent() {
   );
 
   const handleFileCreated = useCallback(
-    (fullPath: string, _name: string, isRestore?: boolean) => {
-      const asyncProcess = async () => {
-        let finalContent = "";
-
-        if (isRestore) {
-          try {
-            finalContent = await window.electronAPI.fs.readFile(fullPath);
-          } catch (readErr) {
-            console.warn("Failed to read restored file from disk:", readErr);
-            const existingTab = tabsRef.current.find((t) => t.path === fullPath);
-            finalContent = existingTab?.content ?? "";
-          }
+    (fullPath: string, _name: string) => {
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.path === fullPath ? { ...t, isDeleted: false } : t
+        )
+      );
+      try {
+        const wsRoot = workspaceRootRef.current;
+        if (collabActiveRef.current && wsRoot) {
+          const relativePath = toRelativePath(fullPath, wsRoot);
+          broadcastFileOpRef.current({
+            type: "create-file",
+            relativePath,
+            content: "",
+          });
         }
-
-        setTabs((prev) =>
-          prev.map((t) => {
-            if (t.path !== fullPath) return t;
-            return {
-              ...t,
-              isDeleted: false,
-              content: isRestore ? finalContent : "",
-              isDirty: isRestore ? t.isDirty : false,
-            };
-          })
-        );
-
-        try {
-          const wsRoot = workspaceRootRef.current;
-          if (collabActiveRef.current && wsRoot) {
-            const relativePath = toRelativePath(fullPath, wsRoot);
-            broadcastFileOpRef.current({
-              type: "create-file",
-              relativePath,
-              content: isRestore ? finalContent : "",
-            });
-          }
-        } catch (err) {
-          console.error("broadcastFileOp create-file failed:", err);
-        }
-      };
-
-      asyncProcess();
+      } catch (err) {
+        console.error('broadcastFileOp create-file failed:', err);
+      }
     },
     [],
   );
@@ -939,7 +916,7 @@ function IDEContent() {
               }
               setTabs((prev) =>
                 prev.map((t) =>
-                  t.path === fullPath ? { ...t, isDeleted: false, content: op.content || "", isDirty: false } : t
+                  t.path === fullPath ? { ...t, isDeleted: false } : t
                 )
               );
               break;

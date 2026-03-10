@@ -1002,25 +1002,7 @@ export function CollaborationProvider({
         timestamp: Date.now(),
         clientId: providerRef.current.awareness.clientID,
       };
-
-      ydocRef.current.transact(() => {
-        if (fullOp.type === "delete" && !fullOp.isDirectory) {
-          const docName = fullOp.relativePath.replace(/[^a-zA-Z0-9]/g, "_");
-          const ytext = ydocRef.current!.getText(docName);
-          ytext.delete(0, ytext.length);
-        } else if (fullOp.type === "create-file") {
-          const docName = fullOp.relativePath.replace(/[^a-zA-Z0-9]/g, "_");
-          const ytext = ydocRef.current!.getText(docName);
-          if (ytext.length > 0) {
-            ytext.delete(0, ytext.length);
-          }
-          if (fullOp.content) {
-            ytext.insert(0, fullOp.content);
-          }
-        }
-        fileOpsArray.push([fullOp]);
-      });
-
+      fileOpsArray.push([fullOp]);
       console.log(
         "Broadcast file operation:",
         fullOp.type,

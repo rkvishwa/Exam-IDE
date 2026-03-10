@@ -265,7 +265,7 @@ interface FileTreeNodeProps {
   onFileOpened: (path: string, name: string) => void;
   onFileDeleted: (path: string, type: "file" | "directory") => void;
   onFileRenamed?: (oldPath: string, newPath: string) => void;
-  onFileCreated?: (path: string, name: string, isRestore?: boolean) => void;
+  onFileCreated?: (path: string, name: string) => void;
   onFolderCreated?: (path: string) => void;
 }
 
@@ -372,7 +372,7 @@ function FileTreeNode({
       if (itemType === "file") {
         await window.electronAPI.fs.createFile(fullPath);
         await loadChildren();
-        onFileCreated?.(fullPath, name, false);
+        onFileCreated?.(fullPath, name);
         onFileOpened(fullPath, name);
       } else {
         await window.electronAPI.fs.createFolder(fullPath);
@@ -408,7 +408,7 @@ function FileTreeNode({
         type: node.type,
         onRestored: () => {
             if (node.type === "file") {
-               onFileCreated?.(node.path, node.name, true);
+               onFileCreated?.(node.path, node.name);
             } else {
                onFolderCreated?.(node.path);
             }
@@ -720,7 +720,7 @@ interface FileTreeProps {
   newFileTrigger?: number;
   onFileDeleted?: (path: string, type: "file" | "directory") => void;
   onFileRenamed?: (oldPath: string, newPath: string) => void;
-  onFileCreated?: (path: string, name: string, isRestore?: boolean) => void;
+  onFileCreated?: (path: string, name: string) => void;
   onFolderCreated?: (path: string) => void;
   refreshTrigger?: number;
 }
