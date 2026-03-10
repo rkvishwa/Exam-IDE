@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { EditorFeaturesProvider } from './context/EditorFeaturesContext';
 import Login from './pages/Login';
 import IDE from './pages/IDE';
 import AdminDashboard from './pages/AdminDashboard';
@@ -239,9 +240,11 @@ export default function App() {
 
   return (
     <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <EditorFeaturesProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </EditorFeaturesProvider>
     </Router>
   );
 }

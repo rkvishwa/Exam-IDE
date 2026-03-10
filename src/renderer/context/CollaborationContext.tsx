@@ -183,6 +183,8 @@ export function CollaborationProvider({
   // Subscribe to status changes from main process
   // Note: connectedUsers is now tracked via Yjs awareness, not from main process
   useEffect(() => {
+    if (!window.electronAPI?.collaboration) return;
+
     const unsubscribe = window.electronAPI.collaboration.onStatusChange(
       (newStatus) => {
         setStatus(newStatus);

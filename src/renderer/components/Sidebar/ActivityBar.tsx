@@ -138,16 +138,6 @@ export default function ActivityBar({
           <Users size={22} strokeWidth={1.5} />
           {isCollaborating && <span className="collab-indicator" />}
         </button>
-      </div>
-
-      <div className="activity-bottom">
-        <button
-          className="activity-action"
-          onClick={onOpenSettings}
-          title="Settings"
-        >
-          <Settings size={22} strokeWidth={1.5} />
-        </button>
 
         <div
           className="user-profile-container"
@@ -160,6 +150,16 @@ export default function ActivityBar({
             className={`status-dot profile-status ${isOnline ? "online" : "offline"}`}
           />
         </div>
+      </div>
+
+      <div className="activity-bottom">
+        <button
+          className="activity-action"
+          onClick={onOpenSettings}
+          title="Settings"
+        >
+          <Settings size={22} strokeWidth={1.5} />
+        </button>
 
         <button className="activity-action" onClick={onLogout} title="Sign Out">
           <LogOut size={22} strokeWidth={1.5} />

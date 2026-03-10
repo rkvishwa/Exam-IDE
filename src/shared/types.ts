@@ -187,3 +187,72 @@ export interface CollaborationStatus {
   connectedUsers: CollaborationUser[];
   networkName?: string;
 }
+
+// ---- Admin-controlled Editor Feature Toggles ----
+export interface EditorFeatureToggles {
+  intellisenseSuggest: boolean;
+  snippetSuggestions: boolean;
+  parameterHints: boolean;
+  hover: boolean;
+  goToDefinition: boolean;
+  goToDeclaration: boolean;
+  goToImplementation: boolean;
+  findReferences: boolean;
+  renameSymbol: boolean;
+  codeActionsQuickFixes: boolean;
+  formatDocument: boolean;
+  formatSelection: boolean;
+  autoClosingBrackets: boolean;
+  autoClosingQuotes: boolean;
+  autoClosingComments: boolean;
+  autoClosingDelete: boolean;
+  autoClosingOvertype: boolean;
+  autoSurround: boolean;
+  htmlTagAutoSuggest: boolean;
+  closingTagAutoComplete: boolean;
+  codeLens: boolean;
+  inlineHints: boolean;
+  inlayHints: boolean;
+  lightbulbActions: boolean;
+  peekDefinition: boolean;
+  peekReferences: boolean;
+  markersDiagnostics: boolean;
+  errorSquiggles: boolean;
+  warningSquiggles: boolean;
+  codeCompletionTriggerCharacters: boolean;
+  linkedEditing: boolean;
+}
+
+export const DEFAULT_FEATURE_TOGGLES: EditorFeatureToggles = {
+  intellisenseSuggest: false,
+  snippetSuggestions: false,
+  parameterHints: false,
+  hover: false,
+  goToDefinition: false,
+  goToDeclaration: false,
+  goToImplementation: false,
+  findReferences: false,
+  renameSymbol: false,
+  codeActionsQuickFixes: false,
+  formatDocument: false,
+  formatSelection: false,
+  autoClosingBrackets: false,
+  autoClosingQuotes: false,
+  autoClosingComments: false,
+  autoClosingDelete: false,
+  autoClosingOvertype: false,
+  autoSurround: false,
+  htmlTagAutoSuggest: false,
+  closingTagAutoComplete: false,
+  codeLens: false,
+  inlineHints: false,
+  inlayHints: false,
+  lightbulbActions: false,
+  peekDefinition: false,
+  peekReferences: false,
+  markersDiagnostics: false,
+  errorSquiggles: false,
+  warningSquiggles: false,
+  codeCompletionTriggerCharacters: false,
+  linkedEditing: false,
+};

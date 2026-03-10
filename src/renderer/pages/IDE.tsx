@@ -17,6 +17,7 @@ import CollaborationModal from "../components/Collaboration/CollaborationModal";
 import { useMonitoring } from "../hooks/useMonitoring";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useActivityLogger } from "../hooks/useActivityLogger";
+import { useEditorFeatures } from "../context/EditorFeaturesContext";
 import "./IDE.css";
 
 export interface OpenTab {
@@ -138,10 +139,27 @@ export default function IDE() {
 function IDEContent() {
   const { user, logout } = useAuth();
   const isOnline = useNetworkStatus();
+  const { featureToggles } = useEditorFeatures();
   const collaboration = useCollaboration();
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
   const [tabs, setTabs] = useState<OpenTab[]>([]);
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
+
+  // Auto-launch a blank file if there are no tabs and no workspace
+  useEffect(() => {
+    if (tabs.length === 0 && !workspaceRoot) {
+      const defaultPath = "Untitled-1.html";
+      setTabs([{
+        path: defaultPath,
+        name: "Untitled-1.html",
+        content: "<!-- Auto-generated scratchpad -->\n<html>\n  <body>\n    \n  </body>\n</html>\n",
+        isDirty: false,
+        language: "html",
+        isPreviewFile: false,
+      }]);
+      setActiveTabPath(defaultPath);
+    }
+  }, []);
   const [showPreview, setShowPreview] = useState(true);
   const [showExplorer, setShowExplorer] = useState(true);
   const [theme, setTheme] = useState(
@@ -1146,6 +1164,7 @@ function IDEContent() {
               onEditorMount={collaboration.bindEditor}
               onEditorUnmount={collaboration.unbindEditor}
               wordWrap={wordWrap}
+              featureToggles={featureToggles}
             />
           </Panel>
           {showPreview && (

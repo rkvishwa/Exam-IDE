@@ -615,3 +615,71 @@ export function subscribeToSettings(callback: (blocked: boolean) => void): () =>
 }
 
 export { client, databases };
+
+// ---- Editor Feature Toggles ----
+
+import { EditorFeatureToggles, DEFAULT_FEATURE_TOGGLES } from '../../shared/types';
+
+export async function getEditorFeatureToggles(): Promise<EditorFeatureToggles> {
+  try {
+    const res = await databases.listDocuments(DB_ID, COL_SETTINGS, [
+      Query.limit(500),
+    ]);
+    const toggles = { ...DEFAULT_FEATURE_TOGGLES };
+    res.documents.forEach((doc: any) => {
+      if (doc.settingType in toggles) {
+        (toggles as any)[doc.settingType] = doc.settingValue === 'true';
+      }
+    });
+    return toggles;
+  } catch {
+    return { ...DEFAULT_FEATURE_TOGGLES };
+  }
+}
+
+export async function saveEditorFeatureToggles(toggles: EditorFeatureToggles): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await databases.listDocuments(DB_ID, COL_SETTINGS, [
+      Query.limit(500),
+    ]);
+    const existingDocs = new Map(res.documents.map((d: any) => [d.settingType, d]));
+
+    const promises = Object.entries(toggles).map(async ([key, value]) => {
+      const stringVal = String(value); // "true" or "false"
+      const existing = existingDocs.get(key);
+      
+      if (existing) {
+        if (existing.settingValue !== stringVal) {
+          return databases.updateDocument(DB_ID, COL_SETTINGS, existing.$id, {
+            settingValue: stringVal,
+          });
+        }
+      } else {
+        return databases.createDocument(DB_ID, COL_SETTINGS, ID.unique(), {
+          settingType: key,
+          settingValue: stringVal,
+        });
+      }
+    });
+
+    await Promise.all(promises);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to save feature toggles' };
+  }
+}
+
+export function subscribeToEditorFeatures(callback: (key: keyof EditorFeatureToggles, value: boolean) => void): () => void {
+  const unsub = client.subscribe(
+    `databases.${DB_ID}.collections.${COL_SETTINGS}.documents`,
+    (response: RealtimeResponseEvent<any>) => {
+      if (response.events.some((e) => e.includes('create') || e.includes('update'))) {
+        const type = response.payload.settingType;
+        if (type in DEFAULT_FEATURE_TOGGLES) {
+          callback(type as keyof EditorFeatureToggles, response.payload.settingValue === 'true');
+        }
+      }
+    }
+  );
+  return unsub;
+}
