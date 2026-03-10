@@ -18,136 +18,9 @@
 	import { onMount } from 'svelte';
 
 	let mounted = $state(false);
-	let canvas: HTMLCanvasElement;
-
 	onMount(() => {
-mounted = true;
-if (!canvas) return;
-const ctx = canvas.getContext('2d');
-if (!ctx) return;
-
-let width = 0;
-let height = 0;
-let animationFrame: number;
-
-const resize = () => {
-const rect = canvas.getBoundingClientRect();
-width = rect.width;
-height = rect.height;
-canvas.width = width * window.devicePixelRatio;
-canvas.height = height * window.devicePixelRatio;
-ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-};
-
-window.addEventListener('resize', resize);
-resize();
-
-const symbols = ['<html>', '</div>', '.class {}', 'const', '=>', '#id', '@media', 'flex', 'var()', 'import'];
-const colors = ['#38aaff', '#7dd3fc', '#ffffff'];
-
-class Meteor {
-x: number = 0;
-y: number = 0;
-speed: number = 0;
-angle: number = 0;
-symbol: string = '';
-color: string = '';
-size: number = 0;
-opacity: number = 0;
-history: {x: number, y: number}[] = [];
-
-constructor(resetToTop = false) {
-this.init(resetToTop);
-}
-
-init(resetToTop = false) {
-// Origin around 50% horizontally, 30% from top
-const originX = width * 0.5;
-const originY = height * 0.3;
-
-this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
-this.color = colors[Math.floor(Math.random() * colors.length)];
-this.size = Math.random() * 6 + 12; // 12px to 18px
-this.opacity = Math.random() * 0.2 + 0.35; // 0.35 to 0.55
-
-this.speed = Math.random() * 1.2 + 0.3; // 0.3 to 1.5 speed
-
-// Angle: 360 degrees outward from center
-this.angle = Math.random() * Math.PI * 2;
-
-if (resetToTop) {
-this.x = originX;
-this.y = originY;
-} else {
-// Disperse initially
-let dist = Math.random() * Math.max(width, height);
-this.x = originX + Math.cos(this.angle) * dist;
-this.y = originY + Math.sin(this.angle) * dist;
-}
-
-this.history = [];
-}
-
-update() {
-this.history.push({x: this.x, y: this.y});
-if (this.history.length > 5) {
-this.history.shift();
-}
-
-this.x += Math.cos(this.angle) * this.speed;
-this.y += Math.sin(this.angle) * this.speed;
-
-if (this.x < -100 || this.x > width + 100 || this.y < -100 || this.y > height + 100) {
-this.init(true);
-}
-}
-
-draw(ctx: CanvasRenderingContext2D) {
-ctx.font = this.size.toString() + 'px monospace';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-
-// Draw history trail
-for (let i = 0; i < this.history.length; i++) {
-const point = this.history[i];
-const histOpacity = this.opacity * ((i + 1) / this.history.length) * 0.4;
-ctx.fillStyle = this.color;
-ctx.globalAlpha = histOpacity;
-ctx.fillText(this.symbol, point.x, point.y);
-}
-
-// Draw current meteor
-ctx.globalAlpha = this.opacity;
-ctx.fillStyle = this.color;
-ctx.fillText(this.symbol, this.x, this.y);
-}
-}
-
-const meteors: Meteor[] = [];
-for (let i = 0; i < 35; i++) {
-meteors.push(new Meteor(false));
-}
-
-const drawScene = () => {
-if (!ctx) return;
-ctx.clearRect(0, 0, width, height);
-
-for (let meteor of meteors) {
-meteor.update();
-meteor.draw(ctx);
-}
-
-ctx.globalAlpha = 1;
-animationFrame = requestAnimationFrame(drawScene);
-};
-
-drawScene();
-
-return () => {
-window.removeEventListener('resize', resize);
-cancelAnimationFrame(animationFrame);
-};
-});
+		mounted = true;
+	});
 </script>
 
 <svelte:head>
@@ -156,61 +29,133 @@ cancelAnimationFrame(animationFrame);
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="relative flex flex-col items-center justify-center text-center px-4 pt-28 sm:pt-36 xl:pt-44 pb-20 overflow-hidden min-h-screen bg-[#050508]">
-	
-	<!-- Radial fade mask for top/sides -->
-<div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at top, transparent 20%, #050508 80%);"></div>
+<section class="relative flex flex-col items-start justify-center px-4 sm:px-8 lg:px-[10%] pt-28 sm:pt-36 xl:pt-44 pb-20 overflow-hidden min-h-screen bg-[#fafafa] dark:bg-[#050508]">
 
-<!-- Meteor Shower Canvas -->
-<div class="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-<canvas bind:this={canvas} class="w-full h-full"></canvas>
+<!-- Radial fade mask for top/sides -->
+<div class="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_top,transparent_20%,#fafafa_80%)] dark:bg-[radial-gradient(circle_at_top,transparent_20%,#050508_80%)]"></div>
+
+<!-- Hero Two-Column Layout -->
+<div class="relative z-10 w-full max-w-[1400px] mx-auto flex flex-col lg:flex-row items-center justify-start text-left">
+
+<!-- Left Column Component -->
+<div class="flex flex-col items-start w-full lg:w-1/2" class:animate-hero-in={mounted}>
+
+
+
+<!-- Logo mark -->
+<div class="mb-6 hero-stagger-2">
+<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 flex items-center justify-center shadow-xl shadow-blue-500/20 dark:shadow-blue-400/20">
+<img src="/favicon.png" alt="Sonar Icon" class="w-10 h-10 sm:w-12 sm:h-12 brightness-0 invert" />
+</div>
 </div>
 
-	<!-- Hero Content -->
-	<div class="relative z-10 flex flex-col items-center" class:animate-hero-in={mounted}>
-		<!-- Top pill badge -->
-		<div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-blue-50/80 dark:bg-blue-500/[0.08] border border-blue-200/50 dark:border-blue-400/[0.12] text-blue-600 dark:text-blue-400 text-[13px] font-medium mb-8 backdrop-blur-sm hero-stagger-1">
-			<Sparkles size={13} class="opacity-80" />
-			<span>Open-source supervised coding</span>
-		</div>
+<!-- Heading -->
+<h1 class="text-[clamp(3rem,6vw,5rem)] font-bold tracking-tight leading-[1.1] text-zinc-900 dark:text-white mb-5 hero-stagger-3">
+The IDE built for<br/>
+<span class="relative whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-400 animate-gradient bg-[length:200%_auto]">
+supervision<span class="animate-pulse text-cyan-400 inline-block -ml-1">_</span>
+</span>
+</h1>
 
-		<!-- Logo mark -->
-		<div class="mb-6 hero-stagger-2">
-			<div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 flex items-center justify-center shadow-xl shadow-blue-500/20 dark:shadow-blue-400/20">
-				<img src="/favicon.png" alt="Sonar Icon" class="w-10 h-10 sm:w-12 sm:h-12 brightness-0 invert" />
-			</div>
-		</div>
+<!-- Subtitle -->
+<p class="text-base sm:text-lg text-zinc-500 dark:text-zinc-400 max-w-[520px] mb-10 leading-relaxed hero-stagger-4">
+Real-time collaboration, exam monitoring, and secure coding � powered by Monaco and Electron.
+</p>
 
-		<!-- Heading -->
-		<h1 class="text-[2.5rem] sm:text-6xl lg:text-7xl font-bold tracking-tight max-w-3xl mx-auto leading-[1.1] text-zinc-900 dark:text-white mb-5 hero-stagger-3">
-			The IDE built for
-			<span class="relative whitespace-nowrap">
-				<span class="relative text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-400 animate-gradient bg-[length:200%_auto]">
-					supervision
-				</span>
-			</span>
-		</h1>
-		
-		<!-- Subtitle -->
-		<p class="text-base sm:text-lg text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mb-10 leading-relaxed hero-stagger-4">
-			Real-time collaboration, exam monitoring, and secure coding — powered by Monaco and Electron.
-		</p>
-		
-		<!-- CTA buttons -->
-		<div class="flex flex-col sm:flex-row items-center gap-3 hero-stagger-5">
-			<a href="/download" class="group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
-				<Download size={15} />
-				<span>Download for Windows</span>
-			</a>
-			<a href="/docs" class="group w-full sm:w-auto px-6 py-2.5 bg-white/70 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.1] backdrop-blur-md text-zinc-700 dark:text-zinc-300 font-medium rounded-lg flex items-center justify-center gap-2 border border-zinc-200/80 dark:border-white/[0.08] text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm">
-				<span>Read Docs</span>
-				<ArrowRight size={14} class="opacity-50 group-hover:translate-x-0.5 transition-transform" />
-			</a>
-		</div>
-	</div>
+<!-- CTA buttons -->
+<div class="flex flex-col sm:flex-row items-center justify-start gap-4 hero-stagger-5 w-full">
+<a href="/download" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
+<Download size={15} />
+<span>Download for Windows</span>
+</a>
+<a href="/download-mac" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
+<Download size={15} />
+<span>Download for Mac</span>
+</a>
+<a href="/docs" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-white/70 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.1] backdrop-blur-md text-zinc-700 dark:text-zinc-300 font-medium rounded-lg flex items-center justify-center gap-2 border border-zinc-200/80 dark:border-white/[0.08] text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm">
+<span>Read Docs</span>
+<ArrowRight size={14} class="opacity-50 group-hover:translate-x-0.5 transition-transform" />
+</a>
+</div>
+</div>
 
-	<!-- Dashboard Preview -->
-	<div class="mt-20 sm:mt-28 max-w-4xl w-full relative z-10" class:animate-float-in={mounted}>
+<!-- Right Column -->
+    <div class="hidden lg:block w-1/2 relative h-[500px] overflow-hidden rounded-xl" style="mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);">
+      <!-- Dark mode images -->
+      <div class="absolute inset-0 flex-col gap-4 h-full w-full hidden dark:flex">
+          <!-- Row 1 -->
+          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-fast w-max">
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <!-- Duplicated for seamless loop -->
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/1.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/2.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+          </div>
+          <!-- Row 2 (staggered) -->
+          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-slow w-max ml-[-200px]">
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <!-- Duplicated for seamless loop -->
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/3.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/4.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+          </div>
+      </div>
+      <!-- Light mode images -->
+      <div class="absolute inset-0 flex-col gap-4 h-full w-full flex dark:hidden">
+          <!-- Row 1 -->
+          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-fast w-max">
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <!-- Duplicated for seamless loop -->
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/6.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+          </div>
+          <!-- Row 2 (staggered) -->
+          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-slow w-max ml-[-200px]">
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <!-- Duplicated for seamless loop -->
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/7.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+              <img src="/gallery/5.jpg" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>
+          </div>
+      </div>
+      </div>
+  </div>
+
+  <!-- Dashboard Preview -->
+	<div class="self-center mt-20 sm:mt-28 max-w-4xl w-full relative z-10" class:animate-float-in={mounted}>
 		<div class="absolute -inset-px bg-gradient-to-b from-blue-500/20 via-transparent to-transparent rounded-2xl"></div>
 		<div class="absolute -inset-4 bg-gradient-to-b from-blue-500/[0.07] to-transparent rounded-3xl blur-2xl"></div>
 		<div class="relative bg-white dark:bg-[#111113] rounded-xl border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl shadow-zinc-300/40 dark:shadow-none overflow-hidden">
@@ -448,7 +393,32 @@ cancelAnimationFrame(animationFrame);
 		from { opacity: 0; transform: translateX(-8px); }
 		to { opacity: 1; transform: translateX(0); }
 	}
+        /* --- Shake button --- */
+        @keyframes shake {
+                0%, 100% { transform: translate(0, -2px); }
+                15% { transform: translate(-4px, -2px); }
+                30% { transform: translate(4px, -2px); }
+                45% { transform: translate(-3px, -2px); }
+                60% { transform: translate(3px, -2px); }
+                75% { transform: translate(-2px, -2px); }
+                90% { transform: translate(2px, -2px); }
+        }
+        .shake-btn:hover {
+                animation: shake 0.4s ease;
+        }
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+.animate-marquee-right-fast {
+  animation: marqueeRight 35s linear infinite;
+}
+.animate-marquee-right-slow {
+  animation: marqueeRight 45s linear infinite;
+}
 </style>
+
+
 
 
 
