@@ -452,6 +452,7 @@ const EditorPanel = React.memo(function EditorPanel({
           >
             {tab.type === "preview" ? (
               <PreviewPanel
+                key={workspaceRoot || 'empty'}
                 workspaceRoot={workspaceRoot}
                 activeFilePath={activeFilePath}
                 initialUrl={previewInitialUrl}

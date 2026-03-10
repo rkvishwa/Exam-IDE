@@ -151,7 +151,7 @@ export default function PreviewPanel({ workspaceRoot, activeFilePath, initialUrl
       wv.removeEventListener('console-message', onConsoleMessage);
       wv.removeEventListener('dom-ready', onDomReady);
     };
-  }, [serverUrl]);
+  }, [serverUrl, initialUrl]);
 
   useEffect(() => {
     const handleFileSaved = () => {

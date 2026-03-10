@@ -994,6 +994,10 @@ function IDEContent() {
     null,
   );
 
+  useEffect(() => {
+    setPreviewInitialUrl(null);
+  }, [workspaceRoot]);
+
   const openPreviewInTab = useCallback(
     (urlFromPanel?: string) => {
       const previewPath = "__preview__";
@@ -1149,6 +1153,7 @@ function IDEContent() {
               <PanelResizeHandle className="resize-handle" />
               <Panel id="preview" order={3} defaultSize={20} minSize={15}>
                 <PreviewPanel
+                  key={workspaceRoot || 'empty'}
                   workspaceRoot={workspaceRoot}
                   activeFilePath={activeTabPath}
                   onOpenInTab={openPreviewInTab}
