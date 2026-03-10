@@ -239,6 +239,16 @@ const EditorPanel = React.memo(function EditorPanel({
       format: { contentUnformatted: "" },
     });
 
+    // Enforce LF (Line Feed) line endings universally.
+    // Different OS line endings (CRLF vs LF) cause the number of characters
+    // per line edit to differ between users (2 vs 1). This causes absolute
+    // character offsets to drift apart between clients, breaking y-monaco's
+    // RelativePosition cursor tracking completely.
+    const model = editor.getModel();
+    if (model) {
+      model.setEOL(monaco.editor.EndOfLineSequence.LF);
+    }
+
     // Track local keyboard input.  onKeyDown fires synchronously before
     // the character is inserted (which happens in the browser's `input`
     // event).  We use setTimeout(0) instead of queueMicrotask because
