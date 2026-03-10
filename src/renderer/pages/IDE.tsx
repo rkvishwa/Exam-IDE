@@ -948,15 +948,16 @@ function IDEContent() {
               // re-broadcast the op and create an infinite echo loop)
               setTabs((prev) => {
                 const next = prev.map((t) => {
+                  const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
+                  const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
                   if (op.isDirectory) {
                     if (
-                      t.path.startsWith(fullPath + "/") ||
-                      t.path.startsWith(fullPath + "\\") ||
-                      t.path === fullPath
+                      tNorm.startsWith(fNorm + "/") ||
+                      tNorm === fNorm
                     ) {
                       return { ...t, isDeleted: true };
                     }
-                  } else if (t.path === fullPath) {
+                  } else if (tNorm === fNorm) {
                     return { ...t, isDeleted: true };
                   }
                   return t;
@@ -980,10 +981,11 @@ function IDEContent() {
               setTabs((prev) => {
                 let updated = false;
                 const next = prev.map((t) => {
+                  const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
+                  const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
                   if (
-                    t.path === fullPath ||
-                    t.path.startsWith(fullPath + "/") ||
-                    t.path.startsWith(fullPath + "\\")
+                    tNorm === fNorm ||
+                    tNorm.startsWith(fNorm + "/")
                   ) {
                     updated = true;
                     const newFilePath =
@@ -997,10 +999,11 @@ function IDEContent() {
                 if (updated) {
                   setActiveTabPath((current) => {
                     if (!current) return null;
+                    const cNorm = current.replace(/\\/g, "/").toLowerCase();
+                    const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
                     if (
-                      current === fullPath ||
-                      current.startsWith(fullPath + "/") ||
-                      current.startsWith(fullPath + "\\")
+                      cNorm === fNorm ||
+                      cNorm.startsWith(fNorm + "/")
                     ) {
                       return newFullPath + current.slice(fullPath.length);
                     }

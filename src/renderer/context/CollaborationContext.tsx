@@ -23,6 +23,50 @@ export interface SharedFile {
   type?: "file" | "image";
 }
 
+/**
+ * Collapse repeated slashes and strip trailing slash for stable comparison.
+ */
+function normalizePath(p: string): string {
+  return p
+    .replace(/\\/g, "/")
+    .replace(/\/{2,}/g, "/")
+    .replace(/\/+$/, "");
+}
+
+/**
+ * Convert an absolute path to a relative path against a workspace root.
+ * Handles Windows/Mac path separator differences and case-insensitive
+ * drive letters for cross-platform collaboration sync.
+ */
+function toRelativePath(fullPath: string, wsRoot: string): string {
+  const normFull = normalizePath(fullPath);
+  const normRoot = normalizePath(wsRoot);
+
+  if (normFull.toLowerCase().startsWith(normRoot.toLowerCase())) {
+    let rel = normFull.slice(normRoot.length);
+    if (rel.startsWith("/")) rel = rel.slice(1);
+    return rel;
+  }
+
+  const fullSegs = normFull.split("/");
+  const rootSegs = normRoot.split("/");
+  let matchCount = 0;
+  for (
+    let i = rootSegs.length - 1, j = fullSegs.length - 1;
+    i >= 0 && j >= 0;
+    i--, j--
+  ) {
+    if (rootSegs[i].toLowerCase() !== fullSegs[j].toLowerCase()) break;
+    matchCount++;
+  }
+  if (matchCount > 0 && matchCount === rootSegs.length) {
+    const rel = fullSegs.slice(fullSegs.length - matchCount + rootSegs.length);
+    if (rel.length > 0) return rel.join("/");
+  }
+
+  return normFull;
+}
+
 // Workspace sync metadata
 export interface WorkspaceFile {
   relativePath: string;
@@ -628,15 +672,7 @@ export function CollaborationProvider({
       // Calculate relative path from workspace root for consistent docName across machines
       let relativePath = filePath;
       if (workspaceRoot) {
-        // Normalize paths (handle both Windows and Unix separators)
-        const normalizedFile = filePath.replace(/\\/g, "/");
-        const normalizedRoot = workspaceRoot.replace(/\\/g, "/");
-        if (normalizedFile.startsWith(normalizedRoot)) {
-          relativePath = normalizedFile.substring(normalizedRoot.length);
-          if (relativePath.startsWith("/")) {
-            relativePath = relativePath.substring(1);
-          }
-        }
+        relativePath = toRelativePath(filePath, workspaceRoot);
       }
 
       // Create a sanitized document name from the relative path
@@ -864,6 +900,25 @@ export function CollaborationProvider({
     return model ? model.getValue() : null;
   }, []);
 
+  // Helper to derive a consistent relative path across OSes
+  const toRelativePath = (fullPath: string, rootPath: string): string => {
+    // Normalize paths to use forward slashes and remove trailing slashes
+    const normalizedFullPath = fullPath.replace(/\\/g, "/").replace(/\/+$/, "");
+    const normalizedRootPath = rootPath.replace(/\\/g, "/").replace(/\/+$/, "");
+
+    // Ensure rootPath is a prefix of fullPath (case-insensitive for robustness)
+    if (normalizedFullPath.toLowerCase().startsWith(normalizedRootPath.toLowerCase())) {
+      let relative = normalizedFullPath.substring(normalizedRootPath.length);
+      // Remove any leading slash if present
+      if (relative.startsWith("/")) {
+        relative = relative.substring(1);
+      }
+      return relative;
+    }
+    // If not a sub-path, return the full path as is
+    return fullPath;
+  };
+
   // Get the latest collaborative content for a file from the Yjs document.
   // This is used when an inactive tab becomes active to show the up-to-date
   // content instead of stale React state.
@@ -871,20 +926,13 @@ export function CollaborationProvider({
     (filePath: string, workspaceRoot?: string): string | null => {
       if (!ydocRef.current) return null;
 
-      // Calculate relative path from workspace root (same logic as bindEditor)
+      // Calculate relative path to construct docName
       let relativePath = filePath;
       if (workspaceRoot) {
-        const normalizedFile = filePath.replace(/\\\\/g, "/");
-        const normalizedRoot = workspaceRoot.replace(/\\\\/g, "/");
-        if (normalizedFile.startsWith(normalizedRoot)) {
-          relativePath = normalizedFile.substring(normalizedRoot.length);
-          if (relativePath.startsWith("/")) {
-            relativePath = relativePath.substring(1);
-          }
-        }
+        relativePath = toRelativePath(filePath, workspaceRoot);
       }
-
       const docName = relativePath.replace(/[^a-zA-Z0-9]/g, "_");
+
       const ytext = ydocRef.current.getText(docName);
       const content = ytext.toString();
       // Return null if the Y.Text is empty (file hasn't been shared yet)
