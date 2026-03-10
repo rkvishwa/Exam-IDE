@@ -636,6 +636,8 @@ export function CollaborationProvider({
 
       // Get or create the Y.Text type for this file
       const ytext = ydocRef.current.getText(docName);
+      const awareness = providerRef.current.awareness;
+      const doc = ydocRef.current;
 
       // Get the Monaco model
       const model = monacoEditor.getModel();
@@ -672,49 +674,157 @@ export function CollaborationProvider({
         ytext.insert(0, currentModelContent);
       }
 
-      // Create the Monaco binding with awareness for cursor sync
+      // ─── Create the MonacoBinding WITHOUT awareness ───────────────
+      // y-monaco has two bugs with cursor awareness:
+      //   1. onDidChangeCursorSelection handlers are never disposed in
+      //      destroy(), so they accumulate across rebinds and send stale
+      //      cursor positions.
+      //   2. _beforeTransaction (which saves cursor before remote edits)
+      //      is guarded by the same mutex as the model-change handler,
+      //      so it gets skipped during local typing — when a concurrent
+      //      remote edit arrives the local cursor isn't saved/restored
+      //      properly.
+      // We pass awareness=null so y-monaco doesn't register its broken
+      // cursor handlers, then set up our own properly-managed versions.
       const binding = new MonacoBinding(
         ytext,
         model,
         new Set([monacoEditor]),
-        providerRef.current.awareness,
+        null, // Don't let y-monaco manage cursor awareness
       );
 
-      // Monkey-patch _rerenderDecorations to prevent recursive
-      // deltaDecorations errors.  y-monaco's decoration re-render triggers
-      // cursor change → awareness update → another decoration re-render,
-      // causing Monaco to throw "Invoking deltaDecorations recursively".
-      // Deferring recursive calls to the next frame avoids the error.
-      const origRerender = (binding as any)._rerenderDecorations;
-      if (typeof origRerender === "function") {
-        let isRerendering = false;
-        (binding as any)._rerenderDecorations = () => {
-          if (isRerendering) {
-            requestAnimationFrame(() => origRerender.call(binding));
-            return;
-          }
-          isRerendering = true;
-          try {
-            origRerender.call(binding);
-          } finally {
-            isRerendering = false;
-          }
-        };
-      }
+      // ─── Our own cursor awareness management ─────────────────────
+      // These are properly disposed when destroy() is called.
 
-      // Monkey-patch destroy() to be idempotent.  y-monaco registers an
-      // internal `monacoModel.onWillDispose(() => this.destroy())` callback
-      // that fires when React unmounts the <MonacoEditor> (key change on
-      // rename, etc.)  Our own cleanup / unbindEditor will then call
-      // destroy() a second time.  The original implementation calls
-      // `doc.off(…)` / `ytext.unobserve(…)` which emit a console.warn
-      // (not throw) when the handler is already gone.  Wrapping avoids the
-      // noisy "[yjs] Tried to remove event handler that doesn't exist."
+      // 1. Send local cursor position to awareness whenever it changes
+      const cursorDisposer = monacoEditor.onDidChangeCursorSelection(() => {
+        if (monacoEditor.getModel() !== model) return;
+        const sel = monacoEditor.getSelection();
+        if (sel === null) return;
+
+        let anchor = model.getOffsetAt(sel.getStartPosition());
+        let head = model.getOffsetAt(sel.getEndPosition());
+        if (sel.getDirection() === 1 /* RTL */) {
+          const tmp = anchor;
+          anchor = head;
+          head = tmp;
+        }
+
+        awareness.setLocalStateField("selection", {
+          anchor: Y.createRelativePositionFromTypeIndex(ytext, anchor),
+          head: Y.createRelativePositionFromTypeIndex(ytext, head),
+        });
+      });
+
+      // 2. Render remote cursor decorations when awareness changes
+      let decorationIds: string[] = [];
+      let isRerendering = false;
+
+      const rerenderDecorations = () => {
+        if (monacoEditor.getModel() !== model) return;
+        const newDecorations: any[] = [];
+
+        awareness.getStates().forEach((state: any, clientID: number) => {
+          if (
+            clientID !== doc.clientID &&
+            state.selection != null &&
+            state.selection.anchor != null &&
+            state.selection.head != null
+          ) {
+            const anchorAbs = Y.createAbsolutePositionFromRelativePosition(
+              state.selection.anchor,
+              doc,
+            );
+            const headAbs = Y.createAbsolutePositionFromRelativePosition(
+              state.selection.head,
+              doc,
+            );
+            if (
+              anchorAbs !== null &&
+              headAbs !== null &&
+              anchorAbs.type === ytext &&
+              headAbs.type === ytext
+            ) {
+              let start, end, afterContentClassName: string | null, beforeContentClassName: string | null;
+              if (anchorAbs.index < headAbs.index) {
+                start = model.getPositionAt(anchorAbs.index);
+                end = model.getPositionAt(headAbs.index);
+                afterContentClassName =
+                  "yRemoteSelectionHead yRemoteSelectionHead-" + clientID;
+                beforeContentClassName = null;
+              } else {
+                start = model.getPositionAt(headAbs.index);
+                end = model.getPositionAt(anchorAbs.index);
+                afterContentClassName = null;
+                beforeContentClassName =
+                  "yRemoteSelectionHead yRemoteSelectionHead-" + clientID;
+              }
+              newDecorations.push({
+                range: {
+                  startLineNumber: start.lineNumber,
+                  startColumn: start.column,
+                  endLineNumber: end.lineNumber,
+                  endColumn: end.column,
+                },
+                options: {
+                  className:
+                    "yRemoteSelection yRemoteSelection-" + clientID,
+                  afterContentClassName,
+                  beforeContentClassName,
+                },
+              });
+            }
+          }
+        });
+
+        decorationIds = monacoEditor.deltaDecorations(
+          decorationIds,
+          newDecorations,
+        );
+      };
+
+      // Wrap to prevent recursive deltaDecorations errors
+      const safeRerenderDecorations = () => {
+        if (isRerendering) {
+          requestAnimationFrame(rerenderDecorations);
+          return;
+        }
+        isRerendering = true;
+        try {
+          rerenderDecorations();
+        } finally {
+          isRerendering = false;
+        }
+      };
+
+      awareness.on("change", safeRerenderDecorations);
+
+      // 3. Also re-render decorations after each Y.Text change so that
+      //    remote cursors update positions as content shifts.
+      const ytextDecorObserver = () => {
+        safeRerenderDecorations();
+      };
+      ytext.observe(ytextDecorObserver);
+
+      // ─── Monkey-patch destroy() ──────────────────────────────────
+      // Make it idempotent AND properly clean up our cursor handlers.
       const originalDestroy = binding.destroy.bind(binding);
       let destroyed = false;
       binding.destroy = () => {
         if (destroyed) return;
         destroyed = true;
+
+        // Clean up our own cursor awareness handlers
+        cursorDisposer.dispose();
+        awareness.off("change", safeRerenderDecorations);
+        ytext.unobserve(ytextDecorObserver);
+        // Clear decorations
+        try {
+          decorationIds = monacoEditor.deltaDecorations(decorationIds, []);
+        } catch {
+          // editor may already be disposed
+        }
+
         originalDestroy();
         // Also null-out our ref so safeDestroyBinding() becomes a no-op
         if (bindingRef.current === binding) {
