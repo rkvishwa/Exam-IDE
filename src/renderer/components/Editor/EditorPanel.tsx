@@ -18,6 +18,7 @@ import {
   Palette,
 } from "lucide-react";
 import type { editor } from "monaco-editor";
+import { formatKey } from "../../utils/shortcut";
 import { OpenTab } from "../../pages/IDE";
 import PreviewPanel from "../Preview/PreviewPanel";
 import "./EditorPanel.css";
@@ -302,19 +303,19 @@ const EditorPanel = React.memo(function EditorPanel({
             <div className="shortcut">
               <span>Toggle Explorer</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>B</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>B</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Toggle Preview Panel</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Toggle Preview Tab</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>
               </div>
             </div>
           </div>
@@ -341,31 +342,31 @@ const EditorPanel = React.memo(function EditorPanel({
             <div className="shortcut">
               <span>Save File</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>S</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>S</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Close Tab</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>W</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>W</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Toggle Explorer</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>B</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>B</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Toggle Preview Panel</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>
               </div>
             </div>
             <div className="shortcut">
               <span>Toggle Preview Tab</span>{" "}
               <div className="kbd-wrap">
-                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>
+                <kbd>{formatKey("Ctrl")}</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>
               </div>
             </div>
           </div>

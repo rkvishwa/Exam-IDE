@@ -25,6 +25,7 @@ import {
 } from "../../services/appwrite";
 import { cacheCredentials } from "../../services/localStore";
 import { Team } from "../../../shared/types";
+import { formatKey } from "../../utils/shortcut";
 import "./SettingsModal.css";
 
 interface SettingsModalProps {
@@ -119,7 +120,7 @@ export default function SettingsModal({
         .then((team) => {
           if (team?.studentIds) setMembers(team.studentIds);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [isOpen, activeTab, user]);
 
@@ -134,39 +135,39 @@ export default function SettingsModal({
   const showTextEditor = !isSearching
     ? activeTab === "Text Editor"
     : matchesSearch("Text Editor") ||
-      matchesSearch("Auto Save") ||
-      matchesSearch("Hot Reload") ||
-      matchesSearch("Word Wrap") ||
-      matchesSearch("Controls auto save") ||
-      matchesSearch("Instantly refresh") ||
-      matchesSearch("wrap long lines");
+    matchesSearch("Auto Save") ||
+    matchesSearch("Hot Reload") ||
+    matchesSearch("Word Wrap") ||
+    matchesSearch("Controls auto save") ||
+    matchesSearch("Instantly refresh") ||
+    matchesSearch("wrap long lines");
 
   const showAppearance = !isSearching
     ? activeTab === "Appearance"
     : matchesSearch("Appearance") ||
-      matchesSearch("Color Theme") ||
-      matchesSearch("interface theme");
+    matchesSearch("Color Theme") ||
+    matchesSearch("interface theme");
 
   const showCollaboration = !isSearching
     ? activeTab === "Collaboration"
     : matchesSearch("Collaboration") ||
-      matchesSearch("Show Usernames") ||
-      matchesSearch("cursor") ||
-      matchesSearch("Username Opacity") ||
-      matchesSearch("collaborator");
+    matchesSearch("Show Usernames") ||
+    matchesSearch("cursor") ||
+    matchesSearch("Username Opacity") ||
+    matchesSearch("collaborator");
 
   const showAccount = !isSearching
     ? activeTab === "Account"
     : matchesSearch("Account") ||
-      matchesSearch("Team") ||
-      matchesSearch("Members") ||
-      matchesSearch("Sign Out");
+    matchesSearch("Team") ||
+    matchesSearch("Members") ||
+    matchesSearch("Sign Out");
 
   const showSecurity = !isSearching
     ? activeTab === "Security"
     : matchesSearch("Security") ||
-      matchesSearch("Password") ||
-      matchesSearch("Change Password");
+    matchesSearch("Password") ||
+    matchesSearch("Change Password");
 
   const handleChangePassword = async () => {
     setPasswordError("");
@@ -215,12 +216,12 @@ export default function SettingsModal({
   };
 
   const shortcuts = [
-    { action: "Save File", keys: ["Ctrl", "S"] },
-    { action: "Close Tab", keys: ["Ctrl", "W"] },
-    { action: "New File", keys: ["Ctrl", "N"] },
-    { action: "Toggle Explorer", keys: ["Ctrl", "B"] },
-    { action: "Toggle Preview Panel", keys: ["Ctrl", "Shift", "V"] },
-    { action: "Toggle Preview Tab", keys: ["Ctrl", "Shift", "B"] },
+    { action: "Save File", keys: [formatKey("Ctrl"), "S"] },
+    { action: "Close Tab", keys: [formatKey("Ctrl"), "W"] },
+    { action: "New File", keys: [formatKey("Ctrl"), "N"] },
+    { action: "Toggle Explorer", keys: [formatKey("Ctrl"), "B"] },
+    { action: "Toggle Preview Panel", keys: [formatKey("Ctrl"), "Shift", "V"] },
+    { action: "Toggle Preview Tab", keys: [formatKey("Ctrl"), "Shift", "B"] },
   ];
 
   const filteredShortcuts = shortcuts.filter(
@@ -237,10 +238,10 @@ export default function SettingsModal({
   const showActivityLog = !isSearching
     ? activeTab === "Activity Log"
     : matchesSearch("Activity Log") ||
-      matchesSearch("Download") ||
-      matchesSearch("clipboard") ||
-      matchesSearch("online") ||
-      matchesSearch("offline");
+    matchesSearch("Download") ||
+    matchesSearch("clipboard") ||
+    matchesSearch("online") ||
+    matchesSearch("offline");
 
   const formatEventType = (
     type: ActivityEvent["type"],
@@ -406,86 +407,86 @@ export default function SettingsModal({
 
               {(isSearching
                 ? matchesSearch("Auto Save") ||
-                  matchesSearch("Controls auto save") ||
-                  matchesSearch("Text Editor")
+                matchesSearch("Controls auto save") ||
+                matchesSearch("Text Editor")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Editor: <span className="highlight">Auto Save</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Controls auto save of dirty editors.
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Editor: <span className="highlight">Auto Save</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Controls auto save of dirty editors.
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <select
+                        className="vscode-select"
+                        value={autoSave ? "on" : "off"}
+                        onChange={(e) =>
+                          onAutoSaveChange(e.target.value === "on")
+                        }
+                      >
+                        <option value="off">off</option>
+                        <option value="on">afterDelay (on)</option>
+                      </select>
                     </div>
                   </div>
-                  <div className="vscode-setting-control">
-                    <select
-                      className="vscode-select"
-                      value={autoSave ? "on" : "off"}
-                      onChange={(e) =>
-                        onAutoSaveChange(e.target.value === "on")
-                      }
-                    >
-                      <option value="off">off</option>
-                      <option value="on">afterDelay (on)</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+                )}
 
               {(isSearching
                 ? matchesSearch("Hot Reload") ||
-                  matchesSearch("Instantly refresh") ||
-                  matchesSearch("Text Editor")
+                matchesSearch("Instantly refresh") ||
+                matchesSearch("Text Editor")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Preview: <span className="highlight">Hot Reload</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Instantly refresh the preview panel when files are saved.
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Preview: <span className="highlight">Hot Reload</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Instantly refresh the preview panel when files are saved.
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <label className="vscode-checkbox-label">
+                        <input
+                          type="checkbox"
+                          className="vscode-checkbox"
+                          checked={hotReload}
+                          onChange={(e) => onHotReloadChange(e.target.checked)}
+                        />
+                      </label>
                     </div>
                   </div>
-                  <div className="vscode-setting-control">
-                    <label className="vscode-checkbox-label">
-                      <input
-                        type="checkbox"
-                        className="vscode-checkbox"
-                        checked={hotReload}
-                        onChange={(e) => onHotReloadChange(e.target.checked)}
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
+                )}
 
               {(isSearching
                 ? matchesSearch("Word Wrap") ||
-                  matchesSearch("wrap long lines") ||
-                  matchesSearch("Text Editor")
+                matchesSearch("wrap long lines") ||
+                matchesSearch("Text Editor")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Editor: <span className="highlight">Word Wrap</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Wrap long lines in the editor to fit within the viewport.
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Editor: <span className="highlight">Word Wrap</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Wrap long lines in the editor to fit within the viewport.
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <label className="vscode-checkbox-label">
+                        <input
+                          type="checkbox"
+                          className="vscode-checkbox"
+                          checked={wordWrap}
+                          onChange={(e) => onWordWrapChange(e.target.checked)}
+                        />
+                      </label>
                     </div>
                   </div>
-                  <div className="vscode-setting-control">
-                    <label className="vscode-checkbox-label">
-                      <input
-                        type="checkbox"
-                        className="vscode-checkbox"
-                        checked={wordWrap}
-                        onChange={(e) => onWordWrapChange(e.target.checked)}
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
@@ -495,31 +496,31 @@ export default function SettingsModal({
 
               {(isSearching
                 ? matchesSearch("Color Theme") ||
-                  matchesSearch("interface theme") ||
-                  matchesSearch("Appearance")
+                matchesSearch("interface theme") ||
+                matchesSearch("Appearance")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Workbench: <span className="highlight">Color Theme</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Select your interface theme or let it match your system.
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Workbench: <span className="highlight">Color Theme</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Select your interface theme or let it match your system.
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <select
+                        className="vscode-select"
+                        value={theme}
+                        onChange={(e) => onThemeChange(e.target.value)}
+                      >
+                        <option value="system">System Default</option>
+                        <option value="light">Light Theme</option>
+                        <option value="dark">Dark Theme</option>
+                      </select>
                     </div>
                   </div>
-                  <div className="vscode-setting-control">
-                    <select
-                      className="vscode-select"
-                      value={theme}
-                      onChange={(e) => onThemeChange(e.target.value)}
-                    >
-                      <option value="system">System Default</option>
-                      <option value="light">Light Theme</option>
-                      <option value="dark">Dark Theme</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
@@ -556,73 +557,73 @@ export default function SettingsModal({
 
               {(isSearching
                 ? matchesSearch("Show Usernames") ||
-                  matchesSearch("cursor") ||
-                  matchesSearch("collaborator") ||
-                  matchesSearch("Collaboration")
+                matchesSearch("cursor") ||
+                matchesSearch("collaborator") ||
+                matchesSearch("Collaboration")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Collaboration:{" "}
-                      <span className="highlight">Show Usernames</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Display collaborator usernames near their cursor in the
-                      editor.
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Collaboration:{" "}
+                        <span className="highlight">Show Usernames</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Display collaborator usernames near their cursor in the
+                        editor.
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <label className="vscode-checkbox-label">
+                        <input
+                          type="checkbox"
+                          className="vscode-checkbox"
+                          checked={showCollabUsernames}
+                          onChange={(e) =>
+                            onShowCollabUsernamesChange(e.target.checked)
+                          }
+                        />
+                      </label>
                     </div>
                   </div>
-                  <div className="vscode-setting-control">
-                    <label className="vscode-checkbox-label">
-                      <input
-                        type="checkbox"
-                        className="vscode-checkbox"
-                        checked={showCollabUsernames}
-                        onChange={(e) =>
-                          onShowCollabUsernamesChange(e.target.checked)
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
+                )}
 
               {(isSearching
                 ? matchesSearch("Username Opacity") ||
-                  matchesSearch("opacity") ||
-                  matchesSearch("Collaboration")
+                matchesSearch("opacity") ||
+                matchesSearch("Collaboration")
                 : true) && (
-                <div className="vscode-setting-item">
-                  <div className="vscode-setting-header">
-                    <span className="vscode-setting-title">
-                      Collaboration:{" "}
-                      <span className="highlight">Username Opacity</span>
-                    </span>
-                    <div className="vscode-setting-description">
-                      Control the opacity of collaborator username labels near
-                      the cursor (0 = fully transparent, 100 = fully opaque).
-                    </div>
-                  </div>
-                  <div className="vscode-setting-control">
-                    <div className="vscode-range-control">
-                      <input
-                        type="range"
-                        className="vscode-range"
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={collabUsernameOpacity}
-                        onChange={(e) =>
-                          onCollabUsernameOpacityChange(Number(e.target.value))
-                        }
-                        disabled={!showCollabUsernames}
-                      />
-                      <span className="vscode-range-value">
-                        {collabUsernameOpacity}%
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Collaboration:{" "}
+                        <span className="highlight">Username Opacity</span>
                       </span>
+                      <div className="vscode-setting-description">
+                        Control the opacity of collaborator username labels near
+                        the cursor (0 = fully transparent, 100 = fully opaque).
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control">
+                      <div className="vscode-range-control">
+                        <input
+                          type="range"
+                          className="vscode-range"
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={collabUsernameOpacity}
+                          onChange={(e) =>
+                            onCollabUsernameOpacityChange(Number(e.target.value))
+                          }
+                          disabled={!showCollabUsernames}
+                        />
+                        <span className="vscode-range-value">
+                          {collabUsernameOpacity}%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 

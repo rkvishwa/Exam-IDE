@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, RefreshCcw, X, Search as SearchIcon, CaseSensitive, WholeWord, Regex, ListTree } from 'lucide-react';
+import { formatShortcut } from '../../utils/shortcut';
 import './SearchPanel.css';
 
 interface SearchResult {
@@ -46,7 +47,7 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
     setHasSearched(true);
     try {
       const searchResults = await window.electronAPI.fs.search(workspaceRoot, query);
-      
+
       let filtered = searchResults;
 
       if (matchCase) {
@@ -102,11 +103,11 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
     if (!searchQuery) return <span>{text}</span>;
     const lowerText = text.toLowerCase();
     const lowerQuery = searchQuery.toLowerCase();
-    
+
     // Fallback if matchCase since indexes differ
     const searchTarget = matchCase ? text : lowerText;
     const searchString = matchCase ? searchQuery : lowerQuery;
-    
+
     const index = searchTarget.indexOf(searchString);
     if (index === -1) return <span className="match-text-container">{text}</span>;
 
@@ -139,28 +140,28 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
           </button>
         </div>
       </div>
-      
+
       <div className="search-inputs-container">
         <div className="input-row">
-          <button 
+          <button
             className={`toggle-replace-btn ${showReplace ? 'active' : ''}`}
             onClick={() => setShowReplace(!showReplace)}
             title="Toggle Replace"
           >
             {showReplace ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          
+
           <div className="input-wrapper">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search"
               className="search-input-field"
             />
             <div className="input-inline-actions">
-              <button className={`inline-btn ${matchCase ? 'active' : ''}`} onClick={() => setMatchCase(!matchCase)} title="Match Case (Alt+C)">Aa</button>
-              <button className={`inline-btn ${wholeWord ? 'active' : ''}`} onClick={() => setWholeWord(!wholeWord)} title="Match Whole Word (Alt+W)">
+              <button className={`inline-btn ${matchCase ? 'active' : ''}`} onClick={() => setMatchCase(!matchCase)} title={`Match Case (${formatShortcut('Alt+C')})`}>Aa</button>
+              <button className={`inline-btn ${wholeWord ? 'active' : ''}`} onClick={() => setWholeWord(!wholeWord)} title={`Match Whole Word (${formatShortcut('Alt+W')})`}>
                 <span className="icon-text">ab</span>
               </button>
             </div>
@@ -171,15 +172,15 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
           <div className="input-row">
             <div className="spacer" />
             <div className="input-wrapper">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={replaceQuery}
                 onChange={(e) => setReplaceQuery(e.target.value)}
                 placeholder="Replace"
                 className="search-input-field replace-field"
               />
               <div className="input-inline-actions">
-                <button className="inline-btn" title="Replace All (Ctrl+Alt+Enter)">
+                <button className="inline-btn" title={`Replace All (${formatShortcut('Ctrl+Alt+Enter')})`}>
                   <span className="icon-text">ab→cd</span>
                 </button>
               </div>
@@ -187,22 +188,22 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
           </div>
         )}
       </div>
-      
+
       <div className="search-results-vscode">
         {!workspaceRoot && (
           <div className="search-message">You have not yet opened a folder.</div>
         )}
-        
+
         {workspaceRoot && isSearching && (
           <div className="search-progress-bar">
             <div className="search-progress-value"></div>
           </div>
         )}
-        
+
         {workspaceRoot && !isSearching && hasSearched && results.length === 0 && query && (
           <div className="search-message">No results found.</div>
         )}
-        
+
         {workspaceRoot && !isSearching && Object.keys(groupedResults).length > 0 && query && (
           <div className="search-results-tree">
             {Object.entries(groupedResults).map(([filePath, fileResults]) => {
@@ -212,8 +213,8 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
 
               return (
                 <div key={filePath} className="search-tree-node">
-                  <div 
-                    className="search-file-node" 
+                  <div
+                    className="search-file-node"
                     onClick={() => toggleFile(filePath)}
                   >
                     <span className="file-caret">
@@ -224,12 +225,12 @@ export default function SearchPanel({ workspaceRoot, onResultClick }: SearchPane
                     <div className="spacer" />
                     <div className="file-match-badge">{fileResults.length}</div>
                   </div>
-                  
+
                   {isExpanded && (
                     <div className="search-matches-list">
                       {fileResults.map((result, idx) => (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className="search-match-node"
                           onClick={() => onResultClick(result.path, result.line)}
                         >
