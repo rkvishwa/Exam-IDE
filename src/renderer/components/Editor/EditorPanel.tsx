@@ -288,7 +288,13 @@ const EditorPanel = React.memo(function EditorPanel({
 
     // ── Emmet-style HTML Tag Auto-suggest ──
     if (!htmlSnippetDisposerRef.current) {
-      const completionLanguages = ["html", "xml", "php", "handlebars", "razor", "javascript", "typescript", "markdown"];
+      const completionLanguages = [
+        "html", "xml", "php", "handlebars", "razor",
+        "javascript", "typescript", "markdown",
+        "python", "c", "cpp", "css", "scss", "json",
+        "java", "csharp", "go", "rust", "ruby",
+        "swift", "sql", "shell"
+      ];
       htmlSnippetDisposerRef.current = monaco.languages.registerCompletionItemProvider(
         completionLanguages,
         {
@@ -363,6 +369,8 @@ const EditorPanel = React.memo(function EditorPanel({
                     kind: monaco.languages.CompletionItemKind.Snippet,
                     insertText: generatedSnippet,
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    filterText: hasBracket ? `<${tagName}` : tagName,
+                    sortText: `000_${tagName}`,
                     detail: `Emit ${count} <${tagName}> tags`,
                     range: wordRange,
                   }
@@ -380,6 +388,8 @@ const EditorPanel = React.memo(function EditorPanel({
                   kind: monaco.languages.CompletionItemKind.Snippet,
                   insertText: insertText,
                   insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                  filterText: hasBracket ? `<${tag}` : tag,
+                  sortText: `000_${tag}`,
                   detail: `HTML <${tag}> tag`,
                   range: wordRange,
                 };
@@ -450,7 +460,13 @@ const EditorPanel = React.memo(function EditorPanel({
     });
 
     // ── Closing tag auto-complete (Evaluates dynamically via ref) ──
-    const autoCloseHtmlLanguages = ["html", "xml", "php", "handlebars", "razor", "javascript", "typescript", "markdown"];
+    const autoCloseHtmlLanguages = [
+      "html", "xml", "php", "handlebars", "razor",
+      "javascript", "typescript", "markdown",
+      "python", "c", "cpp", "css", "scss", "json",
+      "java", "csharp", "go", "rust", "ruby",
+      "swift", "sql", "shell"
+    ];
     editor.onDidChangeModelContent((e) => {
       if (!featureTogglesRef.current.closingTagAutoComplete) return;
 
