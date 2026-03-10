@@ -827,53 +827,47 @@ function IDEContent() {
 
   const handleFileCreated = useCallback(
     (fullPath: string, _name: string, isRestore?: boolean) => {
-      setTabs((prev) =>
-        prev.map((t) => {
-          if (t.path !== fullPath) return t;
-          return {
-            ...t,
-            isDeleted: false,
-            content: isRestore ? t.content : "",
-            isDirty: isRestore ? t.isDirty : false,
-          };
-        })
-      );
-      
-      const asyncBroadcast = async () => {
+      const asyncProcess = async () => {
+        let finalContent = "";
+
+        if (isRestore) {
+          try {
+            finalContent = await window.electronAPI.fs.readFile(fullPath);
+          } catch (readErr) {
+            console.warn("Failed to read restored file from disk:", readErr);
+            const existingTab = tabsRef.current.find((t) => t.path === fullPath);
+            finalContent = existingTab?.content ?? "";
+          }
+        }
+
+        setTabs((prev) =>
+          prev.map((t) => {
+            if (t.path !== fullPath) return t;
+            return {
+              ...t,
+              isDeleted: false,
+              content: isRestore ? finalContent : "",
+              isDirty: isRestore ? t.isDirty : false,
+            };
+          })
+        );
+
         try {
           const wsRoot = workspaceRootRef.current;
           if (collabActiveRef.current && wsRoot) {
             const relativePath = toRelativePath(fullPath, wsRoot);
-            let broadcastContent = "";
-            
-            if (isRestore) {
-              try {
-                broadcastContent = await window.electronAPI.fs.readFile(fullPath);
-                
-                setTabs((prev) =>
-                  prev.map((t) =>
-                    t.path === fullPath ? { ...t, content: broadcastContent } : t
-                  )
-                );
-              } catch (readErr) {
-                console.warn("Failed to read restored file:", readErr);
-                const existingTab = tabsRef.current.find((t) => t.path === fullPath);
-                broadcastContent = existingTab?.content ?? "";
-              }
-            }
-
             broadcastFileOpRef.current({
               type: "create-file",
               relativePath,
-              content: broadcastContent,
+              content: isRestore ? finalContent : "",
             });
           }
         } catch (err) {
-          console.error('broadcastFileOp create-file failed:', err);
+          console.error("broadcastFileOp create-file failed:", err);
         }
       };
-      
-      asyncBroadcast();
+
+      asyncProcess();
     },
     [],
   );
