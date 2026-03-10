@@ -10,6 +10,7 @@ import {
   Chrome,
   Users,
 } from "lucide-react";
+import { formatShortcut } from "../../utils/shortcut";
 import "./ActivityBar.css";
 
 interface ActivityBarProps {
@@ -48,10 +49,10 @@ export default function ActivityBar({
   showExplorer,
   onLogout,
   theme = "dark",
-  onToggleTheme = () => {},
-  onOpenSettings = () => {},
+  onToggleTheme = () => { },
+  onOpenSettings = () => { },
   isCollaborating = false,
-  onToggleCollaboration = () => {},
+  onToggleCollaboration = () => { },
 }: ActivityBarProps) {
   const [showPreviewMenu, setShowPreviewMenu] = useState(false);
   const previewMenuRef = useRef<HTMLDivElement>(null);
@@ -79,7 +80,7 @@ export default function ActivityBar({
         <button
           className={`activity-action ${showExplorer ? "active" : ""}`}
           onClick={onToggleExplorer}
-          title="Toggle Explorer (Ctrl+B)"
+          title={`Toggle Explorer (${formatShortcut('Ctrl+B')})`}
         >
           <FolderOpen size={22} strokeWidth={1.5} />
         </button>
