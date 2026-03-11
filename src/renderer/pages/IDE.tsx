@@ -733,6 +733,13 @@ function IDEContent() {
 
   const handleFileDeleted = useCallback(
     (deletedPath: string, type: "file" | "directory") => {
+      // If the deleted file is currently bound in collaboration, unbind it
+      // so the MonacoBinding doesn't survive through the delete→undo cycle
+      // and become stale.
+      if (collabActiveRef.current) {
+        collaboration.unbindEditor();
+      }
+
       setTabs((prev) => {
         const next = prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
@@ -747,10 +754,6 @@ function IDEContent() {
           }
           return t;
         });
-        /* 
-        // We no longer remove tabs on delete, so we don't automatically close them
-        if (next.length < prev.length) { ... }
-        */
         return next;
       });
 
@@ -769,7 +772,7 @@ function IDEContent() {
         console.error('broadcastFileOp delete failed:', err);
       }
     },
-    [],
+    [collaboration.unbindEditor],
   );
 
   const handleFileRenamed = useCallback(
@@ -824,6 +827,37 @@ function IDEContent() {
 
   const handleFileCreated = useCallback(
     async (fullPath: string, _name: string) => {
+      try {
+        const wsRoot = workspaceRootRef.current;
+        if (collabActiveRef.current && wsRoot) {
+          let content = "";
+          // Read file content FIRST (before setting tab state) so that
+          // setFileContent updates Y.Text before the EditorPanel rebind
+          // effect fires (which is triggered by isDeleted going false).
+          try {
+            content = await window.electronAPI.fs.readFile(fullPath);
+          } catch (readErr) {
+            console.warn(`Could not read file for broadcast: ${fullPath}`, readErr);
+          }
+
+          // Reinitialize the Yjs Y.Text BEFORE marking the tab as
+          // not-deleted, so the rebind triggered by EditorPanel sees
+          // up-to-date collaborative content.
+          setFileContentRef.current(fullPath, content, wsRoot);
+
+          const relativePath = toRelativePath(fullPath, wsRoot);
+          broadcastFileOpRef.current({
+            type: "create-file",
+            relativePath,
+            content,
+          });
+        }
+      } catch (err) {
+        console.error('broadcastFileOp create-file failed:', err);
+      }
+
+      // Mark the tab as not-deleted AFTER seeding Y.Text, so the
+      // EditorPanel rebind effect fires with correct collaborative state.
       setTabs((prev) =>
         prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
@@ -831,35 +865,6 @@ function IDEContent() {
           return tNorm === fNorm ? { ...t, isDeleted: false } : t;
         })
       );
-      try {
-        const wsRoot = workspaceRootRef.current;
-        if (collabActiveRef.current && wsRoot) {
-          const relativePath = toRelativePath(fullPath, wsRoot);
-          
-          let content = "";
-          // Try to read the file content so that restoring a file (e.g., undo delete)
-          // sends the actual content to peers instead of corrupting their end with an empty file.
-          try {
-            content = await window.electronAPI.fs.readFile(fullPath);
-          } catch (readErr) {
-            console.warn(`Could not read file for broadcast: ${fullPath}`, readErr);
-            // Fallback to empty string if file is unreadable or binary
-          }
-
-          broadcastFileOpRef.current({
-            type: "create-file",
-            relativePath,
-            content,
-          });
-
-          // Reinitialize the Yjs Y.Text for this file so that when the
-          // editor binds to it, the collaborative document already has
-          // the correct content and sync resumes immediately.
-          setFileContentRef.current(fullPath, content, wsRoot);
-        }
-      } catch (err) {
-        console.error('broadcastFileOp create-file failed:', err);
-      }
     },
     [],
   );
@@ -932,9 +937,13 @@ function IDEContent() {
               // Seed the Yjs Y.Text for the recreated file so that
               // collaboration sync resumes immediately instead of
               // the remote peer seeing a stale/empty document.
-              if (op.content) {
+              if (op.content != null) {
                 setFileContentRef.current(fullPath, op.content, wsRoot);
               }
+              // Unbind the current editor if this file is the one
+              // currently bound — this forces a fresh rebind after
+              // isDeleted goes from true → false.
+              collaboration.unbindEditor();
               setTabs((prev) =>
                 prev.map((t) => {
                   const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
@@ -959,6 +968,9 @@ function IDEContent() {
               } catch {
                 // File may already be gone (e.g. after a failed rename); treat as success
               }
+              // Unbind the current editor to prevent a stale MonacoBinding
+              // from surviving through the delete→create-file cycle.
+              collaboration.unbindEditor();
               // Update tabs locally WITHOUT calling handleFileDeleted (which would
               // re-broadcast the op and create an infinite echo loop)
               setTabs((prev) => {
