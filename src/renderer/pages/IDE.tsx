@@ -293,6 +293,48 @@ function IDEContent() {
     return () => clearTimeout(timer);
   }, [tabs, autoSave, hotReload]);
 
+  // Listen for raw remote Yjs changes that bypass the UI (Fix for Mac client)
+  useEffect(() => {
+    if (!collaboration.isActive || !collaboration.onRemoteContentChange) return;
+
+    const unsub = collaboration.onRemoteContentChange(async (docName) => {
+      // Find which open tab corresponds to the docName.
+      // Easiest is to check all tabs:
+      const matchingTab = tabsRef.current.find(t => {
+        let relPath = t.path;
+        if (workspaceRootRef.current) {
+          relPath = toRelativePath(t.path, workspaceRootRef.current);
+        }
+        return relPath.replace(/[^a-zA-Z0-9]/g, "_") === docName;
+      });
+
+      if (matchingTab) {
+        if (autoSave) {
+          try {
+            const content = collaboration.getFileContent(matchingTab.path, workspaceRootRef.current ?? undefined);
+            if (content !== null) {
+              await window.electronAPI.fs.writeFile(matchingTab.path, content);
+              if (hotReload) {
+                window.dispatchEvent(new CustomEvent("file-saved"));
+              }
+            }
+          } catch (err) {
+            console.error("Failed to auto-save remote change for live preview:", err);
+          }
+        } else {
+          // If autosave is off, mark tab as dirty so user knows to save manually
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.path === matchingTab.path ? { ...t, isDirty: true } : t,
+            ),
+          );
+        }
+      }
+    });
+
+    return unsub;
+  }, [collaboration.isActive, collaboration.onRemoteContentChange, autoSave, hotReload]);
+
   // Guard ref: prevents multiple concurrent sync / folder-dialog opens.
   // Once a sync has started (or the user has picked / cancelled a folder),
   // subsequent metadata callbacks are ignored.
