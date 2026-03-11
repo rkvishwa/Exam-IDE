@@ -417,12 +417,15 @@ const EditorPanel = React.memo(function EditorPanel({
         <div className="welcome-screen">
           <div className="welcome-hero">
             <div className="welcome-logo-container">
-              <Radar size={48} className="welcome-logo" />
+              <svg width="0" height="0">
+                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="50%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#000000" />
+                </linearGradient>
+              </svg>
+              <Radar size={160} className="welcome-logo" style={{ stroke: "url(#logoGradient)" }} />
             </div>
             <h1 className="welcome-title">Sonar Code Editor</h1>
-            <p className="welcome-subtitle">
-              A lightweight learning environment
-            </p>
           </div>
 
           <div className="start-section">
@@ -470,7 +473,13 @@ const EditorPanel = React.memo(function EditorPanel({
         <div className="welcome-screen">
           <div className="welcome-hero">
             <div className="welcome-logo-container">
-              <FileCode2 size={48} className="welcome-logo" />
+              <svg width="0" height="0">
+                <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="50%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#000000" />
+                </linearGradient>
+              </svg>
+              <FileCode2 size={160} className="welcome-logo" style={{ stroke: "url(#logoGradient2)" }} />
             </div>
             <h1 className="welcome-title">Folder Opened</h1>
             <p className="welcome-subtitle">

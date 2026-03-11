@@ -226,27 +226,32 @@ kbd {
 }
 
 .welcome-logo-container {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background: rgba(99, 102, 241, 0.1);
+  width: 160px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
-  color: var(--accent);
+  margin: 0 auto 32px;
   box-shadow: none;
 }
 
 .welcome-logo {
-  opacity: 0.9;
+  opacity: 0.05;
+  color: var(--accent); /* Fallback */
 }
 
+/* Gradient text works fine for text */
 .welcome-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-family: "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+  font-size: 42px;
+  font-weight: 900;
   margin-bottom: 12px;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #ffffff 50%, #000000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.1;
   letter-spacing: -0.5px;
 }
 
@@ -317,7 +322,7 @@ kbd {
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 280px;
+  max-width: 320px;
 }
 
 .welcome-shortcuts .shortcut {

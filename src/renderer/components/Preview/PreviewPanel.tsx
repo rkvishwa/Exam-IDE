@@ -316,7 +316,7 @@ export default function PreviewPanel({ workspaceRoot, activeFilePath, initialUrl
         <div className="preview-body" style={{ alignItems: 'center', justifyContent: 'center' }}>
           <div className="empty-state">
             <MonitorPlay size={48} className="empty-icon" />
-            <p>Open a folder (or file) to start the preview server</p>
+            <p>Open a folder to start the preview server</p>
           </div>
         </div>
       </div>
