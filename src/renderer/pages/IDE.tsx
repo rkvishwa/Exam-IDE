@@ -858,34 +858,16 @@ function IDEContent() {
       }
 
       // Mark the tab as not-deleted AFTER seeding Y.Text.
-      // If the tab was previously closed (e.g., user dismissed it while deleted),
-      // re-open it so the collaboration binding can be established.
+      // Only update an existing tab — if it was previously closed, leave it
+      // closed. Y.Text is already seeded so collaboration will work when the
+      // user opens the file again from the file tree.
       setTabs((prev) => {
         const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
-        const existingTab = prev.find(
-          (t) => t.path.replace(/\\/g, "/").toLowerCase() === fNorm
+        return prev.map((t) =>
+          t.path.replace(/\\/g, "/").toLowerCase() === fNorm
+            ? { ...t, isDeleted: false, content: restoredContent || t.content }
+            : t
         );
-        if (existingTab) {
-          // Restore the existing tab
-          return prev.map((t) =>
-            t.path.replace(/\\/g, "/").toLowerCase() === fNorm
-              ? { ...t, isDeleted: false, content: restoredContent || t.content }
-              : t
-          );
-        } else {
-          // Tab was closed — re-open it so the user can see and edit the restored file
-          const fileName = fullPath.split(/[\/\\]/).pop() || fullPath;
-          const newTab: OpenTab = {
-            path: fullPath,
-            name: fileName,
-            content: restoredContent,
-            isDirty: false,
-            language: getLanguage(fileName),
-            isPreviewFile: true,
-            isDeleted: false,
-          };
-          return [...prev.filter((t) => !t.isPreviewFile || t.isDirty), newTab];
-        }
       });
     },
     [],
@@ -961,34 +943,16 @@ function IDEContent() {
               if (op.content != null) {
                 setFileContentRef.current(fullPath, op.content, wsRoot);
               }
+              // Only update existing tabs. If the tab was closed, leave it closed.
+              // Y.Text is already seeded above, so collaboration will start
+              // automatically when the user opens the file from the file tree.
               setTabs((prev) => {
                 const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
-                const existingTab = prev.find(
-                  (t) => t.path.replace(/\\/g, "/").toLowerCase() === fNorm
+                return prev.map((t) =>
+                  t.path.replace(/\\/g, "/").toLowerCase() === fNorm
+                    ? { ...t, isDeleted: false, content: op.content || t.content }
+                    : t
                 );
-                if (existingTab) {
-                  // Tab exists (possibly with isDeleted: true) — restore it
-                  return prev.map((t) =>
-                    t.path.replace(/\\/g, "/").toLowerCase() === fNorm
-                      ? { ...t, isDeleted: false, content: op.content || t.content }
-                      : t
-                  );
-                } else {
-                  // Tab was closed (e.g., user dismissed the deleted-file tab).
-                  // Re-open it as a preview tab so collaboration binding can happen.
-                  const fileName = fullPath.split(/[\/\\]/).pop() || relPath;
-                  const newTab: import("./IDE").OpenTab = {
-                    path: fullPath,
-                    name: fileName,
-                    content: op.content || "",
-                    isDirty: false,
-                    language: getLanguage(fileName),
-                    isPreviewFile: true,
-                    isDeleted: false,
-                  };
-                  // Insert at end; don't auto-switch active tab (let user decide)
-                  return [...prev.filter((t) => !t.isPreviewFile || t.isDirty), newTab];
-                }
               });
               break;
             }
