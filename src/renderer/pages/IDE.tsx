@@ -490,7 +490,7 @@ function IDEContent() {
   // Save collaborative edits to local tabs before the session stops
   useEffect(() => {
     if (!collaboration.isActive || !collaboration.onBeforeSessionStop) return;
-    
+
     const unsub = collaboration.onBeforeSessionStop(() => {
       setTabs((prev) =>
         prev.map((t) => {
@@ -506,7 +506,7 @@ function IDEContent() {
         }),
       );
     });
-    
+
     return unsub;
   }, [collaboration.isActive, collaboration.onBeforeSessionStop, collaboration.getFileContent]);
 
@@ -737,7 +737,7 @@ function IDEContent() {
         const next = prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
           const dNorm = deletedPath.replace(/\\/g, "/").toLowerCase();
-          
+
           if (type === "directory") {
             if (tNorm === dNorm || tNorm.startsWith(dNorm + "/")) {
               return { ...t, isDeleted: true };
@@ -775,7 +775,7 @@ function IDEContent() {
         const next = prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
           const oNorm = oldPath.replace(/\\/g, "/").toLowerCase();
-          
+
           if (tNorm === oNorm || tNorm.startsWith(oNorm + "/")) {
             updated = true;
             const newFilePath = newPath + t.path.slice(oldPath.length);
@@ -1105,6 +1105,8 @@ function IDEContent() {
 
   useEffect(() => {
     setPreviewInitialUrl(null);
+    setTabs([]);
+    setActiveTabPath(null);
   }, [workspaceRoot]);
 
   const openPreviewInTab = useCallback(
