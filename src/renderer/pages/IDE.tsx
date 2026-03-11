@@ -733,13 +733,6 @@ function IDEContent() {
 
   const handleFileDeleted = useCallback(
     (deletedPath: string, type: "file" | "directory") => {
-      // If the deleted file is currently bound in collaboration, unbind it
-      // so the MonacoBinding doesn't survive through the delete→undo cycle
-      // and become stale.
-      if (collabActiveRef.current) {
-        collaboration.unbindEditor();
-      }
-
       setTabs((prev) => {
         const next = prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
@@ -772,7 +765,7 @@ function IDEContent() {
         console.error('broadcastFileOp delete failed:', err);
       }
     },
-    [collaboration.unbindEditor],
+    [],
   );
 
   const handleFileRenamed = useCallback(
@@ -940,10 +933,6 @@ function IDEContent() {
               if (op.content != null) {
                 setFileContentRef.current(fullPath, op.content, wsRoot);
               }
-              // Unbind the current editor if this file is the one
-              // currently bound — this forces a fresh rebind after
-              // isDeleted goes from true → false.
-              collaboration.unbindEditor();
               setTabs((prev) =>
                 prev.map((t) => {
                   const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
@@ -968,9 +957,6 @@ function IDEContent() {
               } catch {
                 // File may already be gone (e.g. after a failed rename); treat as success
               }
-              // Unbind the current editor to prevent a stale MonacoBinding
-              // from surviving through the delete→create-file cycle.
-              collaboration.unbindEditor();
               // Update tabs locally WITHOUT calling handleFileDeleted (which would
               // re-broadcast the op and create an infinite echo loop)
               setTabs((prev) => {

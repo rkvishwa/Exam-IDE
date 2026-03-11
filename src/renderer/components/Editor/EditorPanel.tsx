@@ -44,7 +44,7 @@ interface EditorPanelProps {
     filePath: string,
     workspaceRoot?: string,
   ) => void;
-  onEditorUnmount?: () => void;
+  onEditorUnmount?: (filePath?: string) => void;
   wordWrap?: boolean;
   getCollaborativeContent?: (filePath: string) => string | null;
 }
@@ -180,24 +180,22 @@ const EditorPanel = React.memo(function EditorPanel({
     }
   }, [activeTabPath]);
 
-  // Detect when the active tab is restored from deletion (isDeleted goes
-  // from true → false).  The old MonacoBinding is stale after the
-  // delete/restore cycle, so we must destroy it and force a fresh rebind.
+  // Detect when the active tab is deleted or restored.
+  // The old MonacoBinding is stale after the delete/restore cycle, so we must
+  // destroy it (upon delete) and force a fresh rebind (upon restore).
   const activeTabIsDeleted = activeTab?.isDeleted;
   useEffect(() => {
-    if (
-      prevIsDeletedRef.current === true &&
-      activeTabIsDeleted === false &&
-      collaborationActive &&
-      activeTabPath
-    ) {
-      console.log(`File restored — forcing collaboration rebind: ${activeTabPath}`);
-      // Destroy the old stale binding
-      onEditorUnmount?.();
-      // Clear the guard so the binding effect below re-runs
-      boundFileRef.current = null;
-      // Kick the binding effect
-      setEditorMountTick((c) => c + 1);
+    if (collaborationActive && activeTabPath) {
+      if (activeTabIsDeleted === true && prevIsDeletedRef.current !== true) {
+        // File just got deleted: unbind its editor specifically.
+        console.log(`File deleted — unbinding collaboration: ${activeTabPath}`);
+        onEditorUnmount?.(activeTabPath);
+      } else if (activeTabIsDeleted === false && prevIsDeletedRef.current === true) {
+        // File restored: clear guard to force rebind.
+        console.log(`File restored — forcing collaboration rebind: ${activeTabPath}`);
+        boundFileRef.current = null;
+        setEditorMountTick((c) => c + 1);
+      }
     }
     prevIsDeletedRef.current = activeTabIsDeleted;
   }, [activeTabIsDeleted, collaborationActive, activeTabPath, onEditorUnmount]);
@@ -209,6 +207,7 @@ const EditorPanel = React.memo(function EditorPanel({
       collaborationActive &&
       editorRef.current &&
       activeTabPath &&
+      !activeTabIsDeleted &&
       activeTabPath !== "__preview__"
     ) {
       // Only bind if the file has changed or wasn't bound before
@@ -229,12 +228,12 @@ const EditorPanel = React.memo(function EditorPanel({
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [collaborationActive, activeTabPath, onEditorMount, editorMountTick]);
+  }, [collaborationActive, activeTabPath, activeTabIsDeleted, onEditorMount, editorMountTick]);
 
   // Unbind when collaboration ends
   useEffect(() => {
     if (!collaborationActive && boundFileRef.current) {
-      onEditorUnmount?.();
+      onEditorUnmount?.(); // Unbinds whatever is active if no path provided
       boundFileRef.current = null;
     }
   }, [collaborationActive, onEditorUnmount]);
