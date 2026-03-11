@@ -844,9 +844,6 @@ function IDEContent() {
             // Fallback to empty string if file is unreadable or binary
           }
 
-          // Seed the HOST's own Y.Text so the rebind picks up the correct content
-          collaboration.setFileContent(fullPath, content, wsRoot);
-
           broadcastFileOpRef.current({
             type: "create-file",
             relativePath,
@@ -921,9 +918,6 @@ function IDEContent() {
                 await window.electronAPI.fs.createFile(fullPath);
                 if (op.content) {
                   await window.electronAPI.fs.writeFile(fullPath, op.content);
-                  
-                  // Crucial Sync Step: Manually seed the Y.Text document with the received payload.
-                  collaboration.setFileContent(fullPath, op.content, wsRoot);
                 }
               } catch (createErr) {
                 console.warn(`Remote create-file failed: ${relPath}`, createErr);
