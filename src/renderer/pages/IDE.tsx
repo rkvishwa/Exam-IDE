@@ -820,15 +820,16 @@ function IDEContent() {
 
   const handleFileCreated = useCallback(
     async (fullPath: string, _name: string) => {
+      let restoredContent = "";
+
       try {
         const wsRoot = workspaceRootRef.current;
         if (collabActiveRef.current && wsRoot) {
-          let content = "";
           // Read file content FIRST (before setting tab state) so that
           // setFileContent updates Y.Text before the EditorPanel rebind
           // effect fires (which is triggered by isDeleted going false).
           try {
-            content = await window.electronAPI.fs.readFile(fullPath);
+            restoredContent = await window.electronAPI.fs.readFile(fullPath);
           } catch (readErr) {
             console.warn(`Could not read file for broadcast: ${fullPath}`, readErr);
           }
@@ -836,26 +837,38 @@ function IDEContent() {
           // Reinitialize the Yjs Y.Text BEFORE marking the tab as
           // not-deleted, so the rebind triggered by EditorPanel sees
           // up-to-date collaborative content.
-          setFileContentRef.current(fullPath, content, wsRoot);
+          setFileContentRef.current(fullPath, restoredContent, wsRoot);
 
           const relativePath = toRelativePath(fullPath, wsRoot);
           broadcastFileOpRef.current({
             type: "create-file",
             relativePath,
-            content,
+            content: restoredContent,
           });
+        } else {
+          // Non-collaboration: read content so we can restore tab.content
+          try {
+            restoredContent = await window.electronAPI.fs.readFile(fullPath);
+          } catch (readErr) {
+            console.warn(`Could not read restored file: ${fullPath}`, readErr);
+          }
         }
       } catch (err) {
         console.error('broadcastFileOp create-file failed:', err);
       }
 
-      // Mark the tab as not-deleted AFTER seeding Y.Text, so the
-      // EditorPanel rebind effect fires with correct collaborative state.
+      // Mark the tab as not-deleted AFTER seeding Y.Text.
+      // Also restore tab.content so the Monaco editor shows the correct
+      // content even if Y.Text is temporarily empty (e.g. path mismatch)
+      // or when collaboration is not active.
       setTabs((prev) =>
         prev.map((t) => {
           const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
           const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
-          return tNorm === fNorm ? { ...t, isDeleted: false } : t;
+          if (tNorm === fNorm) {
+            return { ...t, isDeleted: false, content: restoredContent || t.content };
+          }
+          return t;
         })
       );
     },

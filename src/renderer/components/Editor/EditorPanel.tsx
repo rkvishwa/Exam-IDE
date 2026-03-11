@@ -223,9 +223,20 @@ const EditorPanel = React.memo(function EditorPanel({
       // Only bind if the file has changed or wasn't bound before
       if (boundFileRef.current !== activeTabPath) {
         // Wait for the model to be ready with a small delay
+        const filePathForBind = activeTabPath;
         const timeoutId = setTimeout(() => {
           const model = editorRef.current?.getModel();
-          if (model && model.getValue().length >= 0) {
+          if (model) {
+            // Safety net: if Monaco model is empty but tab.content has the restored
+            // file content (set by handleFileCreated on undo), seed the model now.
+            // bindEditor will then detect model content and seed Y.Text if needed.
+            if (model.getValue().length === 0) {
+              const tab = tabs.find((t) => t.path === filePathForBind);
+              if (tab?.content) {
+                console.log(`Seeding empty Monaco model from tab.content for: ${filePathForBind}`);
+                model.setValue(tab.content);
+              }
+            }
             console.log(`Binding collaboration for file: ${activeTabPath}`);
             onEditorMount?.(
               editorRef.current!,
