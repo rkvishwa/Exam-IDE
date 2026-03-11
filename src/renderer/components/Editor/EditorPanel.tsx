@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import MonacoEditor, { type OnMount } from "@monaco-editor/react";
+import MonacoEditor, { type OnMount, type Monaco } from "@monaco-editor/react";
 import {
   Radar,
   FileCode2,
@@ -210,22 +210,35 @@ const EditorPanel = React.memo(function EditorPanel({
     });
   }, [tabs, collaborationActive, activeTabPath, onEditorUnmount]);
 
+  // Keep a ref to activeTabPath so that the 100ms setTimeout closure always
+  // reads the LATEST value, not a stale closure capture.
+  const activeTabPathRef = useRef(activeTabPath);
+  activeTabPathRef.current = activeTabPath;
+
   // Single binding path: bind editor to collaboration when the editor is
   // ready, collaboration becomes active, or the active file changes.
   useEffect(() => {
     if (
       collaborationActive &&
-      editorRef.current &&
       activeTabPath &&
       !activeTabIsDeleted &&
       activeTabPath !== "__preview__"
     ) {
       // Only bind if the file has changed or wasn't bound before
       if (boundFileRef.current !== activeTabPath) {
-        // Wait for the model to be ready with a small delay
         const filePathForBind = activeTabPath;
         const timeoutId = setTimeout(() => {
-          const model = editorRef.current?.getModel();
+          const currentPath = activeTabPathRef.current;
+          // Ensure the active tab hasn't changed during the delay
+          if (currentPath !== filePathForBind) return;
+          // Always look up the editor from the map — editorRef.current can be
+          // overwritten by any tab's onMount callback, so it's not reliable.
+          const editor = editorMapRef.current.get(filePathForBind);
+          if (!editor) {
+            console.warn(`Binding skipped: no editor found for ${filePathForBind}`);
+            return;
+          }
+          const model = editor.getModel();
           if (model) {
             // Safety net: if Monaco model is empty but tab.content has the restored
             // file content (set by handleFileCreated on undo), seed the model now.
@@ -237,13 +250,9 @@ const EditorPanel = React.memo(function EditorPanel({
                 model.setValue(tab.content);
               }
             }
-            console.log(`Binding collaboration for file: ${activeTabPath}`);
-            onEditorMount?.(
-              editorRef.current!,
-              activeTabPath,
-              workspaceRoot || undefined,
-            );
-            boundFileRef.current = activeTabPath;
+            console.log(`Binding collaboration for file: ${filePathForBind}`);
+            onEditorMount?.(editor, filePathForBind, workspaceRoot || undefined);
+            boundFileRef.current = filePathForBind;
           }
         }, 100);
         return () => clearTimeout(timeoutId);
@@ -274,11 +283,15 @@ const EditorPanel = React.memo(function EditorPanel({
   // Editor mount handler — sets up auto-close tags, keyboard tracking,
   // and stores the editor in the per-tab map.  Called for ALL editors
   // (active and inactive) so we always have a reference for every open tab.
-  const handleEditorMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
-
-    // Trigger re-evaluation of the binding effect now that the editor is ready
-    setEditorMountTick((c) => c + 1);
+  // isActiveTab: true only when this is the currently active tab's editor.
+  //   - If true:  update editorRef and trigger a binding re-evaluation.
+  //   - If false: skip editorRef update to prevent overwriting the active
+  //               editor's reference with a background tab's Monaco instance.
+  const handleEditorMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco, isActiveTab: boolean) => {
+    if (isActiveTab) {
+      editorRef.current = editor;
+      setEditorMountTick((c) => c + 1);
+    }
 
     // Enable auto-closing HTML tags via linked editing
     monaco.languages.html?.htmlDefaults?.setOptions?.({
@@ -600,7 +613,7 @@ const EditorPanel = React.memo(function EditorPanel({
                 options={getEditorOptions(wordWrap)}
                 onMount={(mountedEditor, mountedMonaco) => {
                   editorMapRef.current.set(tab.path, mountedEditor);
-                  handleEditorMount(mountedEditor, mountedMonaco);
+                  handleEditorMount(mountedEditor, mountedMonaco, tab.path === activeTabPath);
                 }}
                 onChange={(value) => {
                   if (value !== undefined) {
