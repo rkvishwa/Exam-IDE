@@ -181,10 +181,12 @@ function IDEContent() {
   // FileTree re-renders and can steal input focus on Windows/Electron).
   const collabActiveRef = useRef(collaboration.isActive);
   const broadcastFileOpRef = useRef(collaboration.broadcastFileOp);
+  const setFileContentRef = useRef(collaboration.setFileContent);
   useEffect(() => {
     collabActiveRef.current = collaboration.isActive;
     broadcastFileOpRef.current = collaboration.broadcastFileOp;
-  }, [collaboration.isActive, collaboration.broadcastFileOp]);
+    setFileContentRef.current = collaboration.setFileContent;
+  }, [collaboration.isActive, collaboration.broadcastFileOp, collaboration.setFileContent]);
 
   useEffect(() => {
     // Add platform class to body for OS-specific styling
@@ -849,6 +851,11 @@ function IDEContent() {
             relativePath,
             content,
           });
+
+          // Reinitialize the Yjs Y.Text for this file so that when the
+          // editor binds to it, the collaborative document already has
+          // the correct content and sync resumes immediately.
+          setFileContentRef.current(fullPath, content, wsRoot);
         }
       } catch (err) {
         console.error('broadcastFileOp create-file failed:', err);
@@ -922,11 +929,20 @@ function IDEContent() {
               } catch (createErr) {
                 console.warn(`Remote create-file failed: ${relPath}`, createErr);
               }
+              // Seed the Yjs Y.Text for the recreated file so that
+              // collaboration sync resumes immediately instead of
+              // the remote peer seeing a stale/empty document.
+              if (op.content) {
+                setFileContentRef.current(fullPath, op.content, wsRoot);
+              }
               setTabs((prev) =>
                 prev.map((t) => {
                   const tNorm = t.path.replace(/\\/g, "/").toLowerCase();
                   const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
-                  return tNorm === fNorm ? { ...t, isDeleted: false } : t;
+                  if (tNorm === fNorm) {
+                    return { ...t, isDeleted: false, content: op.content || t.content };
+                  }
+                  return t;
                 })
               );
               break;
