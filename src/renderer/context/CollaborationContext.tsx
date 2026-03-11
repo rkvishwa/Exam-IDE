@@ -105,7 +105,7 @@ interface CollaborationContextValue {
     filePath: string,
     workspaceRoot?: string,
   ) => void;
-  unbindEditor: () => void;
+  unbindEditor: (filePath?: string) => void;
   getCurrentEditorContent: () => string | null;
   getFileContent: (filePath: string, workspaceRoot?: string) => string | null;
   setFileContent: (filePath: string, content: string, workspaceRoot?: string) => void;
@@ -888,7 +888,13 @@ export function CollaborationProvider({
     [],
   );
 
-  const unbindEditor = useCallback(() => {
+  const unbindEditor = useCallback((filePath?: string) => {
+    // If a specific filePath is provided, ONLY unbind if it matches the current file
+    if (filePath && currentFileRef.current !== filePath) {
+      console.log(`unbindEditor: ignoring request to unbind ${filePath} because active is ${currentFileRef.current}`);
+      return;
+    }
+    
     safeDestroyBinding();
     currentFileRef.current = null;
     currentEditorRef.current = null;
