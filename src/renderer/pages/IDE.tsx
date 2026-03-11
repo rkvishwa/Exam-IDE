@@ -825,19 +825,38 @@ function IDEContent() {
       try {
         const wsRoot = workspaceRootRef.current;
         if (collabActiveRef.current && wsRoot) {
-          // Read file content FIRST (before setting tab state) so that
-          // setFileContent updates Y.Text before the EditorPanel rebind
-          // effect fires (which is triggered by isDeleted going false).
-          try {
-            restoredContent = await window.electronAPI.fs.readFile(fullPath);
-          } catch (readErr) {
-            console.warn(`Could not read file for broadcast: ${fullPath}`, readErr);
+          // Check if Y.Text already has content for this file (from previous
+          // collaboration session before deletion). Y.Text represents the
+          // latest collaborative state, so prefer it over disk content.
+          const ytextContent = collaboration.isActive
+            ? collaboration.getFileContent(fullPath, wsRoot)
+            : null;
+
+          if (ytextContent) {
+            // Y.Text already has content — use it as authoritative source.
+            restoredContent = ytextContent;
+            console.log(`Using Y.Text content for restored file: ${fullPath} (${restoredContent.length} chars)`);
+          } else {
+            // Y.Text is empty — read from disk (the .trash rename put content back).
+            try {
+              restoredContent = await window.electronAPI.fs.readFile(fullPath);
+            } catch (readErr) {
+              console.warn(`Could not read file for broadcast: ${fullPath}`, readErr);
+            }
           }
 
-          // Reinitialize the Yjs Y.Text BEFORE marking the tab as
-          // not-deleted, so the rebind triggered by EditorPanel sees
-          // up-to-date collaborative content.
+          // Ensure Y.Text is in sync with the content we're broadcasting.
           setFileContentRef.current(fullPath, restoredContent, wsRoot);
+
+          // Write the authoritative content back to disk so that non-editor
+          // opens (via openFile → readFile) always see the correct content.
+          if (restoredContent) {
+            try {
+              await window.electronAPI.fs.writeFile(fullPath, restoredContent);
+            } catch (writeErr) {
+              console.warn(`Could not write restored content to disk: ${fullPath}`, writeErr);
+            }
+          }
 
           const relativePath = toRelativePath(fullPath, wsRoot);
           broadcastFileOpRef.current({
