@@ -165,9 +165,10 @@ const EditorPanel = React.memo(function EditorPanel({
   // Counter incremented when the Monaco editor mounts, so the binding
   // useEffect re-evaluates even though editorRef is not reactive.
   const [editorMountTick, setEditorMountTick] = useState(0);
-  // Track the previous isDeleted state of the active tab so we can detect
-  // a restore (isDeleted going from true → false) and force a rebind.
-  const prevIsDeletedRef = useRef<boolean | undefined>(undefined);
+  // Track the isDeleted state per file path so we can detect when a
+  // specific file goes from deleted→restored even if the active tab changed
+  // in between (a single ref would lose the 'true' value on tab switch).
+  const prevIsDeletedByPathRef = useRef<Map<string, boolean | undefined>>(new Map());
 
   // When the active tab changes, look up the correct editor from the map
   // and update editorRef.  This must run BEFORE the binding effect below
@@ -180,25 +181,35 @@ const EditorPanel = React.memo(function EditorPanel({
     }
   }, [activeTabPath]);
 
-  // Detect when the active tab is deleted or restored.
-  // The old MonacoBinding is stale after the delete/restore cycle, so we must
-  // destroy it (upon delete) and force a fresh rebind (upon restore).
   const activeTabIsDeleted = activeTab?.isDeleted;
+
+  // Detect isDeleted transitions for ALL tabs in one place.
+  // Reading prev BEFORE updating stored state ensures we catch true→false transitions
+  // even when activeTabPath changed between delete and restore.
   useEffect(() => {
-    if (collaborationActive && activeTabPath) {
-      if (activeTabIsDeleted === true && prevIsDeletedRef.current !== true) {
-        // File just got deleted: unbind its editor specifically.
-        console.log(`File deleted — unbinding collaboration: ${activeTabPath}`);
-        onEditorUnmount?.(activeTabPath);
-      } else if (activeTabIsDeleted === false && prevIsDeletedRef.current === true) {
-        // File restored: clear guard to force rebind.
-        console.log(`File restored — forcing collaboration rebind: ${activeTabPath}`);
-        boundFileRef.current = null;
-        setEditorMountTick((c) => c + 1);
+    tabs.forEach((tab) => {
+      const prev = prevIsDeletedByPathRef.current.get(tab.path);
+      const isActive = tab.path === activeTabPath;
+
+      if (collaborationActive) {
+        if (tab.isDeleted === true && prev !== true) {
+          // File just got deleted. If it's the active tab, unbind its editor.
+          if (isActive) {
+            console.log(`File deleted — unbinding collaboration: ${tab.path}`);
+            onEditorUnmount?.(tab.path);
+          }
+        } else if (tab.isDeleted === false && prev === true && isActive) {
+          // File restored and it's the active tab: force a fresh rebind.
+          console.log(`File restored — forcing collaboration rebind: ${tab.path}`);
+          boundFileRef.current = null;
+          setEditorMountTick((c) => c + 1);
+        }
       }
-    }
-    prevIsDeletedRef.current = activeTabIsDeleted;
-  }, [activeTabIsDeleted, collaborationActive, activeTabPath, onEditorUnmount]);
+
+      // Update stored state AFTER checking the transition (read-before-write)
+      prevIsDeletedByPathRef.current.set(tab.path, tab.isDeleted);
+    });
+  }, [tabs, collaborationActive, activeTabPath, onEditorUnmount]);
 
   // Single binding path: bind editor to collaboration when the editor is
   // ready, collaboration becomes active, or the active file changes.
