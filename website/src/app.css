@@ -2,6 +2,15 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+html {
+  scroll-padding-top: 6.5rem;
+  scroll-behavior: smooth;
+}
+
+section[id] {
+  scroll-margin-top: 6.5rem;
+}
+
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }

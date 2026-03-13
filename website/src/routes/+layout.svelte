@@ -13,7 +13,7 @@
 			: 'text-zinc-700 dark:text-zinc-100/82 hover:text-cyan-700 dark:hover:text-cyan-200';
 </script>
 
-<div class="relative isolate min-h-screen flex flex-col overflow-x-hidden bg-[#f7fbff] dark:bg-[#071018] text-zinc-900 dark:text-zinc-50 font-sans selection:bg-cyan-400/20 transition-colors duration-200">
+<div class="relative isolate min-h-screen flex flex-col overflow-x-clip bg-[#f7fbff] dark:bg-[#071018] text-zinc-900 dark:text-zinc-50 font-sans selection:bg-cyan-400/20 transition-colors duration-200">
 	<div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
 		<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.14),transparent_30%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.2),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.16),transparent_30%)]"></div>
 		<div class="absolute inset-0 opacity-85 dark:opacity-60 [background-image:linear-gradient(rgba(71,85,105,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(71,85,105,0.16)_1px,transparent_1px)] dark:[background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:3rem_3rem] [mask-image:radial-gradient(circle_at_center,black_58%,transparent_95%)]"></div>

@@ -78,11 +78,11 @@
   <meta name="description" content="Complete documentation for Sonar IDE — architecture, features, security model, and developer reference." />
 </svelte:head>
 
-<div class="px-6 py-12 lg:py-20 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-12 transition-colors duration-200">
+<div class="px-6 pt-24 pb-12 lg:pt-32 lg:pb-20 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-12 transition-colors duration-200">
 
   <!-- Sidebar Navigation -->
-  <aside class="w-full md:w-64 shrink-0 font-medium">
-    <div class="sticky top-20 space-y-6 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
+  <aside class="w-full md:w-64 shrink-0 font-medium sticky top-[5.5rem] self-start max-h-[calc(100vh-6.5rem)] overflow-y-auto">
+    <div class="space-y-6 pr-2">
       <div class="relative mb-6">
         <Search size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
         <input

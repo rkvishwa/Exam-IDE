@@ -1,5 +1,38 @@
 <script lang="ts">
-  import { Download, Monitor, ShieldAlert, WifiOff } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { Download, Monitor, ShieldAlert, WifiOff, Link2, Copy, Check } from 'lucide-svelte';
+
+  type ClientOS = 'windows' | 'mac' | 'other';
+
+  let clientOS = $state<ClientOS>('other');
+  let linkCopied = $state(false);
+  let updateLinkCopied = $state(false);
+  const macDownloadLink = 'https://github.com/rkvishwa/Sonar-Code-Editor/releases/latest';
+
+  function copyMacLink() {
+    navigator.clipboard.writeText(macDownloadLink).then(() => {
+      linkCopied = true;
+      setTimeout(() => { linkCopied = false; }, 2000);
+    });
+  }
+
+  function copyUpdateLink() {
+    navigator.clipboard.writeText(macDownloadLink).then(() => {
+      updateLinkCopied = true;
+      setTimeout(() => { updateLinkCopied = false; }, 2000);
+    });
+  }
+
+  onMount(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('windows')) {
+      clientOS = 'windows';
+    } else if (ua.includes('macintosh') || ua.includes('mac os x')) {
+      clientOS = 'mac';
+    } else {
+      clientOS = 'other';
+    }
+  });
 </script>
 
 <svelte:head>
@@ -17,22 +50,103 @@
   </p>
 
   <div class="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 rounded-3xl p-8 sm:p-12 mb-16 shadow-sm dark:shadow-none transition-colors duration-200">
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
-      <button class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-3 transition-all hover:scale-105 active:scale-95">
-        <Monitor size={24} />
-        <div class="text-left font-sans">
-          <div class="text-sm font-medium opacity-80 leading-none mb-1">Download for</div>
-          <div class="text-xl leading-none">Windows</div>
+    <div class="flex flex-col items-center justify-center gap-4 mb-12">
+      {#if clientOS === 'mac'}
+        <div class="w-full max-w-2xl rounded-2xl border border-cyan-300/40 dark:border-cyan-400/30 bg-white/70 dark:bg-white/[0.05] p-4 sm:p-5">
+          <label for="download-mac-link" class="mb-2 text-xs uppercase tracking-[0.15em] font-semibold text-cyan-700 dark:text-cyan-300 inline-flex items-center gap-2">
+            <Link2 size={12} />
+            <span>macOS Download Link</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              id="download-mac-link"
+              type="text"
+              value={macDownloadLink}
+              readonly
+              onclick={(event) => (event.currentTarget as HTMLInputElement).select()}
+              class="flex-1 min-w-0 rounded-lg border border-cyan-300/40 dark:border-cyan-400/30 bg-white dark:bg-[#0f1b2c] px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 outline-none"
+            />
+            <button
+              onclick={copyMacLink}
+              aria-label="Copy link"
+              class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border transition-all
+                {linkCopied
+                  ? 'border-green-400/60 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                  : 'border-cyan-300/40 dark:border-cyan-400/30 bg-white dark:bg-[#0f1b2c] text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-400/10'}"
+            >
+              {#if linkCopied}
+                <Check size={15} />
+              {:else}
+                <Copy size={15} />
+              {/if}
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">Paste this link on your terminal.</p>
+          <div class="mt-5 w-full">
+            <label for="mac-update-link" class="mb-2 text-xs text-zinc-500 dark:text-zinc-400 block font-medium">Already installed an older version? <span class="text-cyan-600 dark:text-cyan-400">Update here:</span></label>
+            <div class="flex items-center gap-2">
+              <input
+                id="mac-update-link"
+                type="text"
+                value={macDownloadLink}
+                readonly
+                onclick={(event) => (event.currentTarget as HTMLInputElement).select()}
+                class="flex-1 min-w-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 outline-none"
+              />
+              <button
+                onclick={copyUpdateLink}
+                aria-label="Copy update link"
+                class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border transition-all
+                  {updateLinkCopied
+                    ? 'border-green-400/60 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                    : 'border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5'}"
+              >
+                {#if updateLinkCopied}
+                  <Check size={15} />
+                {:else}
+                  <Copy size={15} />
+                {/if}
+              </button>
+            </div>
+          </div>
         </div>
-      </button>
-
-      <button class="w-full sm:w-auto px-8 py-4 bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-400 font-bold rounded-xl flex items-center justify-center space-x-3 transition-colors cursor-not-allowed">
-        <Monitor size={24} />
-        <div class="text-left font-sans">
-          <div class="text-sm font-medium opacity-80 leading-none mb-1">Coming Soon</div>
-          <div class="text-xl leading-none">macOS</div>
+      {:else}
+        <button class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-3 transition-all hover:scale-105 active:scale-95">
+          <Monitor size={24} />
+          <div class="text-left font-sans">
+            <div class="text-sm font-medium opacity-80 leading-none mb-1">Download for</div>
+            <div class="text-xl leading-none">Windows</div>
+          </div>
+        </button>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2">Allow permission in your browser to download the file.</p>
+        <div class="mt-5 w-full max-w-sm mx-auto sm:mx-0">
+          <label for="win-update-link" class="mb-2 text-xs text-zinc-500 dark:text-zinc-400 block font-medium">Already installed an older version? <span class="text-blue-600 dark:text-blue-400">Update here:</span></label>
+          <div class="flex items-center gap-2">
+            <input
+              id="win-update-link"
+              type="text"
+              value={macDownloadLink}
+              readonly
+              onclick={(event) => (event.currentTarget as HTMLInputElement).select()}
+              class="flex-1 min-w-0 rounded-lg border border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300 outline-none text-left"
+            />
+            <button
+              onclick={copyUpdateLink}
+              aria-label="Copy update link"
+              class="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg border transition-all
+                {updateLinkCopied
+                  ? 'border-green-400/60 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                  : 'border-zinc-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5'}"
+            >
+              {#if updateLinkCopied}
+                <Check size={15} />
+              {:else}
+                <Copy size={15} />
+              {/if}
+            </button>
+          </div>
         </div>
-      </button>
+      {/if}
     </div>
 
     <div class="grid sm:grid-cols-2 gap-6 text-left border-t border-zinc-100 dark:border-white/5 pt-10">

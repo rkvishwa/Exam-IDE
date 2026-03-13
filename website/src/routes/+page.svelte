@@ -10,6 +10,9 @@
 		FileBox,
 		Download,
 		Terminal,
+		Link2,
+		Copy,
+		Check,
 		Zap,
 		ArrowRight,
 		Monitor,
@@ -18,13 +21,25 @@
 	} from 'lucide-svelte';
 	import { onMount, onDestroy } from 'svelte';
 
+	type ClientOS = 'windows' | 'mac' | 'other';
+
 	let mounted = $state(false);
 	
 	// Spotlight effect state
 	let mouseX = $state(0);
 	let mouseY = $state(0);
 	let isHovering = $state(false);
+	let clientOS = $state<ClientOS>('other');
+	let linkCopied = $state(false);
 	let sectionRef: HTMLElement;
+	const macDownloadLink = 'https://github.com/rkvishwa/Sonar-Code-Editor/releases/latest';
+
+	function copyMacLink() {
+		navigator.clipboard.writeText(macDownloadLink).then(() => {
+			linkCopied = true;
+			setTimeout(() => { linkCopied = false; }, 2000);
+		});
+	}
 
 	function handleMouseMove(e: MouseEvent) {
 		if (!sectionRef) return;
@@ -37,6 +52,15 @@
 	function handleMouseLeave() { isHovering = false; }
 
 	onMount(() => {
+		const ua = navigator.userAgent.toLowerCase();
+		if (ua.includes('windows')) {
+			clientOS = 'windows';
+		} else if (ua.includes('macintosh') || ua.includes('mac os x')) {
+			clientOS = 'mac';
+		} else {
+			clientOS = 'other';
+		}
+
 		mounted = true;
 	});
 </script>
@@ -47,7 +71,7 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="relative flex flex-col items-start justify-center px-4 sm:px-8 lg:px-[10%] pt-28 sm:pt-36 xl:pt-44 pb-20 overflow-hidden min-h-screen">
+<section class="relative flex flex-col items-start justify-center px-4 sm:px-8 lg:px-[10%] pt-20 sm:pt-24 xl:pt-32 pb-32 sm:pb-40 overflow-hidden min-h-screen">
 
 <!-- Radial fade mask for top/sides -->
 <div class="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_top,transparent_16%,rgba(247,251,255,0.96)_78%)] dark:bg-[radial-gradient(circle_at_top,transparent_16%,rgba(7,16,24,0.94)_78%)]"></div>
@@ -71,8 +95,7 @@
 <h1 class="text-[clamp(3rem,6vw,5rem)] font-bold tracking-tight leading-[1.1] text-zinc-900 dark:text-white mb-5 hero-stagger-3">
 The IDE built for<br/>
 <span class="relative inline-flex items-end whitespace-nowrap">
-<span class="pointer-events-none absolute -inset-x-3 -inset-y-1 rounded-xl bg-gradient-to-r from-cyan-200/80 via-sky-200/55 to-blue-200/70 blur-sm dark:from-cyan-400/20 dark:via-sky-400/12 dark:to-blue-500/22"></span>
-<span class="relative text-transparent bg-clip-text bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-300 dark:to-blue-300 animate-gradient bg-[length:220%_auto] [text-shadow:0_0_24px_rgba(56,189,248,0.32)]">supervision</span><span class="relative animate-pulse text-cyan-500 dark:text-cyan-300 inline-block -ml-1">_</span>
+<span class="relative text-transparent bg-clip-text bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-300 dark:to-blue-300 animate-gradient bg-[length:220%_auto]">supervision</span><span class="relative animate-pulse text-cyan-500 dark:text-cyan-300 inline-block -ml-1">_</span>
 </span>
 </h1>
 
@@ -82,15 +105,49 @@ Real-time collaboration, exam monitoring, and secure coding - powered by Monaco 
 </p>
 
 <!-- CTA buttons -->
-<div class="flex flex-col sm:flex-row items-center justify-start gap-4 hero-stagger-5 w-full">
+<div class="flex flex-col items-start justify-start gap-4 hero-stagger-5 w-full">
+{#if clientOS === 'mac'}
+<div class="w-full sm:max-w-md flex flex-col gap-3">
+	<div class="rounded-xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-1.5 backdrop-blur-md flex items-center shadow-sm transition-colors hover:border-zinc-300 dark:hover:border-white/20">
+		<div class="flex items-center flex-1 min-w-0 pl-3">
+			<Terminal size={14} class="text-zinc-400 mr-2 shrink-0" />
+			<input
+				id="mac-download-link"
+				type="text"
+				value={macDownloadLink}
+				readonly
+				onclick={(event) => (event.currentTarget as HTMLInputElement).select()}
+				class="bg-transparent text-sm font-mono text-zinc-700 dark:text-zinc-300 w-full outline-none truncate cursor-copy selection:bg-cyan-500/20"
+			/>
+		</div>
+		<button
+			onclick={copyMacLink}
+			aria-label="Copy link"
+			class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg transition-all
+				{linkCopied
+					? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+					: 'bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-zinc-600 dark:text-zinc-400'}"
+		>
+			{#if linkCopied}
+				<Check size={14} />
+			{:else}
+				<Copy size={14} />
+			{/if}
+		</button>
+	</div>
+	<p class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 pl-1">Paste this link in your terminal to install.</p>
+	<p class="text-xs text-zinc-600 dark:text-zinc-400 pl-1 mt-1">Already installed an older version? <a href="/download" class="text-cyan-600 dark:text-cyan-400 hover:underline font-medium">Get updates &rarr;</a></p>
+</div>
+{:else}
+<div class="w-full sm:w-auto">
 <a href="/download" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
 <Download size={15} />
 <span>Download for Windows</span>
 </a>
-<a href="/download-mac" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0">
-<Download size={15} />
-<span>Download for Mac</span>
-</a>
+<p class="mt-3 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Allow permission in your browser to download the file.</p>
+<p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">Already installed an older version? <a href="/download" class="text-cyan-600 dark:text-cyan-400 hover:underline font-medium">Get updates &rarr;</a></p>
+</div>
+{/if}
 <a href="/docs" class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-white/70 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.1] backdrop-blur-md text-zinc-700 dark:text-zinc-300 font-medium rounded-lg flex items-center justify-center gap-2 border border-zinc-200/80 dark:border-white/[0.08] text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm">
 <span>Read Docs</span>
 <ArrowRight size={14} class="opacity-50 group-hover:translate-x-0.5 transition-transform" />
