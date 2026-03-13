@@ -23,7 +23,6 @@ import {
   getTeamById,
   changeTeamPassword,
 } from "../../services/appwrite";
-import { cacheCredentials } from "../../services/localStore";
 import { Team } from "../../../shared/types";
 import { formatKey } from "../../utils/shortcut";
 import "./SettingsModal.css";
@@ -188,7 +187,6 @@ export default function SettingsModal({
     setChangingPassword(true);
     const result = await changeTeamPassword(user.$id, oldPassword, newPassword);
     if (result.success) {
-      cacheCredentials(user.teamName, newPassword, user.$id, user.role);
       setPasswordSuccess("Password changed successfully");
       setOldPassword("");
       setNewPassword("");
@@ -274,7 +272,7 @@ export default function SettingsModal({
   };
 
   const handleDownloadLog = () => {
-    generateActivityLogPDF(teamName);
+    void generateActivityLogPDF(teamName);
   };
 
   const handleRefreshLog = () => {
@@ -423,6 +421,8 @@ export default function SettingsModal({
                       <select
                         className="vscode-select"
                         value={autoSave ? "on" : "off"}
+                        aria-label="Auto Save"
+                        title="Auto Save"
                         onChange={(e) =>
                           onAutoSaveChange(e.target.value === "on")
                         }
@@ -454,6 +454,8 @@ export default function SettingsModal({
                           type="checkbox"
                           className="vscode-checkbox"
                           checked={hotReload}
+                          aria-label="Hot Reload"
+                          title="Hot Reload"
                           onChange={(e) => onHotReloadChange(e.target.checked)}
                         />
                       </label>
@@ -481,6 +483,8 @@ export default function SettingsModal({
                           type="checkbox"
                           className="vscode-checkbox"
                           checked={wordWrap}
+                          aria-label="Word Wrap"
+                          title="Word Wrap"
                           onChange={(e) => onWordWrapChange(e.target.checked)}
                         />
                       </label>
@@ -512,6 +516,8 @@ export default function SettingsModal({
                       <select
                         className="vscode-select"
                         value={theme}
+                        aria-label="Color Theme"
+                        title="Color Theme"
                         onChange={(e) => onThemeChange(e.target.value)}
                       >
                         <option value="system">System Default</option>
@@ -578,6 +584,8 @@ export default function SettingsModal({
                           type="checkbox"
                           className="vscode-checkbox"
                           checked={showCollabUsernames}
+                          aria-label="Show Usernames"
+                          title="Show Usernames"
                           onChange={(e) =>
                             onShowCollabUsernamesChange(e.target.checked)
                           }
@@ -612,6 +620,8 @@ export default function SettingsModal({
                           max={100}
                           step={5}
                           value={collabUsernameOpacity}
+                          aria-label="Username Opacity"
+                          title="Username Opacity"
                           onChange={(e) =>
                             onCollabUsernameOpacityChange(Number(e.target.value))
                           }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ArrowLeft, X, Users, LogOut, Settings, Key, CheckCircle2, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { updateTeamName, updateTeamPassword, flushAllActivityLogs, getGlobalInternetRestriction, setGlobalInternetRestriction } from '../../services/appwrite';
-import { cacheCredentials } from '../../services/localStore';
 import { Team } from '../../../shared/types';
 import '../Settings/SettingsModal.css';
 
@@ -144,7 +143,6 @@ export default function AdminSettingsModal({
     setSavingPassword(true);
     const result = await updateTeamPassword(user.$id, oldPassword, newPassword);
     if (result.success) {
-      cacheCredentials(user.teamName, newPassword, user.$id, user.role);
       setPasswordSuccess('Password updated successfully');
       setOldPassword('');
       setNewPassword('');
@@ -266,6 +264,8 @@ export default function AdminSettingsModal({
                       <select
                         className="vscode-select"
                         value={theme}
+                        aria-label="Color Theme"
+                        title="Color Theme"
                         onChange={(e) => onThemeChange(e.target.value)}
                       >
                         <option value="system">System Default</option>
@@ -332,6 +332,8 @@ export default function AdminSettingsModal({
                             type="checkbox"
                             className="vscode-checkbox"
                             checked={globalRestriction}
+                            aria-label="Block Internet Access"
+                            title="Block Internet Access"
                             onChange={(e) => handleToggleRestriction(e.target.checked)}
                             disabled={savingRestriction}
                           />

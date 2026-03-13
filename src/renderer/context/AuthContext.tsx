@@ -13,11 +13,6 @@ import {
   getGlobalInternetRestriction,
   subscribeToSettings,
 } from "../services/appwrite";
-import {
-  cacheCredentials,
-  validateCachedAuth,
-  clearCache,
-} from "../services/localStore";
 
 interface AuthContextValue {
   user: Team | null;
@@ -43,15 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [internetBlocked, setInternetBlocked] = useState(false);
 
   useEffect(() => {
-    // Attempt to restore session from cache
-    const cached = JSON.parse(localStorage.getItem("sonar_session") || "null");
-    if (cached) {
-      setUser(cached);
-      // Mark session as online in DB on restore (fire-and-forget)
-      if (cached.$id && cached.teamName) {
-        upsertSession(cached.$id, cached.teamName, "online").catch(() => {});
-      }
-    }
+    localStorage.removeItem("sonar_session");
+    localStorage.removeItem("sonar_auth_cache");
     setLoading(false);
   }, []);
 
@@ -80,40 +68,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      const attestation =
+        (await window.electronAPI?.security?.getAttestationData?.()) || {
+          token: "DEV_MODE",
+          version: "dev",
+          buildTimestamp: "DEV_MODE",
+          label: "DEV_MODE" as const,
+        };
       // Try online auth first
       const team = await validateTeamCredentials(teamName, password);
       if (team) {
         setUser(team);
-        localStorage.setItem("sonar_session", JSON.stringify(team));
-        cacheCredentials(teamName, password, team.$id!, team.role);
-        await upsertSession(team.$id!, teamName, "online");
+        await upsertSession(team.$id!, teamName, "online", attestation);
         return { success: true };
       }
       // Online auth returned null = invalid credentials (server reachable)
       return { success: false, error: "Invalid credentials" };
-    } catch (err) {
-      // Network error - try cached login
-      const cached = validateCachedAuth(teamName, password);
-      if (cached) {
-        const offlineUser: Team = {
-          $id: cached.teamId,
-          teamName: cached.teamName,
-          role: cached.role,
-        };
-        setUser(offlineUser);
-        localStorage.setItem("sonar_session", JSON.stringify(offlineUser));
-        return { success: true };
-      }
-      return { success: false, error: "Login failed. Check your connection." };
+    } catch {
+      return {
+        success: false,
+        error: "Online login is required. Check your connection and try again.",
+      };
     }
   };
 
   const logout = () => {
     if (user) {
-      upsertSession(user.$id!, user.teamName, "offline").catch(() => {});
+      window.electronAPI?.security?.getAttestationData?.()
+        .then((attestation) => upsertSession(user.$id!, user.teamName, "offline", attestation))
+        .catch(() =>
+          upsertSession(user.$id!, user.teamName, "offline", {
+            token: "DEV_MODE",
+            version: "dev",
+            buildTimestamp: "DEV_MODE",
+            label: "DEV_MODE",
+          })
+        );
     }
     setUser(null);
     localStorage.removeItem("sonar_session");
+    localStorage.removeItem("sonar_auth_cache");
   };
 
   const register = async (

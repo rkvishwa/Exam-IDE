@@ -1,18 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-export function useNetworkStatus(): boolean {
+interface NetworkStatusState {
+  isOnline: boolean;
+  refreshStatus: () => Promise<boolean>;
+}
+
+export function useNetworkStatus(): NetworkStatusState {
   const [isOnline, setIsOnline] = useState(false);
+
+  const refreshStatus = useCallback(async (): Promise<boolean> => {
+    if (window.electronAPI?.network) {
+      try {
+        const status = await window.electronAPI.network.getStatus();
+        setIsOnline(status);
+        return status;
+      } catch {
+        setIsOnline(false);
+        return false;
+      }
+    }
+
+    const status = navigator.onLine;
+    setIsOnline(status);
+    return status;
+  }, []);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
 
     if (window.electronAPI?.network) {
       // Use purely main process HTTP-verified connectivity
-      window.electronAPI.network.getStatus().then((status) => setIsOnline(status)).catch(() => setIsOnline(false));
+      void refreshStatus();
       cleanup = window.electronAPI.network.onStatusChange((status) => setIsOnline(status));
     } else {
       // Fallback for non-Electron environments
-      setIsOnline(navigator.onLine);
+      void refreshStatus();
       const handleOnline = () => setIsOnline(true);
       const handleOffline = () => setIsOnline(false);
 
@@ -28,7 +50,7 @@ export function useNetworkStatus(): boolean {
     return () => {
       cleanup?.();
     };
-  }, []);
+  }, [refreshStatus]);
 
-  return isOnline;
+  return { isOnline, refreshStatus };
 }

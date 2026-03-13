@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import IDE from './pages/IDE';
 import AdminDashboard from './pages/AdminDashboard';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { startSecurityHeartbeat, stopSecurityHeartbeat } from './services/securityHeartbeat';
 
 // ── Permission gate ──────────────────────────────────────────────────────────
 // On macOS the app needs Automation/System Events access to track app switching.
@@ -128,7 +129,25 @@ function PermissionRequired({ onRecheck }: { onRecheck: () => Promise<void> }) {
   );
 }
 
-function InternetRestrictedBlock() {
+function InternetRestrictedBlock({
+  onRetry,
+}: {
+  onRetry: () => Promise<boolean>;
+}) {
+  const [checking, setChecking] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleRetry = async () => {
+    setChecking(true);
+    const online = await onRetry();
+    setChecking(false);
+    setMessage(
+      online
+        ? 'Internet is still enabled. Turn it off and try again.'
+        : 'Internet is off. Reconnecting to the IDE...'
+    );
+  };
+
   return (
     <div
       style={{
@@ -152,15 +171,55 @@ function InternetRestrictedBlock() {
       <p style={{ maxWidth: '480px', lineHeight: '1.6', margin: 0, color: '#a0a0a0' }}>
         Your admin has restricted IDE usage while connected to the internet.
         <br/><br/>
-        Please disconnect from the internet or disable your network adapter to continue using Sonar Code Editor.
+        Login requires internet, so after signing in you can disconnect from the internet and retry to continue using Sonar Code Editor.
       </p>
+      <button
+        onClick={handleRetry}
+        disabled={checking}
+        style={{
+          padding: '10px 20px',
+          background: checking ? '#2a2a2a' : '#0e639c',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: checking ? 'not-allowed' : 'pointer',
+          fontSize: '14px',
+        }}
+      >
+        {checking ? 'Checking…' : 'Retry After Disconnecting'}
+      </button>
+      {message && (
+        <p style={{ margin: 0, fontSize: '12px', color: '#a0a0a0' }}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }
 
-function AppRoutes() {
+function UnofficialBuildBanner() {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        background: '#d32f2f',
+        color: '#fff',
+        textAlign: 'center',
+        padding: '4px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        zIndex: 9999,
+      }}
+    >
+      UNOFFICIAL BUILD - DEV MODE
+    </div>
+  );
+}
+
+function AppRoutes({ isOfficialBuild }: { isOfficialBuild: boolean }) {
   const { user, loading, internetBlocked } = useAuth();
-  const isOnline = useNetworkStatus();
+  const { isOnline, refreshStatus } = useNetworkStatus();
 
   if (loading) {
     return (
@@ -170,29 +229,40 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <Login />;
-  if (user.role === 'admin') return (
-    <Routes>
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="*" element={<Navigate to="/admin" />} />
-    </Routes>
-  );
+  let content: React.ReactNode;
 
-  if (internetBlocked && isOnline) {
-    return <InternetRestrictedBlock />;
+  if (!user) {
+    content = <Login />;
+  } else if (user.role === 'admin') {
+    content = (
+      <Routes>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="*" element={<Navigate to="/admin" />} />
+      </Routes>
+    );
+  } else if (internetBlocked && isOnline) {
+    content = <InternetRestrictedBlock onRetry={refreshStatus} />;
+  } else {
+    content = (
+      <Routes>
+        <Route path="/ide" element={<IDE />} />
+        <Route path="*" element={<Navigate to="/ide" />} />
+      </Routes>
+    );
   }
 
   return (
-    <Routes>
-      <Route path="/ide" element={<IDE />} />
-      <Route path="*" element={<Navigate to="/ide" />} />
-    </Routes>
+    <>
+      {!isOfficialBuild && <UnofficialBuildBanner />}
+      {content}
+    </>
   );
 }
 
 export default function App() {
   // null = checking, true = granted, false = denied
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [isOfficialBuild, setIsOfficialBuild] = useState(true);
 
   useEffect(() => {
     // Add platform class to body for OS-specific styling globally
@@ -204,6 +274,22 @@ export default function App() {
     } else {
       document.body.classList.add("platform-linux");
     }
+  }, []);
+
+  useEffect(() => {
+    startSecurityHeartbeat();
+
+    window.electronAPI?.security?.getAttestationToken?.()
+      .then((token) => {
+        setIsOfficialBuild(!!token && token !== 'DEV_MODE');
+      })
+      .catch(() => {
+        setIsOfficialBuild(false);
+      });
+
+    return () => {
+      stopSecurityHeartbeat();
+    };
   }, []);
 
   const checkPermission = useCallback(async () => {
@@ -240,7 +326,7 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <AppRoutes isOfficialBuild={isOfficialBuild} />
       </AuthProvider>
     </Router>
   );

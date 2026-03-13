@@ -1,6 +1,6 @@
-import { Client, Databases, Query, ID, RealtimeResponseEvent } from 'appwrite';
+import { Client, Databases, Functions, Query, ID, RealtimeResponseEvent, ExecutionMethod } from 'appwrite';
 import { APP_CONFIG } from '../../shared/constants';
-import { Team, Session, ActivityLog, ActivitySyncData, Report, HeartbeatPayload } from '../../shared/types';
+import { Team, Session, ActivityLog, ActivitySyncData, Report, HeartbeatPayload, AttestationData } from '../../shared/types';
 
 const APPWRITE_ENDPOINT = import.meta.env.VITE_APPWRITE_ENDPOINT;
 const APPWRITE_PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID;
@@ -10,6 +10,7 @@ const client = new Client()
   .setProject(APPWRITE_PROJECT_ID);
 
 const databases = new Databases(client);
+const functions = new Functions(client);
 
 const DB_ID = import.meta.env.VITE_APPWRITE_DB_NAME || 'devwatch_db';
 const COL_TEAMS = import.meta.env.VITE_APPWRITE_COLLECTION_TEAMS || 'teams';
@@ -17,6 +18,50 @@ const COL_SESSIONS = import.meta.env.VITE_APPWRITE_COLLECTION_SESSIONS || 'sessi
 const COL_ACTIVITY_LOGS = import.meta.env.VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS || 'activityLogs';
 const COL_REPORTS = import.meta.env.VITE_APPWRITE_COLLECTION_REPORTS || 'reports';
 const COL_SETTINGS = import.meta.env.VITE_APPWRITE_COLLECTION_SETTINGS || 'settings';
+const VERIFY_ATTESTATION_FUNCTION_ID = import.meta.env.VITE_APPWRITE_VERIFY_ATTESTATION_FUNCTION_ID;
+
+interface AttestationVerificationResponse {
+  verified: boolean;
+  status: Session['attestation'];
+}
+
+async function verifyBuildAttestation(attestation: AttestationData): Promise<Session['attestation']> {
+  if (!attestation.token || !attestation.version || !attestation.buildTimestamp) {
+    return 'UNVERIFIED';
+  }
+
+  if (attestation.label === 'DEV_MODE' && attestation.token === 'DEV_MODE') {
+    return 'DEV_MODE';
+  }
+
+  if (!VERIFY_ATTESTATION_FUNCTION_ID) {
+    return 'UNVERIFIED';
+  }
+
+  try {
+    const execution = await functions.createExecution(
+      VERIFY_ATTESTATION_FUNCTION_ID,
+      JSON.stringify(attestation),
+      false,
+      '/',
+      ExecutionMethod.POST,
+      {
+        'content-type': 'application/json',
+      }
+    );
+    const parsed = JSON.parse(execution.responseBody || '{}') as AttestationVerificationResponse;
+    if (parsed.verified && parsed.status === 'OFFICIAL_BUILD') {
+      return 'OFFICIAL_BUILD';
+    }
+    if (parsed.verified && parsed.status === 'DEV_MODE') {
+      return 'DEV_MODE';
+    }
+    return 'UNVERIFIED';
+  } catch (err) {
+    console.error('Failed to verify attestation with Appwrite Function:', err);
+    return 'UNVERIFIED';
+  }
+}
 
 // ---- Teams ----
 export async function getTeamByName(teamName: string): Promise<Team | null> {
@@ -168,16 +213,23 @@ export async function getAdminTeamIds(): Promise<Set<string>> {
 }
 
 // ---- Sessions ----
-export async function upsertSession(teamId: string, teamName: string, status: 'online' | 'offline'): Promise<void> {
+export async function upsertSession(
+  teamId: string,
+  teamName: string,
+  status: 'online' | 'offline',
+  attestationData: AttestationData
+): Promise<void> {
   try {
     const existing = await databases.listDocuments(DB_ID, COL_SESSIONS, [
       Query.equal('teamId', teamId),
     ]);
+    const attestation = await verifyBuildAttestation(attestationData);
     const data: Omit<Session, '$id'> = {
       teamId,
       teamName,
       status,
       lastSeen: new Date().toISOString(),
+      attestation,
     };
     if (existing.documents.length > 0) {
       await databases.updateDocument(DB_ID, COL_SESSIONS, existing.documents[0].$id, data);

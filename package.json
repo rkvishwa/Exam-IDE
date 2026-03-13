@@ -12,7 +12,7 @@
     "dev:main": "tsc -p tsconfig.main.json --watch",
     "dev:electron": "wait-on http://127.0.0.1:5173 && electron .",
     "start": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
-    "build": "npm run build:renderer && npm run build:main && npm run build:preload",
+    "build": "npm run build:renderer && npm run build:main && npm run build:preload && node scripts/generate-attestation.js && node scripts/build-bytecode.js",
     "build:renderer": "vite build --config vite.renderer.config.ts",
     "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "tsc -p tsconfig.preload.json",
@@ -26,6 +26,7 @@
     "@radix-ui/colors": "^3.0.0",
     "@types/ws": "^8.18.1",
     "appwrite": "^16.0.0",
+    "bytenode": "^1.5.7",
     "dotenv": "^17.3.1",
     "electron-store": "^8.1.0",
     "is-online": "^12.0.2",
@@ -55,6 +56,7 @@
     "wait-on": "^7.2.0"
   },
   "build": {
+    "afterPack": "scripts/generate-seal.js",
     "appId": "com.sonar.editor",
     "productName": "Sonar Code Editor",
     "icon": "build/icon.png",

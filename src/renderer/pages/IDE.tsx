@@ -137,7 +137,7 @@ export default function IDE() {
 
 function IDEContent() {
   const { user, logout } = useAuth();
-  const isOnline = useNetworkStatus();
+  const { isOnline } = useNetworkStatus();
   const collaboration = useCollaboration();
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null);
   const [tabs, setTabs] = useState<OpenTab[]>([]);

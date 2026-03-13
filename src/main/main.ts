@@ -9,6 +9,10 @@ import { registerFsHandlers } from './ipcHandlers';
 import { MonitoringService } from './monitoring';
 import { IPC_CHANNELS } from '../shared/constants';
 import { stopStaticServer } from './staticServer';
+import { verifyAsarIntegrity } from './integrityCheck';
+import { securityLog } from './securityLog';
+import { offlineHeartbeatMonitor } from './offlineHeartbeat';
+import { getAttestationData, getAttestationToken } from './buildAttestation';
 
 // Lazy load collaboration manager to prevent ws import issues on some systems
 let collaborationManager: typeof import('./collaborationManager').collaborationManager | null = null;
@@ -105,6 +109,9 @@ function createWindow(): void {
     );
   }
 
+  offlineHeartbeatMonitor.attachWindow(mainWindow);
+  offlineHeartbeatMonitor.start();
+
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
     startNetworkPolling();
@@ -115,6 +122,7 @@ function createWindow(): void {
   Menu.setApplicationMenu(null);
 
   mainWindow.on('closed', () => {
+    offlineHeartbeatMonitor.stop();
     mainWindow = null;
   });
 }
@@ -137,6 +145,26 @@ ipcMain.on(IPC_CHANNELS.MONITORING_STOP, () => {
 
 ipcMain.on('monitoring:setCurrentFile', (_event, filePath: string) => {
   monitoringService?.setCurrentFile(filePath);
+});
+
+ipcMain.on(IPC_CHANNELS.SECURITY_HEARTBEAT_PING, (_event, nonce: string) => {
+  offlineHeartbeatMonitor.receivePing(nonce);
+});
+
+ipcMain.handle(IPC_CHANNELS.SECURITY_NONCE_REQUEST, async () => {
+  return offlineHeartbeatMonitor.getNonce();
+});
+
+ipcMain.handle(IPC_CHANNELS.SECURITY_GET_LOG, async () => {
+  return securityLog.getEntries();
+});
+
+ipcMain.handle(IPC_CHANNELS.SECURITY_GET_ATTESTATION, async () => {
+  return getAttestationToken();
+});
+
+ipcMain.handle(IPC_CHANNELS.SECURITY_GET_ATTESTATION_DATA, async () => {
+  return getAttestationData();
 });
 
 // Register collaboration IPC handlers
@@ -192,6 +220,29 @@ ipcMain.handle(IPC_CHANNELS.COLLAB_CHECK_LOCAL_NETWORK, async () => {
 
 // App lifecycle
 app.whenReady().then(async () => {
+  securityLog.initialize();
+  securityLog.append('APP_STARTED', {
+    packaged: app.isPackaged,
+    version: app.getVersion(),
+  });
+
+  if (!(await verifyAsarIntegrity(isDev))) {
+    return;
+  }
+
+  getAttestationToken();
+
+  if (!isDev) {
+    app.on('web-contents-created', (_event, contents) => {
+      contents.on('devtools-opened', () => {
+        securityLog.append('DEVTOOLS_OPENED', {
+          source: contents.getType(),
+        });
+        contents.closeDevTools();
+      });
+    });
+  }
+
   // ── macOS: enforce Automation / System Events permission ─────────────────
   // The app uses osascript to detect active window (app-switching monitoring).
   // If the user denied it, block startup entirely. Loop with Retry so the user
@@ -287,13 +338,18 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   monitoringService?.stopHeartbeat();
+  offlineHeartbeatMonitor.stop();
   getCollaborationManager().then(collab => collab?.stopSession());
   stopStaticServer();
   if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('before-quit', () => {
+  securityLog.append('APP_QUIT', {
+    packaged: app.isPackaged,
+  });
   monitoringService?.stopHeartbeat();
+  offlineHeartbeatMonitor.stop();
   getCollaborationManager().then(collab => collab?.stopSession());
 });
 
@@ -342,6 +398,7 @@ async function checkConnectivity(): Promise<boolean> {
 }
 
 function sendNetworkStatus(online: boolean): void {
+  monitoringService?.setOnlineStatus(online);
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('network:status', online);
   }

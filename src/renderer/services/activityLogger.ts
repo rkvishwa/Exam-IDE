@@ -63,12 +63,14 @@ function formatTimestamp(iso: string): string {
   return d.toLocaleString();
 }
 
-export function generateActivityLogPDF(teamName: string): void {
+export async function generateActivityLogPDF(teamName: string): Promise<void> {
   const log = getActivityLog();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 14;
   const contentW = pageW - margin * 2;
+  const attestationToken = await window.electronAPI?.security?.getAttestationToken?.();
+  const isOfficialBuild = !!attestationToken && attestationToken !== 'DEV_MODE';
 
   // --- Colors ---
   const C = {
@@ -150,6 +152,13 @@ export function generateActivityLogPDF(teamName: string): void {
   doc.text('Sonar Code Editor — Activity Monitoring System', margin, 22);
 
   let y = 38;
+
+  if (!isOfficialBuild) {
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(211, 47, 47);
+    doc.text('WARNING: UNOFFICIAL BUILD / DEV MODE', margin, 32);
+  }
 
   const dateRaw = new Date();
   const dateStr = `${dateRaw.getFullYear()}-${String(dateRaw.getMonth()+1).padStart(2,'0')}-${String(dateRaw.getDate()).padStart(2,'0')}`;

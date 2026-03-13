@@ -21,6 +21,7 @@ type ViewMode = 'table' | 'grid';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
+  const [adminDisplayName, setAdminDisplayName] = useState(user?.teamName || 'Admin');
   const [teams, setTeams] = useState<TeamStatus[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,10 @@ export default function AdminDashboard() {
   );
   const unsubRefs = useRef<Array<() => void>>([]);
   const adminIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    setAdminDisplayName(user?.teamName || 'Admin');
+  }, [user?.teamName]);
 
   const applyStaleCheck = useCallback((teamsList: TeamStatus[]): TeamStatus[] => {
     const now = Date.now();
@@ -356,6 +361,43 @@ export default function AdminDashboard() {
     setShowReport(true);
   };
 
+  const renderAttestationBadge = (attestation?: string) => {
+    const status = attestation || 'UNVERIFIED';
+    const isOfficial = status === 'OFFICIAL_BUILD';
+    const isDevMode = status === 'DEV_MODE';
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderRadius: '999px',
+          padding: '2px 8px',
+          fontSize: '11px',
+          fontWeight: 700,
+          background: isOfficial
+            ? 'rgba(34, 197, 94, 0.12)'
+            : isDevMode
+              ? 'rgba(211, 47, 47, 0.15)'
+              : 'rgba(245, 158, 11, 0.15)',
+          color: isOfficial
+            ? '#86efac'
+            : isDevMode
+              ? '#fca5a5'
+              : '#fcd34d',
+          border: `1px solid ${
+            isOfficial
+              ? 'rgba(34, 197, 94, 0.25)'
+              : isDevMode
+                ? 'rgba(211, 47, 47, 0.25)'
+                : 'rgba(245, 158, 11, 0.25)'
+          }`,
+        }}
+      >
+        {status}
+      </span>
+    );
+  };
+
   return (
     <div className="admin-container">
       <div className="admin-header">
@@ -386,7 +428,7 @@ export default function AdminDashboard() {
           </button>
           <div className="admin-user-pill">
             <ShieldAlert size={14} className="user-icon" />
-            {user?.teamName || 'Admin'}
+            {adminDisplayName}
           </div>
           <button className="admin-btn danger" onClick={logout}>
             <LogOut size={14} />
@@ -554,7 +596,9 @@ export default function AdminDashboard() {
                           <div className="team-identity">
                             <div className="team-avatar">{team.teamName.charAt(0).toUpperCase()}</div>
                             <div className="team-info">
-                              <span className="team-name">{team.teamName}</span>
+                              <span className="team-name">
+                                {team.teamName} {renderAttestationBadge(team.attestation)}
+                              </span>
                               <span className="team-window" title={team.currentWindow || 'Idle'}>
                                 {team.currentWindow || 'Awaiting window context'}
                               </span>
@@ -614,6 +658,7 @@ export default function AdminDashboard() {
                       <div className="gc-avatar">{team.teamName.charAt(0).toUpperCase()}</div>
                       <div className="gc-title">
                         <h4>{team.teamName}</h4>
+                        {renderAttestationBadge(team.attestation)}
                         <div className={`status-sm ${team.status}`}>
                           <span className="dot" />
                           {team.status}
@@ -665,9 +710,8 @@ export default function AdminDashboard() {
         theme={theme}
         onThemeChange={setTheme}
         onTeamNameUpdated={(newName) => {
-          const updated = { ...user!, teamName: newName };
-          localStorage.setItem('sonar_session', JSON.stringify(updated));
-          window.location.reload();
+          setAdminDisplayName(newName);
+          setShowSettings(false);
         }}
       />
     </div>

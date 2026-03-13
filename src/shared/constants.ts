@@ -45,6 +45,13 @@ export const IPC_CHANNELS = {
   COLLAB_START_HOSTED_NETWORK: 'collaboration:startHostedNetwork',
   COLLAB_STATUS_CHANGE: 'collaboration:statusChange',
   COLLAB_CHECK_LOCAL_NETWORK: 'collaboration:checkLocalNetwork',
+  // Security
+  SECURITY_HEARTBEAT_PING: 'security:heartbeat-ping',
+  SECURITY_NONCE_REQUEST: 'security:nonce-request',
+  SECURITY_NONCE_RESPONSE: 'security:nonce-response',
+  SECURITY_GET_LOG: 'security:get-log',
+  SECURITY_GET_ATTESTATION: 'security:get-attestation',
+  SECURITY_GET_ATTESTATION_DATA: 'security:get-attestation-data',
 } as const;
 
 export const APP_CONFIG = {

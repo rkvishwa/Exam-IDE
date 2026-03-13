@@ -69,6 +69,13 @@ const api: ElectronAPI = {
       return () => ipcRenderer.removeListener(IPC_CHANNELS.COLLAB_STATUS_CHANGE, handler);
     },
   },
+  security: {
+    sendHeartbeat: (nonce: string) => ipcRenderer.send(IPC_CHANNELS.SECURITY_HEARTBEAT_PING, nonce),
+    requestNonce: () => ipcRenderer.invoke(IPC_CHANNELS.SECURITY_NONCE_REQUEST),
+    getSecurityLog: () => ipcRenderer.invoke(IPC_CHANNELS.SECURITY_GET_LOG),
+    getAttestationToken: () => ipcRenderer.invoke(IPC_CHANNELS.SECURITY_GET_ATTESTATION),
+    getAttestationData: () => ipcRenderer.invoke(IPC_CHANNELS.SECURITY_GET_ATTESTATION_DATA),
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

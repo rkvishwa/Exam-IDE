@@ -22,6 +22,14 @@ export interface Session {
   status: 'online' | 'offline';
   lastSeen: string;
   ipAddress?: string;
+  attestation?: 'OFFICIAL_BUILD' | 'DEV_MODE' | 'UNVERIFIED';
+}
+
+export interface AttestationData {
+  token: string;
+  version: string;
+  buildTimestamp: string;
+  label: 'OFFICIAL_BUILD' | 'DEV_MODE';
 }
 
 export interface ActivityLog {
@@ -169,6 +177,19 @@ export interface ElectronAPI {
     startHostedNetwork: (ssid: string, password: string) => Promise<{ success: boolean; error?: string }>;
     checkLocalNetwork: () => Promise<boolean>;
     onStatusChange: (callback: (status: CollaborationStatus) => void) => () => void;
+  };
+  security: {
+    sendHeartbeat: (nonce: string) => void;
+    requestNonce: () => Promise<string>;
+    getSecurityLog: () => Promise<Array<{
+      seq: number;
+      timestamp: string;
+      event: string;
+      details: Record<string, unknown>;
+      hmac: string;
+    }>>;
+    getAttestationToken: () => Promise<string>;
+    getAttestationData: () => Promise<AttestationData>;
   };
 }
 
