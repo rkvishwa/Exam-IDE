@@ -21,7 +21,7 @@
   } from "lucide-svelte";
   import { onMount, onDestroy } from "svelte";
 
-  type ClientOS = "windows" | "mac" | "other";
+  type ClientOS = "windows" | "mac" | "linux" | "other";
 
   let mounted = $state(false);
 
@@ -64,6 +64,8 @@
       clientOS = "windows";
     } else if (ua.includes("macintosh") || ua.includes("mac os x")) {
       clientOS = "mac";
+    } else if (ua.includes("linux")) {
+      clientOS = "linux";
     } else {
       clientOS = "other";
     }
@@ -76,8 +78,20 @@
   <title>Sonar IDE | Supervised Coding & Exam Environment</title>
   <meta
     name="description"
-    content="A real-time collaborative code editor built for supervised teams, featuring advanced activity monitoring and strict local environments."
+    content="A secure, real-time collaborative coding environment designed specifically for supervised exams and technical interviews."
   />
+  <!-- Open Graph Meta Tags -->
+  <meta
+    property="og:title"
+    content="Sonar IDE | Supervised Coding & Exam Environment"
+  />
+  <meta
+    property="og:description"
+    content="A secure, real-time collaborative coding environment designed specifically for supervised exams and technical interviews."
+  />
+  <meta property="og:image" content="/favicon.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
 <!-- Hero Section -->
@@ -135,8 +149,8 @@
         <p
           class="text-base sm:text-lg text-zinc-500 dark:text-zinc-400 max-w-[520px] mb-10 leading-relaxed hero-stagger-4"
         >
-          Real-time collaboration, exam monitoring, and secure coding - powered
-          by Monaco and Electron.
+          A secure, real-time collaborative coding environment designed
+          specifically for supervised exams and technical interviews.
         </p>
 
         <!-- CTA buttons -->
@@ -188,7 +202,7 @@
                 >
               </p>
             </div>
-          {:else}
+          {:else if clientOS === "windows"}
             <div class="w-full sm:w-auto">
               <a
                 href="/download"
@@ -203,10 +217,27 @@
                 Allow permission in your browser to download the file.
               </p>
               <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-                Already installed an older version? <a
+                Other versions? <a
                   href="/download"
                   class="text-cyan-600 dark:text-cyan-400 hover:underline font-medium"
-                  >Get updates &rarr;</a
+                  >See all options &rarr;</a
+                >
+              </p>
+            </div>
+           {:else}
+            <div class="w-full sm:w-auto">
+              <a
+                href="/download"
+                class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Download size={15} />
+                <span>Download Sonar IDE</span>
+              </a>
+              <p class="mt-4 text-xs text-zinc-600 dark:text-zinc-400 text-center sm:text-left">
+                Available for Windows, macOS, and Linux. <br><a
+                  href="/download"
+                  class="text-cyan-600 dark:text-cyan-400 hover:underline font-medium"
+                  >View all options &rarr;</a
                 >
               </p>
             </div>
@@ -746,6 +777,22 @@
   </div>
 </section>
 
+<!-- Trust Banner -->
+<section class="py-12 border-y border-zinc-100 dark:border-white/[0.05] bg-white/30 dark:bg-white/[0.01]">
+  <div class="container mx-auto px-6 text-center">
+    <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-8 tracking-wider uppercase">
+      Trusted by developers, teams, and educators for secure coding
+    </p>
+    <div class="flex flex-wrap justify-center items-center gap-10 sm:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+        <!-- Placeholder logos that fit the context -->
+		<svg class="h-7 w-auto min-w-[100px] text-zinc-800 dark:text-zinc-200 fill-current" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><path d="M10 5h20v5H10zM10 15h15v5H10zM40 5a10 10 0 100 20 10 10 0 000-20z" opacity="0.8"/><text x="60" y="22" font-family="sans-serif" font-weight="bold" font-size="18">Acme Corp</text></svg>
+		<svg class="h-7 w-auto min-w-[100px] text-zinc-800 dark:text-zinc-200 fill-current" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><polygon points="15,5 30,25 0,25" opacity="0.8"/><text x="40" y="22" font-family="sans-serif" font-weight="bold" font-size="18">EduTech</text></svg>
+		<svg class="h-7 w-auto min-w-[100px] text-zinc-800 dark:text-zinc-200 fill-current" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="10" opacity="0.8"/><text x="35" y="22" font-family="sans-serif" font-weight="bold" font-size="18">Procto</text></svg>
+		<svg class="h-7 w-auto min-w-[100px] text-zinc-800 dark:text-zinc-200 fill-current" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="20" height="20" rx="4" opacity="0.8"/><text x="35" y="22" font-family="sans-serif" font-weight="bold" font-size="18">Global U.</text></svg>
+    </div>
+  </div>
+</section>
+
 <!-- Features Section -->
 <section class="py-24 sm:py-32 relative">
   <div class="container mx-auto px-6">
@@ -772,7 +819,7 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
       <!-- Card 1 -->
       <div
-        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-blue-200 dark:hover:border-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/[0.04]"
+        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-blue-200 dark:hover:border-blue-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/[0.04]"
       >
         <div
           class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 transition-transform"
@@ -790,7 +837,7 @@
 
       <!-- Card 2 -->
       <div
-        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-blue-200 dark:hover:border-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/[0.04]"
+        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-blue-200 dark:hover:border-blue-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/[0.04]"
       >
         <div
           class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 mb-4 group-hover:scale-110 transition-transform"
@@ -808,7 +855,7 @@
 
       <!-- Card 3 -->
       <div
-        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-cyan-200 dark:hover:border-cyan-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/[0.04]"
+        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-cyan-200 dark:hover:border-cyan-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/[0.04]"
       >
         <div
           class="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 group-hover:scale-110 transition-transform"
@@ -828,7 +875,7 @@
 
       <!-- Card 4 -->
       <div
-        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-amber-200 dark:hover:border-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/[0.04]"
+        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-amber-200 dark:hover:border-amber-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/[0.04]"
       >
         <div
           class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 group-hover:scale-110 transition-transform"
@@ -846,7 +893,7 @@
 
       <!-- Card 5 -->
       <div
-        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-emerald-200 dark:hover:border-emerald-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.04]"
+        class="group relative p-6 rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] hover:border-emerald-200 dark:hover:border-emerald-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/[0.04]"
       >
         <div
           class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 group-hover:scale-110 transition-transform"
@@ -884,6 +931,58 @@
           />
         </span>
       </a>
+    </div>
+  </div>
+</section>
+
+<!-- Changelog Section -->
+<section class="py-24 sm:py-32 relative bg-zinc-50/50 dark:bg-zinc-900/20 border-y border-zinc-100 dark:border-white/[0.05]">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <div class="flex items-center justify-between mb-12">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight mb-2">
+          Latest Updates
+        </h2>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+          We're constantly improving Sonar IDE.
+        </p>
+      </div>
+      <a href="https://github.com/rkvishwa/Sonar-Code-Editor/releases" target="_blank" rel="noreferrer" class="text-sm font-medium text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
+        View all releases <ArrowRight size={14} />
+      </a>
+    </div>
+
+    <div class="space-y-6">
+      <!-- Release Item -->
+      <div class="group relative pl-8 sm:pl-0">
+        <div class="hidden sm:flex absolute left-0 top-0 bottom-0 w-32 flex-col items-end pr-8 pt-1">
+          <span class="text-sm border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded-md font-mono font-medium">v1.2.0</span>
+          <span class="text-xs text-zinc-500 dark:text-zinc-400 mt-2">March 2026</span>
+        </div>
+        <div class="sm:ml-32 relative bg-white dark:bg-white/[0.03] rounded-2xl p-6 border border-zinc-100 dark:border-white/[0.06] shadow-sm hover:shadow-md hover:border-zinc-200 dark:hover:border-white/[0.1] transition-all duration-300">
+          <!-- Mobile Date/Version -->
+          <div class="sm:hidden flex items-center gap-3 mb-4">
+            <span class="text-sm border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded-md font-mono font-medium">v1.2.0</span>
+            <span class="text-xs text-zinc-500 dark:text-zinc-400">March 2026</span>
+          </div>
+          
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3">Performance & Security Polish</h3>
+          <ul class="space-y-2">
+            <li class="flex items-start text-sm text-zinc-600 dark:text-zinc-300">
+              <Check size={16} class="text-emerald-500 mr-2 shrink-0 mt-0.5" />
+              <span>Optimized Yjs CRDT engine to support larger collaborative documents.</span>
+            </li>
+            <li class="flex items-start text-sm text-zinc-600 dark:text-zinc-300">
+              <Check size={16} class="text-emerald-500 mr-2 shrink-0 mt-0.5" />
+              <span>Enhanced local-only secured preview environment stability.</span>
+            </li>
+            <li class="flex items-start text-sm text-zinc-600 dark:text-zinc-300">
+              <Check size={16} class="text-emerald-500 mr-2 shrink-0 mt-0.5" />
+              <span>Dark mode theme refinements and a11y improvements.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </section>
