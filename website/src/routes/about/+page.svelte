@@ -1,9 +1,6 @@
 <script lang="ts">
-  import type { ActionData } from './$types';
   import { onMount } from 'svelte';
-  import { Github, Users, ShieldCheck, Mail } from 'lucide-svelte';
-
-  let { form } = $props<{ form?: ActionData }>();
+  import { Github, Users, ShieldCheck } from 'lucide-svelte';
 
   interface Contributor {
     login: string;
@@ -45,7 +42,7 @@
     </p>
   </div>
 
-  <section id="contact-us" class="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none rounded-3xl p-8 sm:p-12 mb-20 transition-colors duration-200">
+  <section class="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none rounded-3xl p-8 sm:p-12 mb-20 transition-colors duration-200">
     <div class="flex items-center space-x-3 mb-8">
       <Users size={28} class="text-blue-600 dark:text-blue-400" />
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Project Contributors</h2>
@@ -83,90 +80,18 @@
     {/if}
   </section>
 
-  <section class="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none rounded-3xl p-8 sm:p-12 mb-20 transition-colors duration-200">
-    <div class="flex items-center space-x-3 mb-8">
-      <Mail size={28} class="text-blue-600 dark:text-blue-400" />
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Contact Us</h2>
-    </div>
-
-    <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
-      Send us your feedback or questions. We will email a confirmation back to you once your form is submitted.
-    </p>
-
-    <form method="POST" class="space-y-5" novalidate>
-      <div>
-        <label for="name" class="block mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">Name</label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          value={form?.values?.name ?? ''}
-          autocomplete="name"
-          required
-          class="w-full rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#101014] px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none ring-0 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
-          aria-invalid={form?.errors?.name ? 'true' : 'false'}
-        />
-        {#if form?.errors?.name}
-          <p class="mt-2 text-sm text-rose-600 dark:text-rose-400">{form.errors.name}</p>
-        {/if}
-      </div>
-
-      <div>
-        <label for="email" class="block mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={form?.values?.email ?? ''}
-          autocomplete="email"
-          required
-          class="w-full rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#101014] px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none ring-0 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
-          aria-invalid={form?.errors?.email ? 'true' : 'false'}
-        />
-        {#if form?.errors?.email}
-          <p class="mt-2 text-sm text-rose-600 dark:text-rose-400">{form.errors.email}</p>
-        {/if}
-      </div>
-
-      <div>
-        <label for="message" class="block mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">Message</label>
-        <textarea
-          id="message"
-          name="message"
-          rows="6"
-          required
-          class="w-full rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#101014] px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none ring-0 focus:border-blue-500 dark:focus:border-blue-400 transition-colors resize-y"
-          aria-invalid={form?.errors?.message ? 'true' : 'false'}
-        >{form?.values?.message ?? ''}</textarea>
-        {#if form?.errors?.message}
-          <p class="mt-2 text-sm text-rose-600 dark:text-rose-400">{form.errors.message}</p>
-        {/if}
-      </div>
-
-      {#if form?.message}
-        <p class={`text-sm ${form.success ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-          {form.message}
-        </p>
-      {/if}
-
-      <div class="pt-2">
-        <button
-          type="submit"
-          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-sm"
-        >
-          Send Message
-        </button>
-      </div>
-    </form>
-  </section>
-
   <div class="text-center bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-600/10 dark:to-cyan-600/10 rounded-3xl p-10 border border-blue-200 dark:border-blue-500/20 transition-colors duration-200">
     <h2 class="text-2xl font-bold mb-4 text-zinc-900 dark:text-white">Join the Mission</h2>
     <p class="text-zinc-600 dark:text-zinc-400 mb-8 max-w-xl mx-auto">
       Help us improve Sonar Code Editor by actively suggesting features, improving logging, or building better IDE tools.
     </p>
-    <a href="https://github.com/rkvishwa/Sonar-Code-Editor/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer" class="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-[#0B0F19] hover:bg-zinc-800 dark:hover:bg-zinc-200 font-semibold rounded-lg transition-colors inline-block shadow-lg">
-      Contribution Guidelines
-    </a>
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+      <a href="/contact" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors inline-block shadow-lg shadow-blue-500/20">
+        Contact Us
+      </a>
+      <a href="https://github.com/rkvishwa/Sonar-Code-Editor/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer" class="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-[#0B0F19] hover:bg-zinc-800 dark:hover:bg-zinc-200 font-semibold rounded-lg transition-colors inline-block shadow-lg">
+        Contribution Guidelines
+      </a>
+    </div>
   </div>
 </div>

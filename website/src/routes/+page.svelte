@@ -47,10 +47,10 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<section class="relative flex flex-col items-start justify-center px-4 sm:px-8 lg:px-[10%] pt-28 sm:pt-36 xl:pt-44 pb-20 overflow-hidden min-h-screen bg-[#fafafa] dark:bg-[#050508]">
+<section class="relative flex flex-col items-start justify-center px-4 sm:px-8 lg:px-[10%] pt-28 sm:pt-36 xl:pt-44 pb-20 overflow-hidden min-h-screen">
 
 <!-- Radial fade mask for top/sides -->
-<div class="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_top,transparent_20%,#fafafa_80%)] dark:bg-[radial-gradient(circle_at_top,transparent_20%,#050508_80%)]"></div>
+<div class="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_top,transparent_16%,rgba(247,251,255,0.96)_78%)] dark:bg-[radial-gradient(circle_at_top,transparent_16%,rgba(7,16,24,0.94)_78%)]"></div>
 
 <!-- Hero Two-Column Layout -->
 <div class="relative z-10 w-full max-w-[1400px] mx-auto flex flex-col lg:flex-row items-center justify-start text-left">
@@ -70,14 +70,15 @@
 <!-- Heading -->
 <h1 class="text-[clamp(3rem,6vw,5rem)] font-bold tracking-tight leading-[1.1] text-zinc-900 dark:text-white mb-5 hero-stagger-3">
 The IDE built for<br/>
-<span class="relative whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-400 animate-gradient bg-[length:200%_auto]">
-supervision<span class="animate-pulse text-cyan-400 inline-block -ml-1">_</span>
+<span class="relative inline-flex items-end whitespace-nowrap">
+<span class="pointer-events-none absolute -inset-x-3 -inset-y-1 rounded-xl bg-gradient-to-r from-cyan-200/80 via-sky-200/55 to-blue-200/70 blur-sm dark:from-cyan-400/20 dark:via-sky-400/12 dark:to-blue-500/22"></span>
+<span class="relative text-transparent bg-clip-text bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-700 dark:from-cyan-200 dark:via-sky-300 dark:to-blue-300 animate-gradient bg-[length:220%_auto] [text-shadow:0_0_24px_rgba(56,189,248,0.32)]">supervision</span><span class="relative animate-pulse text-cyan-500 dark:text-cyan-300 inline-block -ml-1">_</span>
 </span>
 </h1>
 
 <!-- Subtitle -->
 <p class="text-base sm:text-lg text-zinc-500 dark:text-zinc-400 max-w-[520px] mb-10 leading-relaxed hero-stagger-4">
-Real-time collaboration, exam monitoring, and secure coding � powered by Monaco and Electron.
+Real-time collaboration, exam monitoring, and secure coding - powered by Monaco and Electron.
 </p>
 
 <!-- CTA buttons -->

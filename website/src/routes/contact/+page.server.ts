@@ -140,7 +140,6 @@ export const actions: Actions = {
         html: acknowledgement.html
       });
 
-      // Keep a copy of the submitted message for team follow-up.
       await transporter.sendMail({
         from: env.SMTP_FROM,
         to: inboxAddress,

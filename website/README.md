@@ -41,9 +41,9 @@ You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
-## About Page Contact Form Email Setup
+## Contact Page Email Setup
 
-The `/about` page now includes a contact form that sends:
+The `/contact` page now includes a contact form that sends:
 
 - an acknowledgement email to the sender
 - a copy of the submitted message to your inbox

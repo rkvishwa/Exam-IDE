@@ -1,56 +1,92 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
-	import { Github, Activity, Download } from 'lucide-svelte';
+	import { Github, Download, Home } from 'lucide-svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	let { children } = $props();
 
 	// Computed for active navigation
 	const isActive = (path: string) => page.url.pathname === path || page.url.pathname.startsWith(`${path}/`);
+	const navLinkClass = (path: string) =>
+		isActive(path)
+			? 'text-cyan-700 dark:text-cyan-200'
+			: 'text-zinc-700 dark:text-zinc-100/82 hover:text-cyan-700 dark:hover:text-cyan-200';
 </script>
 
-<div class="min-h-screen flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-50 font-sans selection:bg-blue-500/30 transition-colors duration-200">
-	<header class="fixed top-0 z-[100] w-full border-b border-zinc-200 dark:border-white/5 bg-white/80 dark:bg-[#0a0a0f]/70 backdrop-blur-[12px]">
-		<div class="container mx-auto px-6 h-16 flex items-center justify-between">
-			<a href="/" class="flex items-center space-x-3 text-xl font-bold">
-				<img src="/favicon.png" alt="Sonar Code Editor Icon" class="w-7 h-7 drop-shadow-sm" />
-				<span class="text-zinc-900 dark:text-white">Sonar IDE</span>
-			</a>
-			
-			<nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
-				<a href="/docs" class="transition-colors {isActive('/docs') ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}">Documentation</a>
-				<a href="/developer" class="transition-colors {isActive('/developer') ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}">Architecture</a>
-				<a href="/about" class="transition-colors {isActive('/about') ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}">About</a>
-			</nav>
+<div class="relative isolate min-h-screen flex flex-col overflow-x-hidden bg-[#f7fbff] dark:bg-[#071018] text-zinc-900 dark:text-zinc-50 font-sans selection:bg-cyan-400/20 transition-colors duration-200">
+	<div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+		<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.14),transparent_30%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.2),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.16),transparent_30%)]"></div>
+		<div class="absolute inset-0 opacity-85 dark:opacity-60 [background-image:linear-gradient(rgba(71,85,105,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(71,85,105,0.16)_1px,transparent_1px)] dark:[background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:3rem_3rem] [mask-image:radial-gradient(circle_at_center,black_58%,transparent_95%)]"></div>
+		<div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.62),transparent_62%)] dark:bg-[radial-gradient(circle_at_top,rgba(8,16,25,0.28),transparent_58%)]"></div>
+	</div>
 
-			<div class="flex items-center space-x-3 sm:space-x-5">
-				<ThemeToggle />
-				<div class="w-px h-5 bg-zinc-200 dark:bg-white/10 hidden sm:block"></div>
-				<a 
-					href="https://github.com/rkvishwa/Sonar-Code-Editor" 
-					target="_blank" 
-					rel="noreferrer"
-					class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-					aria-label="GitHub Repository"
-				>
-					<Github size={20} />
+	<header class="fixed top-0 z-[100] w-full px-4 pt-3 sm:px-6">
+		<div class="header-shell relative mx-auto max-w-7xl rounded-2xl border border-cyan-400/30 dark:border-cyan-400/20 bg-[#e9f3ff]/78 dark:bg-[#040a16]/94 shadow-[0_18px_46px_-24px_rgba(3,40,58,0.45)] dark:shadow-[0_18px_46px_-24px_rgba(2,12,27,0.9)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200">
+
+			<div class="relative flex h-16 items-center justify-between px-4 sm:px-6">
+				<a href="/" class="flex items-center space-x-3 text-xl font-bold">
+					<div class="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/40 dark:border-cyan-300/35 bg-white/78 dark:bg-cyan-500/12 shadow-sm">
+						<img src="/favicon.png" alt="Sonar Code Editor Icon" class="h-6 w-6 drop-shadow-sm" />
+					</div>
+					<span class="bg-gradient-to-r from-cyan-700 via-sky-700 to-blue-700 bg-clip-text text-transparent dark:from-cyan-100 dark:via-sky-200 dark:to-blue-200">Sonar IDE</span>
 				</a>
-				<a 
-					href="/download" 
-					class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium shadow-md shadow-blue-500/20 transition-all flex items-center space-x-2"
-				>
-					<Download size={16} />
-					<span class="hidden sm:inline">Download</span>
-				</a>
+
+				<nav class="hidden md:flex items-center gap-6 text-sm font-semibold">
+					<a href="/" class={`relative pb-1 transition-colors ${navLinkClass('/')}`}>
+						Home
+						<span class={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ${isActive('/') ? 'w-full opacity-100' : 'w-0 opacity-0'}`}></span>
+					</a>
+					<a href="/docs" class={`relative pb-1 transition-colors ${navLinkClass('/docs')}`}>
+						Documentation
+						<span class={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ${isActive('/docs') ? 'w-full opacity-100' : 'w-0 opacity-0'}`}></span>
+					</a>
+					<a href="/developer" class={`relative pb-1 transition-colors ${navLinkClass('/developer')}`}>
+						Architecture
+						<span class={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ${isActive('/developer') ? 'w-full opacity-100' : 'w-0 opacity-0'}`}></span>
+					</a>
+					<a href="/about" class={`relative pb-1 transition-colors ${navLinkClass('/about')}`}>
+						About
+						<span class={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ${isActive('/about') ? 'w-full opacity-100' : 'w-0 opacity-0'}`}></span>
+					</a>
+					<a href="/contact" class={`relative pb-1 transition-colors ${navLinkClass('/contact')}`}>
+						Contact
+						<span class={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all ${isActive('/contact') ? 'w-full opacity-100' : 'w-0 opacity-0'}`}></span>
+					</a>
+				</nav>
+
+				<div class="flex items-center space-x-2 sm:space-x-3">
+					<a href="/" class="md:hidden inline-flex items-center justify-center rounded-xl border border-cyan-400/38 dark:border-cyan-300/35 bg-white/74 dark:bg-cyan-500/12 p-2 text-cyan-700 dark:text-cyan-100 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors" aria-label="Home">
+						<Home size={18} />
+					</a>
+					<ThemeToggle />
+					<a
+						href="https://github.com/rkvishwa/Sonar-Code-Editor"
+						target="_blank"
+						rel="noreferrer"
+						class="rounded-xl border border-cyan-400/38 dark:border-cyan-300/35 bg-white/74 dark:bg-white/10 p-2 text-zinc-700 dark:text-zinc-100/85 hover:text-cyan-700 dark:hover:text-cyan-200 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
+						aria-label="GitHub Repository"
+					>
+						<Github size={18} />
+					</a>
+					<a
+						href="/download"
+						class="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition-all hover:from-cyan-400 hover:to-blue-500"
+					>
+						<span class="inline-flex items-center space-x-2">
+							<Download size={16} />
+							<span class="hidden sm:inline">Download</span>
+						</span>
+					</a>
+				</div>
 			</div>
 		</div>
 	</header>
 
-	<main class="flex-1 flex flex-col">
+	<main class="relative z-10 flex-1 flex flex-col">
 		{@render children()}
 	</main>
 
-	<footer class="border-t border-zinc-200 dark:border-white/5 mt-auto py-12 bg-zinc-50 dark:bg-[#121214] text-zinc-500 dark:text-zinc-400 transition-colors duration-200">
+	<footer class="relative z-10 mt-auto border-t border-zinc-200/70 dark:border-white/8 py-12 bg-white/60 dark:bg-[#0d1520]/72 text-zinc-500 dark:text-zinc-400 backdrop-blur-xl transition-colors duration-200">
 		<div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm">
 			<div class="flex items-center space-x-2 mb-6 md:mb-0">
 				<img src="/favicon.png" alt="Sonar Icon" class="w-5 h-5 opacity-70 grayscale dark:grayscale-0" />
@@ -60,7 +96,7 @@
 			<div class="flex space-x-8">
 				<a href="/docs" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Documentation</a>
 				<a href="/developer" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Architecture</a>
-				<a href="/about#contact-us" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Contact Us</a>
+				<a href="/contact" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Contact Us</a>
 				<a href="https://github.com/rkvishwa/Sonar-Code-Editor" target="_blank" rel="noreferrer" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">GitHub</a>
 			</div>
 			

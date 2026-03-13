@@ -10,6 +10,85 @@ body {
   font-family: var(--font-sans);
 }
 
+.header-shell {
+  position: relative;
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.header-shell::before {
+  content: '';
+  position: absolute;
+  inset: -10px -14px;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(
+      62% 82% at 50% 0%,
+      rgba(56, 189, 248, 0.2) 0%,
+      rgba(14, 165, 233, 0.12) 44%,
+      rgba(14, 165, 233, 0) 76%
+    );
+  filter: blur(16px);
+  opacity: 0.12;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.header-shell::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 1rem;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    rgba(34, 211, 238, 0.46) 0%,
+    rgba(59, 130, 246, 0.34) 52%,
+    rgba(34, 211, 238, 0.42) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.24;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.header-shell:hover::before {
+  opacity: 0.5;
+}
+
+.header-shell:hover::after {
+  opacity: 0.66;
+}
+
+.dark .header-shell::before {
+  background:
+    radial-gradient(
+      62% 82% at 50% 0%,
+      rgba(34, 211, 238, 0.2) 0%,
+      rgba(59, 130, 246, 0.12) 44%,
+      rgba(59, 130, 246, 0) 76%
+    );
+  opacity: 0.08;
+}
+
+.dark .header-shell:hover::before {
+  opacity: 0.42;
+}
+
+.dark .header-shell::after {
+  opacity: 0.2;
+}
+
+.dark .header-shell:hover::after {
+  opacity: 0.56;
+}
+
+.header-shell > * {
+  position: relative;
+  z-index: 2;
+}
+
 /* Hide scrollbars globally but keep scroll functionality */
 * {
   scrollbar-width: none; /* Firefox */
