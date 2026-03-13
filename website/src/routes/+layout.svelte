@@ -83,7 +83,11 @@
 	</header>
 
 	<main class="relative z-10 flex-1 flex flex-col">
-		{@render children()}
+		{#key page.url.pathname}
+			<div class="page-load-smooth">
+				{@render children()}
+			</div>
+		{/key}
 	</main>
 
 	<footer class="relative z-10 mt-auto border-t border-zinc-200/70 dark:border-white/8 py-12 bg-white/60 dark:bg-[#0d1520]/72 text-zinc-500 dark:text-zinc-400 backdrop-blur-xl transition-colors duration-200">
