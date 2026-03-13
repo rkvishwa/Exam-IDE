@@ -529,10 +529,10 @@ Real-time collaboration, exam monitoring, and secure coding - powered by Monaco 
   100% { transform: translateX(0%); }
 }
 .animate-marquee-right-fast {
-  animation: marqueeRight 35s linear infinite;
+  animation: marqueeRight 60s linear infinite;
 }
 .animate-marquee-right-slow {
-  animation: marqueeRight 45s linear infinite;
+  animation: marqueeRight 75s linear infinite;
 }
 </style>
 

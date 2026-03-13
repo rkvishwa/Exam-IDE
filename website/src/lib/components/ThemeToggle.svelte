@@ -1,27 +1,19 @@
 <script lang="ts">
-  import { Sun, Moon, Monitor } from 'lucide-svelte';
+  import { Sun, Moon } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
-  type ThemeMode = 'light' | 'dark' | 'system';
+  type ThemeMode = 'light' | 'dark';
 
-  let currentTheme = $state<ThemeMode>('system');
+  let currentTheme = $state<ThemeMode>('dark');
   let isOpen = $state(false);
 
   function applyTheme(theme: ThemeMode) {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      localStorage.theme = 'dark';
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      localStorage.theme = 'light';
     } else {
-      localStorage.removeItem('theme');
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      document.documentElement.classList.remove('dark');
     }
+    localStorage.theme = theme;
   }
 
   function updateTheme(theme: ThemeMode) {
@@ -38,23 +30,14 @@
   onMount(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    if (localStorage.theme === 'dark' || localStorage.theme === 'light') {
+    // If no preference stored, read system theme. Otherwise use stored.
+    if (localStorage.theme === 'light' || localStorage.theme === 'dark') {
       currentTheme = localStorage.theme;
     } else {
-      currentTheme = 'system';
+      currentTheme = mediaQuery.matches ? 'dark' : 'light';
     }
 
     applyTheme(currentTheme);
-
-    const onSystemThemeChange = (event: MediaQueryListEvent) => {
-      if (currentTheme === 'system') {
-        if (event.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-    };
 
     const onDocumentClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -63,11 +46,9 @@
       }
     };
 
-    mediaQuery.addEventListener('change', onSystemThemeChange);
     document.addEventListener('click', onDocumentClick);
 
     return () => {
-      mediaQuery.removeEventListener('change', onSystemThemeChange);
       document.removeEventListener('click', onDocumentClick);
     };
   });
@@ -83,10 +64,8 @@
   >
     {#if currentTheme === 'light'}
       <Sun size={20} />
-    {:else if currentTheme === 'dark'}
-      <Moon size={20} />
     {:else}
-      <Monitor size={20} />
+      <Moon size={20} />
     {/if}
   </button>
 
@@ -107,14 +86,6 @@
       >
         <Moon size={16} />
         <span>Dark</span>
-      </button>
-      <button 
-        type="button"
-        class="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm transition-colors {currentTheme === 'system' ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300 font-medium' : 'text-zinc-600 dark:text-zinc-300 hover:bg-cyan-50 dark:hover:bg-cyan-500/10 hover:text-cyan-700 dark:hover:text-cyan-300'}"
-        onclick={() => updateTheme('system')}
-      >
-        <Monitor size={16} />
-        <span>System</span>
       </button>
     </div>
   {/if}
