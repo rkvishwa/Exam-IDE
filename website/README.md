@@ -40,3 +40,28 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## About Page Contact Form Email Setup
+
+The `/about` page now includes a contact form that sends:
+
+- an acknowledgement email to the sender
+- a copy of the submitted message to your inbox
+
+Configure SMTP environment variables before running the app:
+
+```env
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
+SMTP_FROM="Sonar IDE <no-reply@example.com>"
+CONTACT_INBOX_EMAIL=support@example.com
+```
+
+Notes:
+
+- `SMTP_HOST` and `SMTP_FROM` are required.
+- `SMTP_SECURE` can be `true` or `false` (if omitted, port `465` is treated as secure).
+- `CONTACT_INBOX_EMAIL` is optional; if omitted, messages are copied to `SMTP_FROM`.

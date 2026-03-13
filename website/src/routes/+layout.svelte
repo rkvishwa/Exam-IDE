@@ -60,6 +60,7 @@
 			<div class="flex space-x-8">
 				<a href="/docs" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Documentation</a>
 				<a href="/developer" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Architecture</a>
+				<a href="/about#contact-us" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">Contact Us</a>
 				<a href="https://github.com/rkvishwa/Sonar-Code-Editor" target="_blank" rel="noreferrer" class="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">GitHub</a>
 			</div>
 			
