@@ -5,6 +5,7 @@ Welcome to the development guide for **Sonar Code Editor**. This document covers
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - **Node.js**: `v18.x` or higher
 - **NPM**: `v9.x` or higher
 - **Git**
@@ -12,12 +13,14 @@ Before you begin, ensure you have the following installed:
 ## 🚀 Local Setup
 
 1. **Clone the repository:**
+
    ```bash
-   git clone https://github.com/your-username/Sonar-Code-Editor.git
+   git clone https://github.com/rkvishwa/Sonar-Code-Editor.git
    cd Sonar-Code-Editor
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
@@ -33,7 +36,8 @@ To start the application with hot-reloading for both the Vite React renderer and
 ```bash
 npm run start
 ```
-*This utilizes `concurrently` to run the Vite dev server, TypeScript compiler for the main process, and the Electron executable simultaneously.*
+
+_This utilizes `concurrently` to run the Vite dev server, TypeScript compiler for the main process, and the Electron executable simultaneously._
 
 ## 📂 Project Structure
 
@@ -46,9 +50,9 @@ npm run start
 │   │   ├── main.ts           # App lifecycle & window management
 │   │   ├── ipcHandlers.ts    # Secure IPC communication handlers
 │   │   ├── monitoring.ts     # System monitoring & activity tracking
-│   │   └── ...               
+│   │   └── ...
 │   ├── preload/              # Electron context bridge scripts
-│   │   └── preload.ts        
+│   │   └── preload.ts
 │   ├── renderer/             # React frontend source
 │   │   ├── components/       # Reusable UI (Editor, Sidebar, FileTree, AdminPanel)
 │   │   ├── context/          # React Contexts (Auth, Collaboration)
@@ -57,7 +61,7 @@ npm run start
 │   │   ├── services/         # Appwrite, localStore, PDF reporting
 │   │   ├── styles/           # Global CSS definitions
 │   │   ├── types/            # TypeScript declaration files
-│   │   └── App.tsx           
+│   │   └── App.tsx
 │   └── shared/               # Shared types and constants (main ↔ renderer)
 ├── appwrite.config.json      # Appwrite Collection schema definitions
 ├── package.json              # Dependencies & scripts
@@ -77,4 +81,5 @@ npm run package:win    # For Windows (.exe)
 npm run package:mac    # For macOS (.dmg, .app)
 npm run package:linux  # For Linux (.AppImage)
 ```
-*Compiled artifacts will be located in the `release/` directory.*
+
+_Compiled artifacts will be located in the `release/` directory._

@@ -16,13 +16,13 @@ const generateImages = (files) => {
     // 3 repetitions
     for(let i=0; i<3; i++) {
         files.forEach((file) => {
-            html += `              <img src="/gallery/${file}" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>\n`;
+            html += `              <img src="/gallery/${file}" class="h-57.5 w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl shrink-0" alt=""/>\n`;
         });
     }
     html += '              <!-- Duplicated for seamless loop -->\n';
     for(let i=0; i<3; i++) {
         files.forEach((file) => {
-            html += `              <img src="/gallery/${file}" class="h-[230px] w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl flex-shrink-0" alt=""/>\n`;
+            html += `              <img src="/gallery/${file}" class="h-57.5 w-auto aspect-video rounded-xl object-cover border border-zinc-200 dark:border-white/5 opacity-80 shadow-2xl shrink-0" alt=""/>\n`;
         });
     }
     return html;
@@ -41,12 +41,12 @@ const generateLayout = (r1, r2, classes) => `      <div class="absolute inset-0 
           <div class="flex-1 flex flex-row gap-4 animate-marquee-right-fast w-max">
 ${generateImages(r1)}          </div>
           <!-- Row 2 (staggered) -->
-          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-slow w-max ml-[-200px]">
+          <div class="flex-1 flex flex-row gap-4 animate-marquee-right-slow w-max -ml-50">
 ${generateImages(r2)}          </div>
       </div>`;
 
 const newRightColumnHTML = `<!-- Right Column -->
-    <div class="hidden lg:block w-1/2 relative h-[500px] overflow-hidden rounded-xl" style="mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);">
+    <div class="hidden lg:block w-1/2 relative h-125 overflow-hidden rounded-xl" style="mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);">
       <!-- Dark mode images -->
 ${generateLayout(darkRow1, darkRow2, 'hidden dark:flex')}
       <!-- Light mode images -->

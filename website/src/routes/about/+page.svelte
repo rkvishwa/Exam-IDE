@@ -51,7 +51,7 @@
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 text-cyan-300 text-xs font-semibold tracking-wider uppercase mb-4 outline outline-1 outline-white/10">
           <span>The Community</span>
         </div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Crafted by <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">knurdz</span></h2>
+        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Crafted by <span class="text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-400">knurdz</span></h2>
         <p class="text-zinc-400 max-w-lg mb-6 leading-relaxed mx-auto md:mx-0">
           Sonar IDE is proudly developed and maintained by the <strong>knurdz</strong> community. This project is completely open-source, and we welcome contributions from developers worldwide to help build the future of education and coding.
         </p>
@@ -108,7 +108,7 @@
     {/if}
   </section>
 
-  <div class="text-center bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-600/10 dark:to-cyan-600/10 rounded-3xl p-10 border border-blue-200 dark:border-blue-500/20 transition-colors duration-200">
+  <div class="text-center bg-linear-to-r from-blue-50 to-cyan-50 dark:from-blue-600/10 dark:to-cyan-600/10 rounded-3xl p-10 border border-blue-200 dark:border-blue-500/20 transition-colors duration-200">
     <h2 class="text-2xl font-bold mb-4 text-zinc-900 dark:text-white">Join the Mission</h2>
     <p class="text-zinc-600 dark:text-zinc-400 mb-8 max-w-xl mx-auto">
       Help us improve Sonar Code Editor by actively suggesting features, improving logging, or building better IDE tools.
