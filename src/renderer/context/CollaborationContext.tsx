@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
-import { MonacoBinding } from "y-monaco";
+import { MonacoBinding } from "./y-monaco";
 import type { editor } from "monaco-editor";
 import { CollaborationStatus, CollaborationUser } from "../../shared/types";
 import { useAuth } from "./AuthContext";

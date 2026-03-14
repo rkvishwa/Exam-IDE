@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
+import { MonacoBinding } from '../context/y-monaco';
 import type { editor } from 'monaco-editor';
 import { CollaborationStatus, CollaborationUser } from '../../shared/types';
 

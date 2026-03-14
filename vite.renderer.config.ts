@@ -14,7 +14,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['yjs', 'y-websocket', 'y-monaco', 'monaco-editor'],
+    include: ['yjs', 'y-websocket', 'monaco-editor'],
   },
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
@@ -23,7 +23,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'monaco-editor': ['monaco-editor'],
-          'yjs': ['yjs', 'y-websocket', 'y-monaco'],
+          'yjs': ['yjs', 'y-websocket'],
         },
       },
     },
