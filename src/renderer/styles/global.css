@@ -28,7 +28,7 @@
   --offline: #ef4444;
   --idle: #f59e0b;
 
-  --grid-opacity: 0.015;
+  --grid-opacity: 0.008;
 }
 
 [data-theme="light"] {
@@ -63,7 +63,7 @@
   --offline: #dc2626;
   --idle: #d97706;
   
-  --grid-opacity: 0.03;
+  --grid-opacity: 0.015;
 }
 
 * {
