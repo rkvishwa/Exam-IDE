@@ -25,18 +25,71 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Electron App (Unsigned)
-      
-        run: npm run build
+      - name: Verify Secrets Against .env.example
         env:
-          CSC_SKIP_SIGNING: true 
+          SECRETS_JSON: ${{ toJson(secrets) }}
+        run: |
+          node -e '
+          const fs = require("fs");
+          const secrets = JSON.parse(process.env.SECRETS_JSON || "{}");
+          const envExample = fs.readFileSync(".env.example", "utf-8");
+          const missing = [];
+          envExample.split("\n").forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith("#")) {
+              const key = trimmed.split("=")[0];
+              if (!secrets[key]) {
+                missing.push(key);
+              }
+            }
+          });
+          if (missing.length > 0) {
+            console.error(`::error::Missing required secrets in GitHub Actions: ${missing.join(", ")}`);
+            process.exit(1);
+          }
+          '
 
-      - name: Upload Artifacts
+      - name: Create .env file
+        shell: bash
+        run: |
+          echo "VITE_APPWRITE_ENDPOINT=${{ secrets.VITE_APPWRITE_ENDPOINT }}" >> .env
+          echo "VITE_APPWRITE_PROJECT_ID=${{ secrets.VITE_APPWRITE_PROJECT_ID }}" >> .env
+          echo "VITE_APPWRITE_DB_NAME=${{ secrets.VITE_APPWRITE_DB_NAME }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_TEAMS=${{ secrets.VITE_APPWRITE_COLLECTION_TEAMS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_SESSIONS=${{ secrets.VITE_APPWRITE_COLLECTION_SESSIONS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS=${{ secrets.VITE_APPWRITE_COLLECTION_ACTIVITY_LOGS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_REPORTS=${{ secrets.VITE_APPWRITE_COLLECTION_REPORTS }}" >> .env
+          echo "VITE_APPWRITE_COLLECTION_SETTINGS=${{ secrets.VITE_APPWRITE_COLLECTION_SETTINGS }}" >> .env
+
+      - name: Build macOS App
+        if: matrix.os == 'macos-latest'
+        run: npm run package:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Build Windows App
+        if: matrix.os == 'windows-latest'
+        run: npm run package:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_SKIP_SIGNING: true
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload macOS Artifacts
+        if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
           path: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.zip
+            release/**/*.dmg
+            release/**/*.zip
+          retention-days: 3
+
+      - name: Upload Windows Artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: release/**/*.exe
           retention-days: 3

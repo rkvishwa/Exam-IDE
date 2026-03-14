@@ -1,19 +1,25 @@
-name: Build and Draft Release
+name: "Manual Build (Development)"
 
 on:
-  push:
-    branches:
-      - releases
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from (defaults to development)'
+        required: false
+        default: 'development'
 
 permissions:
   contents: write
 
 jobs:
   build-mac:
+    name: Build macOS (Development)
     runs-on: macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'development' }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Set App Version dynamic
-        run: npm --no-git-tag-version version 1.0.0-beta.${{ github.run_number }}
+        run: npm --no-git-tag-version version 1.0.0-beta-manual.${{ github.run_number }}
 
       - name: Create .env file
         shell: bash
@@ -40,22 +46,27 @@ jobs:
           echo "VITE_APPWRITE_COLLECTION_SETTINGS=${{ secrets.VITE_APPWRITE_COLLECTION_SETTINGS }}" >> .env
 
       - name: Build macOS app (DMG)
-        run: npm run package:mac
+        run: npm run build && npx electron-builder --mac --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_SKIP_SIGNING: true 
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mac-build
+          name: macOS-App-DMG
           path: release/*.dmg
+          retention-days: 7
 
   build-win:
+    name: Build Windows (Development)
     runs-on: windows-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'development' }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,7 +78,7 @@ jobs:
         run: npm ci
 
       - name: Set App Version dynamic
-        run: npm --no-git-tag-version version 1.0.0-beta.${{ github.run_number }}
+        run: npm --no-git-tag-version version 1.0.0-beta-manual.${{ github.run_number }}
 
       - name: Create .env file
         shell: bash
@@ -82,39 +93,14 @@ jobs:
           echo "VITE_APPWRITE_COLLECTION_SETTINGS=${{ secrets.VITE_APPWRITE_COLLECTION_SETTINGS }}" >> .env
 
       - name: Build Windows app (EXE)
-        run: npm run package:win
+        run: npm run build && npx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_SKIP_SIGNING: true 
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: win-build
+          name: Windows-App-EXE
           path: release/*.exe
-
-  create-release:
-    needs: [build-mac, build-win]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download macOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: mac-build
-          path: artifacts
-
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: win-build
-          path: artifacts
-
-      - name: Create Draft Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          name: Release 1.0.0-beta.${{ github.run_number }}
-          tag_name: "v1.0.0-beta.${{ github.run_number }}"
-          generate_release_notes: true
-          files: |
-            artifacts/*.dmg
-            artifacts/*.exe
+          retention-days: 7
