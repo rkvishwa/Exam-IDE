@@ -1005,9 +1005,14 @@ export function CollaborationProvider({
 
       const ytext = ydocRef.current.getText(docName);
       if (ytext.toString() !== content) {
-        // Clear and replace the content
-        ytext.delete(0, ytext.length);
-        ytext.insert(0, content);
+        // Use a single transaction so MonacoBinding sees one atomic update
+        // instead of a delete followed by an insert (which would flash empty).
+        ydocRef.current.transact(() => {
+          ytext.delete(0, ytext.length);
+          if (content.length > 0) {
+            ytext.insert(0, content);
+          }
+        });
       }
     },
     [],
