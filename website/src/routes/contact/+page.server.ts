@@ -85,17 +85,13 @@ const buildAcknowledgementEmail = (name: string) => {
 
 export const actions: Actions = {
   default: async ({ request }) => {
-    try {
-      console.log("Action started");
-      const formData = await request.formData();
-      console.log("Got formData");
+    const formData = await request.formData();
 
-      const values: ContactValues = {
-        name: getFormText(formData, 'name'),
-        email: getFormText(formData, 'email').toLowerCase(),
-        message: getFormText(formData, 'message')
-      };
-      console.log("Parsed values:", values);
+    const values: ContactValues = {
+      name: getFormText(formData, 'name'),
+      email: getFormText(formData, 'email').toLowerCase(),
+      message: getFormText(formData, 'message')
+    };
 
     const errors = validate(values);
     if (Object.keys(errors).length > 0) {
@@ -134,40 +130,35 @@ export const actions: Actions = {
     const acknowledgement = buildAcknowledgementEmail(values.name);
     const safeNameForSubject = values.name.replace(/[\r\n]+/g, ' ').trim();
 
-    try {
-      await transporter.sendMail({
+    // Send emails in the background so the form UI responds instantly
+    Promise.all([
+      transporter.sendMail({
         from: env.SMTP_FROM,
         to: values.email,
         replyTo: inboxAddress,
         subject: 'We received your message - Sonar IDE',
         text: acknowledgement.text,
         html: acknowledgement.html
-      });
-
-      await transporter.sendMail({
+      }),
+      transporter.sendMail({
         from: env.SMTP_FROM,
         to: inboxAddress,
         replyTo: values.email,
         subject: `New contact form message from ${safeNameForSubject}`,
         text: `Name: ${values.name}\nEmail: ${values.email}\n\nMessage:\n${values.message}`
-      });
+      })
+    ]).catch((error) => {
+      console.error('Failed to send contact form emails in background:', error);
+    });
 
-      return {
-        success: true,
-        message: 'Thanks. We received your email and sent a confirmation message.',
-        values: {
-          name: '',
-          email: '',
-          message: ''
-        }
-      };
-    } catch (error) {
-      console.error('Failed to send contact form emails:', error);
-      return fail(500, {
-        success: false,
-        message: 'We could not send the confirmation email right now. Please try again later.',
-        values
-      });
-    }
+    return {
+      success: true,
+      message: 'Thanks. We received your email and sent a confirmation message.',
+      values: {
+        name: '',
+        email: '',
+        message: ''
+      }
+    };
   }
 };

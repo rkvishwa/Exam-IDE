@@ -189,7 +189,7 @@
               </div>
             </div>
 
-            <form method="POST" action="?/default" use:enhance class="space-y-5" novalidate>
+            <form method="POST" use:enhance class="space-y-5" novalidate>
               <div>
                 <label
                   for="name"
