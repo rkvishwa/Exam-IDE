@@ -188,7 +188,7 @@ export default function Login() {
       <div className="login-hero">
         <div className="hero-content">
           <div className="hero-icon">
-            <Radar size={64} className="radar-icon" />
+            <Radar size={120} className="radar-icon" />
           </div>
           <h1>Sonar Code Editor</h1>
           <p>
