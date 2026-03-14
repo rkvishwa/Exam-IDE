@@ -266,6 +266,8 @@ export default function AdminSettingsModal({
                       <select
                         className="vscode-select"
                         value={theme}
+                        aria-label="Color Theme"
+                        title="Color Theme"
                         onChange={(e) => onThemeChange(e.target.value)}
                       >
                         <option value="system">System Default</option>
@@ -332,6 +334,8 @@ export default function AdminSettingsModal({
                             type="checkbox"
                             className="vscode-checkbox"
                             checked={globalRestriction}
+                            aria-label="Block Internet Access"
+                            title="Block Internet Access"
                             onChange={(e) => handleToggleRestriction(e.target.checked)}
                             disabled={savingRestriction}
                           />

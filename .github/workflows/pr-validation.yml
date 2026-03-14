@@ -61,19 +61,35 @@ jobs:
           echo "VITE_APPWRITE_COLLECTION_REPORTS=${{ secrets.VITE_APPWRITE_COLLECTION_REPORTS }}" >> .env
           echo "VITE_APPWRITE_COLLECTION_SETTINGS=${{ secrets.VITE_APPWRITE_COLLECTION_SETTINGS }}" >> .env
 
-      - name: Build Electron App (Unsigned)
-        run: npm run build && npx electron-builder --publish never
+      - name: Build macOS App
+        if: matrix.os == 'macos-latest'
+        run: npm run package:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_SKIP_SIGNING: true 
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Upload Artifacts
+      - name: Build Windows App
+        if: matrix.os == 'windows-latest'
+        run: npm run package:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_SKIP_SIGNING: true
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload macOS Artifacts
+        if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
           path: |
-            release/*.exe
-            release/*.dmg
-            release/*.zip
+            release/**/*.dmg
+            release/**/*.zip
+          retention-days: 3
+
+      - name: Upload Windows Artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: release/**/*.exe
           retention-days: 3
