@@ -784,8 +784,11 @@ export function CollaborationProvider({
       // ─── Our own cursor awareness management ─────────────────────
       // These are properly disposed when destroy() is called.
 
-      // 1. Send local cursor position to awareness whenever it changes
-      const cursorDisposer = monacoEditor.onDidChangeCursorSelection(() => {
+      // 1. Send local cursor position to awareness whenever it changes.
+      //    Also broadcast once immediately so peers see this machine's cursor
+      //    right after bind — without this initial publish, remote machines
+      //    only see the cursor after the user physically moves it.
+      const publishCursor = () => {
         if (monacoEditor.getModel() !== model) return;
         const sel = monacoEditor.getSelection();
         if (sel === null) return;
@@ -802,7 +805,14 @@ export function CollaborationProvider({
           anchor: Y.createRelativePositionFromTypeIndex(ytext, anchor),
           head: Y.createRelativePositionFromTypeIndex(ytext, head),
         });
-      });
+      };
+
+      const cursorDisposer = monacoEditor.onDidChangeCursorSelection(publishCursor);
+
+      // Broadcast current cursor position immediately so peers can see it
+      // without waiting for the first cursor-move event after this bind.
+      publishCursor();
+
 
       // 2. Render remote cursor decorations when awareness changes
       let decorationIds: string[] = [];
