@@ -161,7 +161,8 @@
           </div>
         </div>
       {:else}
-        <button
+        <a
+          href="/windows/download"
           class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-3 transition-all hover:scale-105 active:scale-95"
         >
           <Monitor size={24} />
@@ -171,7 +172,7 @@
             </div>
             <div class="text-xl leading-none">Windows</div>
           </div>
-        </button>
+        </a>
         <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
           Allow permission in your browser to download the file.
         </p>

@@ -205,7 +205,7 @@
           {:else if clientOS === "windows"}
             <div class="w-full sm:w-auto">
               <a
-                href="/download"
+                href="/windows/download"
                 class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
                 <Download size={15} />

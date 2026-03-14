@@ -85,13 +85,17 @@ const buildAcknowledgementEmail = (name: string) => {
 
 export const actions: Actions = {
   default: async ({ request }) => {
-    const formData = await request.formData();
+    try {
+      console.log("Action started");
+      const formData = await request.formData();
+      console.log("Got formData");
 
-    const values: ContactValues = {
-      name: getFormText(formData, 'name'),
-      email: getFormText(formData, 'email').toLowerCase(),
-      message: getFormText(formData, 'message')
-    };
+      const values: ContactValues = {
+        name: getFormText(formData, 'name'),
+        email: getFormText(formData, 'email').toLowerCase(),
+        message: getFormText(formData, 'message')
+      };
+      console.log("Parsed values:", values);
 
     const errors = validate(values);
     if (Object.keys(errors).length > 0) {
