@@ -203,8 +203,8 @@
           {:else if clientOS === "windows"}
             <div class="w-full sm:w-auto">
               <a
-                href="/download"
-                class="group relative overflow-hidden w-full sm:w-auto px-6 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:text-white dark:hover:text-white font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 hover:shadow-[0_0_18px_rgba(6,182,212,0.4)] flex items-center justify-center text-sm transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
+                href="/windows/download"
+                class="shake-btn group w-full sm:w-auto px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg shadow-lg shadow-zinc-900/10 dark:shadow-white/10 flex items-center justify-center gap-2 text-sm transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
                 <div
                   class="absolute inset-0 flex items-center justify-center pointer-events-none z-0"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enhance } from "$app/forms";
   import type { ActionData } from "./$types";
   import { Mail, ShieldCheck, Sparkles, Clock3, Send } from "lucide-svelte";
 
@@ -188,7 +189,7 @@
               </div>
             </div>
 
-            <form method="POST" class="space-y-5" novalidate>
+            <form method="POST" use:enhance class="space-y-5" novalidate>
               <div>
                 <label
                   for="name"

@@ -70,7 +70,7 @@
     </div>
   </section>
 
-  <section class="bg-white dark:bg-white/2 border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none rounded-3xl p-8 sm:p-12 mb-20 transition-colors duration-200">
+  <section class="bg-white dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 shadow-sm dark:shadow-none rounded-3xl p-8 sm:p-12 mb-20 transition-colors duration-200">
     <div class="flex items-center space-x-3 mb-8">
       <Users size={28} class="text-blue-600 dark:text-blue-400" />
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Project Contributors</h2>
