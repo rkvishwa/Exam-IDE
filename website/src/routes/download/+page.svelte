@@ -16,11 +16,11 @@
   let clientOS = $state<ClientOS>("other");
   let linkCopied = $state(false);
   let updateLinkCopied = $state(false);
-  const macDownloadLink =
-    "https://github.com/rkvishwa/Sonar-Code-Editor/releases/latest";
+  const macInstallCommand = "brew install --cask rkvishwa/knurdz/sonar-code-editor";
+  const macUpdateCommand = "brew upgrade --cask rkvishwa/knurdz/sonar-code-editor";
 
   function copyMacLink() {
-    navigator.clipboard.writeText(macDownloadLink).then(() => {
+    navigator.clipboard.writeText(macInstallCommand).then(() => {
       linkCopied = true;
       setTimeout(() => {
         linkCopied = false;
@@ -29,7 +29,7 @@
   }
 
   function copyUpdateLink() {
-    navigator.clipboard.writeText(macDownloadLink).then(() => {
+    navigator.clipboard.writeText(macUpdateCommand).then(() => {
       updateLinkCopied = true;
       setTimeout(() => {
         updateLinkCopied = false;
@@ -84,18 +84,18 @@
             for="download-mac-link"
             class="mb-2 text-xs uppercase tracking-[0.15em] font-semibold text-cyan-700 dark:text-cyan-300 inline-flex items-center gap-2"
           >
-            <Link2 size={12} />
-            <span>macOS Download Link</span>
+            <Terminal size={12} />
+            <span>macOS Install Command</span>
           </label>
           <div
             class="rounded-xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-1.5 backdrop-blur-md flex items-center shadow-sm transition-colors hover:border-zinc-300 dark:hover:border-white/20"
           >
             <div class="flex items-center flex-1 min-w-0 pl-3">
-              <Terminal size={14} class="text-zinc-400 mr-2 shrink-0" />
+              <span class="text-zinc-500 font-mono mr-2 shrink-0">$</span>
               <input
                 id="download-mac-link"
                 type="text"
-                value={macDownloadLink}
+                value={macInstallCommand}
                 readonly
                 onclick={(event) =>
                   (event.currentTarget as HTMLInputElement).select()}
@@ -104,7 +104,7 @@
             </div>
             <button
               onclick={copyMacLink}
-              aria-label="Copy link"
+              aria-label="Copy command"
               class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg transition-all
                 {linkCopied
                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
@@ -118,7 +118,7 @@
             </button>
           </div>
           <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-            Paste this link on your terminal.
+            Run this command in your terminal using Homebrew.
           </p>
           <div class="mt-5 w-full">
             <label
@@ -132,11 +132,11 @@
               class="rounded-xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-1.5 backdrop-blur-md flex items-center shadow-sm transition-colors hover:border-zinc-300 dark:hover:border-white/20"
             >
               <div class="flex items-center flex-1 min-w-0 pl-3">
-                <Terminal size={14} class="text-zinc-400 mr-2 shrink-0" />
+                <span class="text-zinc-500 font-mono mr-2 shrink-0">$</span>
                 <input
                   id="mac-update-link"
                   type="text"
-                  value={macDownloadLink}
+                  value={macUpdateCommand}
                   readonly
                   onclick={(event) =>
                     (event.currentTarget as HTMLInputElement).select()}
