@@ -30,7 +30,7 @@
   background-image: 
     linear-gradient(to right, var(--text-primary) 1px, transparent 1px),
     linear-gradient(to bottom, var(--text-primary) 1px, transparent 1px);
-  opacity: 0.03;
+  opacity: var(--grid-opacity);
   z-index: 0;
   pointer-events: none;
 }
