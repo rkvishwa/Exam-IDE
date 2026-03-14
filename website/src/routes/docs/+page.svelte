@@ -215,7 +215,7 @@
         class="bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 rounded-xl p-5 font-mono text-sm text-zinc-700 dark:text-zinc-300 space-y-1 mb-6 overflow-x-auto"
       >
         <p class="text-zinc-500 dark:text-zinc-500"># Clone and install</p>
-        <p>git clone https://github.com/your-username/Sonar-Code-Editor.git</p>
+        <p>git clone https://github.com/rkvishwa/Sonar-Code-Editor.git</p>
         <p>cd Sonar-Code-Editor</p>
         <p>npm install</p>
         <br />
@@ -301,12 +301,22 @@
         </div>
       </div>
 
-      <div class="mt-4 p-5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-        <h4 class="font-semibold text-amber-900 dark:text-amber-200 mb-2 text-sm flex items-center gap-2">
+      <div
+        class="mt-4 p-5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20"
+      >
+        <h4
+          class="font-semibold text-amber-900 dark:text-amber-200 mb-2 text-sm flex items-center gap-2"
+        >
           <Shield size={16} /> Admin-Controlled Editor Policies
         </h4>
         <p class="text-sm text-amber-800 dark:text-amber-300">
-          To maintain strict exam environments, advanced editor behaviors such as <strong>quick suggestions (autocomplete)</strong>, <strong>snippet completions</strong>, and <strong>auto-closing brackets/quotes</strong> can be dynamically enabled or disabled globally by an administrator in the admin dashboard settings. This prevents over-reliance on IntelliSense and enforces academic integrity when needed.
+          To maintain strict exam environments, advanced editor behaviors such
+          as <strong>quick suggestions (autocomplete)</strong>,
+          <strong>snippet completions</strong>, and
+          <strong>auto-closing brackets/quotes</strong> can be dynamically enabled
+          or disabled globally by an administrator in the admin dashboard settings.
+          This prevents over-reliance on IntelliSense and enforces academic integrity
+          when needed.
         </p>
       </div>
     </section>
@@ -626,7 +636,10 @@
         Settings
       </h2>
       <p class="text-zinc-600 dark:text-zinc-400 mb-4">
-        The settings modal provides tabs for customizing the IDE experience. User settings persist to <code class="text-blue-700 dark:text-blue-300">localStorage</code>. Administrator actions sync globally in real-time.
+        The settings modal provides tabs for customizing the IDE experience.
+        User settings persist to <code class="text-blue-700 dark:text-blue-300"
+          >localStorage</code
+        >. Administrator actions sync globally in real-time.
       </p>
 
       <h3 class="text-lg font-semibold mb-3 text-zinc-800 dark:text-zinc-200">
@@ -649,7 +662,8 @@
         Admin Settings & Overrides
       </h3>
       <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-        Administrators have access to global management settings that bypass local student choices.
+        Administrators have access to global management settings that bypass
+        local student choices.
       </p>
       <div
         class="bg-zinc-50 dark:bg-white/[0.02] rounded-xl border border-zinc-200 dark:border-white/5 divide-y divide-zinc-100 dark:divide-white/5 text-sm overflow-hidden"
@@ -893,8 +907,7 @@
       <p class="text-sm text-zinc-600 dark:text-zinc-400">
         Security issues should <strong>not</strong> be reported as public GitHub
         issues. Please email
-        <code class="text-blue-700 dark:text-blue-300"
-          >security@example.com</code
+        <code class="text-blue-700 dark:text-blue-300">security@knurdz.org</code
         >
         with a detailed disclosure. See
         <a
