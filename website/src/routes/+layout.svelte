@@ -99,6 +99,9 @@
 					<nav class="flex flex-col gap-3 font-semibold text-sm">
 						<a href="/" class={navLinkClass('/')}>Home</a>
 						<a href="/docs" class={navLinkClass('/docs')}>Documentation</a>
+						<a href="/about" class={navLinkClass('/about')}>About</a>
+						<a href="/contact" class={navLinkClass('/contact')}>Contact</a>
+					</nav>
 					<div class="flex items-center gap-3 pt-4 border-t border-cyan-400/20">
 						<ThemeToggle />
 						<a

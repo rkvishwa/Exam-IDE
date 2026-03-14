@@ -175,45 +175,6 @@
         <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2">
           Allow permission in your browser to download the file.
         </p>
-        <div class="mt-5 w-full max-w-sm mx-auto sm:mx-0">
-          <label
-            for="win-update-link"
-            class="mb-2 text-xs text-zinc-500 dark:text-zinc-400 block font-medium"
-            >Already installed an older version? <span
-              class="text-blue-600 dark:text-blue-400">Update here:</span
-            ></label
-          >
-          <div
-            class="rounded-xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-1.5 backdrop-blur-md flex items-center shadow-sm transition-colors hover:border-zinc-300 dark:hover:border-white/20"
-          >
-            <div class="flex items-center flex-1 min-w-0 pl-3">
-              <Terminal size={14} class="text-zinc-400 mr-2 shrink-0" />
-              <input
-                id="win-update-link"
-                type="text"
-                value={macDownloadLink}
-                readonly
-                onclick={(event) =>
-                  (event.currentTarget as HTMLInputElement).select()}
-                class="bg-transparent text-sm font-mono text-zinc-700 dark:text-zinc-300 w-full outline-none truncate cursor-copy selection:bg-cyan-500/20"
-              />
-            </div>
-            <button
-              onclick={copyUpdateLink}
-              aria-label="Copy update link"
-              class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg transition-all
-                {updateLinkCopied
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-zinc-600 dark:text-zinc-400'}"
-            >
-              {#if updateLinkCopied}
-                <Check size={14} />
-              {:else}
-                <Copy size={14} />
-              {/if}
-            </button>
-          </div>
-        </div>
       {/if}
     </div>
 
