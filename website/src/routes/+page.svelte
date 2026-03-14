@@ -33,7 +33,7 @@
   let linkCopied = $state(false);
   let sectionRef: HTMLElement;
   const macDownloadLink =
-    "https://github.com/rkvishwa/Sonar-Code-Editor/releases/latest";
+    "brew install --cask rkvishwa/knurdz/sonar-code-editor";
 
   function copyMacLink() {
     navigator.clipboard.writeText(macDownloadLink).then(() => {
@@ -163,7 +163,7 @@
                 class="rounded-xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] p-1.5 backdrop-blur-md flex items-center shadow-sm transition-colors hover:border-zinc-300 dark:hover:border-white/20"
               >
                 <div class="flex items-center flex-1 min-w-0 pl-3">
-                  <Terminal size={14} class="text-zinc-400 mr-2 shrink-0" />
+                  <span class="text-zinc-500 font-mono mr-2 shrink-0">$</span>
                   <input
                     id="mac-download-link"
                     type="text"
