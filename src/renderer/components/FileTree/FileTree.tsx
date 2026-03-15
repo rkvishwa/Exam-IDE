@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 
+export let globalClipboard: { path: string; isCut: boolean } | null = null;
+export function setGlobalClipboard(item: { path: string; isCut: boolean } | null) {
+  globalClipboard = item;
+  if (typeof document !== "undefined") {
+    document.dispatchEvent(new CustomEvent("clipboard-changed"));
+  }
+}
+
 // Global undo stack for file tree operations
 export const fileUndoStack: Array<{ 
   originalPath: string; 
@@ -296,6 +304,8 @@ function FileTreeNode({
   } | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(node.name);
+  const [isDragTarget, setIsDragTarget] = useState(false);
+  const [isCut, setIsCut] = useState(globalClipboard?.path === node.path && globalClipboard?.isCut);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -325,6 +335,22 @@ function FileTreeNode({
       loadChildren();
     }
   }, [isCreatingHere, expanded, loadChildren]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (expanded && node.type === "directory") {
+        loadChildren();
+      }
+    };
+    document.addEventListener("refresh-file-tree", handleRefresh);
+    return () => document.removeEventListener("refresh-file-tree", handleRefresh);
+  }, [expanded, node.type, loadChildren]);
+
+  useEffect(() => {
+    const handleClipboard = () => setIsCut(globalClipboard?.path === node.path && !!globalClipboard?.isCut);
+    document.addEventListener("clipboard-changed", handleClipboard);
+    return () => document.removeEventListener("clipboard-changed", handleClipboard);
+  }, [node.path]);
 
   const toggleExpanded = async () => {
     if (node.type !== "directory") return;
@@ -555,11 +581,79 @@ function FileTreeNode({
   return (
     <div className="tree-node-wrapper">
       <div
-        className={`tree-node ${isActive ? "active" : ""} ${isSelected ? "selected-folder" : ""}`}
+        className={`tree-node ${isActive ? "active" : ""} ${isSelected ? "selected-folder" : ""} ${isDragTarget ? "drag-target" : ""} ${isCut ? "cut-item" : ""}`}
         style={{ paddingLeft: `${depth * INDENT_PX + 8}px` }}
-        onKeyDown={(e) => {
+        draggable={!renaming}
+        onDragStart={(e) => {
+          e.dataTransfer.setData("application/vnd.sonar.filepath", node.path);
+          e.dataTransfer.effectAllowed = "move";
+        }}
+        onDragOver={(e) => {
+          if (node.type === "directory") {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "move";
+          }
+        }}
+        onDragEnter={(e) => {
+          if (node.type === "directory") {
+            e.preventDefault();
+            setIsDragTarget(true);
+          }
+        }}
+        onDragLeave={() => {
+          if (node.type === "directory") {
+            setIsDragTarget(false);
+          }
+        }}
+        onDrop={async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragTarget(false);
+          if (node.type === "directory") {
+            const sourcePath = e.dataTransfer.getData("application/vnd.sonar.filepath");
+            if (sourcePath && sourcePath !== node.path) {
+              if (node.path.startsWith(sourcePath + "/")) return;
+              const fileName = sourcePath.split(/[/\\]/).pop();
+              if (!fileName) return;
+              const targetPath = `${node.path}/${fileName}`;
+              if (sourcePath !== targetPath) {
+                try {
+                  await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+                  onFileRenamed?.(sourcePath, targetPath);
+                  document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+                } catch (err) {
+                  console.error("Failed to move item:", err);
+                }
+              }
+            }
+          }
+        }}
+        onKeyDown={async (e) => {
           if (renaming) return;
-          if (e.key === "F2") {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x") {
+            e.preventDefault();
+            e.stopPropagation();
+            setGlobalClipboard({ path: node.path, isCut: true });
+          } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && globalClipboard?.isCut) {
+            e.preventDefault();
+            e.stopPropagation();
+            const sourcePath = globalClipboard.path;
+            const fileName = sourcePath.split(/[/\\]/).pop();
+            if (!fileName) return;
+            const targetDir = node.type === "directory" ? node.path : node.path.split(/[\\/]/).slice(0, -1).join("/");
+            const targetPath = `${targetDir}/${fileName}`;
+            if (sourcePath !== targetPath && !targetDir.startsWith(sourcePath + "/")) {
+              try {
+                await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+                onFileRenamed?.(sourcePath, targetPath);
+                document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+              } catch (err) {
+                console.error("Failed to paste item:", err);
+              }
+            }
+            setGlobalClipboard(null);
+          } else if (e.key === "F2") {
             e.preventDefault();
             startRename();
           } else if (e.key === "Delete" || e.key === "Del" || (e.metaKey && e.key === "Backspace")) {
@@ -637,6 +731,31 @@ function FileTreeNode({
             <div className="context-menu-item" onClick={handleNewFolder}>
               <span>New Folder</span>
             </div>
+            <div className="context-menu-separator" />
+            <div className="context-menu-item" onClick={() => { setGlobalClipboard({ path: node.path, isCut: true }); closeContextMenu(); }}>
+              <span>Cut</span>
+              <span className="context-menu-shortcut">{isWindows ? "Ctrl+X" : "⌘X"}</span>
+            </div>
+            {globalClipboard && globalClipboard.isCut && node.type === "directory" && (
+              <div className="context-menu-item" onClick={async () => {
+                closeContextMenu();
+                const sourcePath = globalClipboard!.path;
+                const fileName = sourcePath.split(/[/\\]/).pop();
+                if (!fileName) return;
+                const targetPath = `${node.path}/${fileName}`;
+                if (sourcePath !== targetPath && !node.path.startsWith(sourcePath + "/")) {
+                   try {
+                     await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+                     onFileRenamed?.(sourcePath, targetPath);
+                     document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+                   } catch(e) { console.error(e); }
+                }
+                setGlobalClipboard(null);
+              }}>
+                <span>Paste</span>
+                <span className="context-menu-shortcut">{isWindows ? "Ctrl+V" : "⌘V"}</span>
+              </div>
+            )}
             <div className="context-menu-separator" />
             <div className="context-menu-item" onClick={startRename}>
               <span>Rename</span>
@@ -763,6 +882,7 @@ const FileTree = React.memo(function FileTree({
     x: number;
     y: number;
   } | null>(null);
+  const [isDragTarget, setIsDragTarget] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -823,6 +943,12 @@ const FileTree = React.memo(function FileTree({
   }, [loadRoot]);
 
   useEffect(() => {
+    const handleRefresh = () => loadRoot();
+    document.addEventListener("refresh-file-tree", handleRefresh);
+    return () => document.removeEventListener("refresh-file-tree", handleRefresh);
+  }, [loadRoot]);
+
+  useEffect(() => {
     if (refreshTrigger) loadRoot();
   }, [refreshTrigger, loadRoot]);
 
@@ -859,8 +985,65 @@ const FileTree = React.memo(function FileTree({
   return (
     <div
       ref={panelRef}
-      className="file-tree-panel"
-      onClick={() => setSelectedFolder(workspaceRoot)}
+      className={`file-tree-panel ${isDragTarget ? "root-drag-target" : ""}`}
+      tabIndex={-1}
+      onClick={(e) => {
+        setSelectedFolder(workspaceRoot);
+        if (e.target === e.currentTarget) {
+          (e.currentTarget as HTMLElement).focus();
+        }
+      }}
+      onKeyDown={async (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && globalClipboard?.isCut && workspaceRoot) {
+          e.preventDefault();
+          e.stopPropagation();
+          const sourcePath = globalClipboard.path;
+          const fileName = sourcePath.split(/[/\\]/).pop();
+          if (!fileName) return;
+          const targetPath = `${workspaceRoot}/${fileName}`;
+          if (sourcePath !== targetPath && !workspaceRoot.startsWith(sourcePath + "/")) {
+            try {
+              await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+              onFileRenamed?.(sourcePath, targetPath);
+              document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+            } catch (err) {
+              console.error("Failed to paste item to root:", err);
+            }
+          }
+          setGlobalClipboard(null);
+        }
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setIsDragTarget(true);
+      }}
+      onDragLeave={(e) => {
+        setIsDragTarget(false);
+      }}
+      onDrop={async (e) => {
+        e.preventDefault();
+        setIsDragTarget(false);
+        const sourcePath = e.dataTransfer.getData("application/vnd.sonar.filepath");
+        if (sourcePath && workspaceRoot) {
+          if (workspaceRoot.startsWith(sourcePath + "/")) return;
+          const fileName = sourcePath.split(/[/\\]/).pop();
+          if (!fileName) return;
+          const targetPath = `${workspaceRoot}/${fileName}`;
+          if (sourcePath !== targetPath) {
+            try {
+              await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+              onFileRenamed?.(sourcePath, targetPath);
+              document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+            } catch (err) {
+              console.error("Failed to move item to root:", err);
+            }
+          }
+        }
+      }}
       onContextMenu={(e) => {
         // Prevent default browser context menu and only show root context if clicking dead space
         if ((e.target as HTMLElement).closest(".tree-node")) return;
@@ -1026,6 +1209,34 @@ const FileTree = React.memo(function FileTree({
             >
               <span>New Folder</span>
             </div>
+            {globalClipboard && globalClipboard.isCut && (
+              <>
+                <div className="context-menu-separator" />
+                <div
+                  className="context-menu-item"
+                  onClick={async () => {
+                    setContextMenu(null);
+                    const sourcePath = globalClipboard!.path;
+                    const fileName = sourcePath.split(/[/\\]/).pop();
+                    if (!fileName) return;
+                    const targetPath = `${workspaceRoot}/${fileName}`;
+                    if (sourcePath !== targetPath && !workspaceRoot!.startsWith(sourcePath + "/")) {
+                      try {
+                        await window.electronAPI.fs.renameItem(sourcePath, targetPath);
+                        onFileRenamed?.(sourcePath, targetPath);
+                        document.dispatchEvent(new CustomEvent("refresh-file-tree"));
+                      } catch (err) {
+                        console.error("Failed to paste item to root:", err);
+                      }
+                    }
+                    setGlobalClipboard(null);
+                  }}
+                >
+                  <span>Paste</span>
+                  <span className="context-menu-shortcut">{isWindows ? "Ctrl+V" : "⌘V"}</span>
+                </div>
+              </>
+            )}
           </div>,
           document.body,
         )}

@@ -137,6 +137,20 @@
   border-right: 2px solid var(--accent);
 }
 
+.tree-node.drag-target {
+  background: var(--bg-hover);
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.root-drag-target {
+  background: var(--bg-hover);
+}
+
+.tree-node.cut-item {
+  opacity: 0.5;
+}
+
 .expand-icon {
   width: 16px;
   display: flex;
