@@ -277,13 +277,22 @@ const EditorPanel = React.memo(function EditorPanel({
     }
   }, [collaborationActive, activeTabPath, activeTabIsDeleted, onEditorMount, editorMountTick]);
 
-  // Unbind when collaboration ends
+  // Unbind when collaboration ends, or when activeTabPath becomes null
   useEffect(() => {
     if (!collaborationActive && boundFileRef.current) {
-      onEditorUnmount?.(); // Unbinds whatever is active if no path provided
+      onEditorUnmount?.();
       boundFileRef.current = null;
     }
   }, [collaborationActive, onEditorUnmount]);
+
+  // Unbind the previous file when the active tab changes to something else,
+  // or when the last tab is closed (activeTabPath becomes null).
+  useEffect(() => {
+    if (activeTabPath !== boundFileRef.current && boundFileRef.current) {
+        onEditorUnmount?.();
+        boundFileRef.current = null;
+    }
+  }, [activeTabPath, onEditorUnmount]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -38,7 +38,6 @@
     "react-resizable-panels": "^2.0.19",
     "react-router-dom": "^6.22.0",
     "ws": "^8.19.0",
-    "y-monaco": "^0.1.6",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.29"
   },
