@@ -324,9 +324,23 @@ export default function CollaborationPanel({
               <Wifi size={14} className="connected" />
               <span>
                 {collaborationStatus?.mode === "host"
-                  ? `Hosting on ${collaborationStatus.hostIp}:${collaborationStatus.port}`
-                  : `Connected to ${collaborationStatus?.hostIp}:${collaborationStatus?.port}`}
+                  ? `Hosting on ${localIp || collaborationStatus.hostIp}`
+                  : `Connected to ${collaborationStatus?.hostIp}`}
               </span>
+              {collaborationStatus?.mode === "host" && (
+                <button
+                  className="copy-btn"
+                  onClick={copyIpToClipboard}
+                  title="Copy IP"
+                  style={{ marginLeft: "auto" }}
+                >
+                  {copied ? (
+                    <Check size={14} className="success" />
+                  ) : (
+                    <Copy size={14} />
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
