@@ -12,6 +12,8 @@ interface AdminSettingsModalProps {
   onLogout: () => void;
   theme: string;
   onThemeChange: (val: string) => void;
+  accentColor: string;
+  onAccentColorChange: (val: string) => void;
   onTeamNameUpdated: (newName: string) => void;
 }
 
@@ -22,6 +24,8 @@ export default function AdminSettingsModal({
   onLogout,
   theme,
   onThemeChange,
+  accentColor,
+  onAccentColorChange,
   onTeamNameUpdated,
 }: AdminSettingsModalProps) {
   const [activeTab, setActiveTab] = useState('Account');
@@ -186,6 +190,16 @@ export default function AdminSettingsModal({
 
   const isWindows = navigator.userAgent.toLowerCase().includes('win');
 
+  const PRESET_COLORS = [
+    { name: "Blue", value: "#3b82f6" },
+    { name: "Teal", value: "#0d9488" },
+    { name: "Purple", value: "#8b5cf6" },
+    { name: "Green", value: "#10b981" },
+    { name: "Orange", value: "#f59e0b" },
+    { name: "Red", value: "#ef4444" },
+    { name: "Pink", value: "#ec4899" },
+  ];
+
   return (
     <div className="vscode-settings-overlay">
       <div
@@ -274,6 +288,53 @@ export default function AdminSettingsModal({
                         <option value="light">Light Theme</option>
                         <option value="dark">Dark Theme</option>
                       </select>
+                    </div>
+                  </div>
+                )}
+
+              {(isSearching
+                ? matchesSearch("Accent Color") ||
+                matchesSearch("custom color") ||
+                matchesSearch("Appearance")
+                : true) && (
+                  <div className="vscode-setting-item">
+                    <div className="vscode-setting-header">
+                      <span className="vscode-setting-title">
+                        Workbench: <span className="highlight">Accent Color</span>
+                      </span>
+                      <div className="vscode-setting-description">
+                        Select a custom accent color for the interface (default is blue).
+                      </div>
+                    </div>
+                    <div className="vscode-setting-control color-picker-control">
+                      <div className="color-presets">
+                        {PRESET_COLORS.map((c) => (
+                          <button
+                            key={c.value}
+                            className={`color-preset-btn ${accentColor.toLowerCase() === c.value.toLowerCase() ? "active" : ""}`}
+                            style={{ backgroundColor: c.value }}
+                            title={c.name}
+                            onClick={() => onAccentColorChange(c.value)}
+                          />
+                        ))}
+                      </div>
+                      <div className="custom-color-wrap">
+                        <input
+                          type="color"
+                          className="vscode-color-picker"
+                          value={accentColor}
+                          onChange={(e) => onAccentColorChange(e.target.value)}
+                          title="Custom Color"
+                        />
+                        <span className="custom-color-hex">{accentColor.toUpperCase()}</span>
+                        <button 
+                          className="activity-log-btn secondary reset-color-btn"
+                          onClick={() => onAccentColorChange('#3b82f6')}
+                          disabled={accentColor.toLowerCase() === '#3b82f6'}
+                        >
+                          Reset
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

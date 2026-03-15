@@ -36,6 +36,9 @@ export default function AdminDashboard() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem('ide-theme') || 'system'
   );
+  const [accentColor, setAccentColor] = useState(
+    () => localStorage.getItem("ide-accent-color") || "#3b82f6"
+  );
   const unsubRefs = useRef<Array<() => void>>([]);
   const adminIdsRef = useRef<Set<string>>(new Set());
 
@@ -124,6 +127,21 @@ export default function AdminDashboard() {
       localStorage.setItem('ide-theme', theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("ide-accent-color", accentColor);
+    const root = document.documentElement;
+    root.style.setProperty("--user-accent", accentColor);
+    root.style.setProperty("--user-accent-hover", accentColor);
+    
+    let r = 59, g = 130, b = 246; // default blue
+    if (accentColor.startsWith('#') && (accentColor.length === 7 || accentColor.length === 9)) {
+      r = parseInt(accentColor.slice(1, 3), 16);
+      g = parseInt(accentColor.slice(3, 5), 16);
+      b = parseInt(accentColor.slice(5, 7), 16);
+    }
+    root.style.setProperty("--user-accent-rgb", `${r}, ${g}, ${b}`);
+  }, [accentColor]);
 
   useEffect(() => {
     loadSessions();
@@ -371,7 +389,7 @@ export default function AdminDashboard() {
             Live System
           </span>
         </div>
-        <div className="admin-header-right">
+                <div className="admin-header-right">
           {lastUpdated && (
             <span className="last-updated">
               <Clock className="meta-icon" size={12} />
@@ -664,6 +682,8 @@ export default function AdminDashboard() {
         onLogout={logout}
         theme={theme}
         onThemeChange={setTheme}
+        accentColor={accentColor}
+        onAccentColorChange={setAccentColor}
         onTeamNameUpdated={(newName) => {
           const updated = { ...user!, teamName: newName };
           localStorage.setItem('sonar_session', JSON.stringify(updated));

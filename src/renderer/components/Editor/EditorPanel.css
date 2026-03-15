@@ -242,7 +242,7 @@ kbd {
 
 /* Gradient text works fine for text */
 .welcome-title {
-  font-family: "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
   font-size: 42px;
   font-weight: 900;
   margin-bottom: 12px;
