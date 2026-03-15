@@ -24,7 +24,7 @@
 
 /* y-monaco cursor widget label (shows user name) */
 .yRemoteSelectionHead::after {
-  content: ' ';
+  /* Dynamic content injected via CollaborationContext */
 }
 
 /* Monaco widget cursor label styling */

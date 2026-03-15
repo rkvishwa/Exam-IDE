@@ -332,8 +332,7 @@ export default function SettingsModal({
   return (
     <div className="vscode-settings-overlay">
       <div
-        className="vscode-settings-header-tabs"
-        style={{ paddingLeft: isWindows ? "0px" : "75px" }}
+        className={`vscode-settings-header-tabs ${isWindows ? "is-windows" : "is-mac"}`}
       >
         <div className="vscode-settings-tab active">
           Settings
@@ -394,7 +393,7 @@ export default function SettingsModal({
               <Keyboard size={14} /> Keyboard Shortcuts
             </li>
 
-            <div className="vscode-settings-divider" />
+            <li className="vscode-settings-divider" />
 
             <li
               className={
@@ -421,7 +420,7 @@ export default function SettingsModal({
               <Activity size={14} /> Activity Log
             </li>
 
-            <div className="vscode-settings-divider" />
+            <li className="vscode-settings-divider" />
 
             <li
               className={
@@ -444,7 +443,7 @@ export default function SettingsModal({
               <User size={14} /> Account
             </li>
 
-            <div className="vscode-settings-divider" />
+            <li className="vscode-settings-divider" />
 
             <li
               className={
@@ -478,16 +477,16 @@ export default function SettingsModal({
                       </div>
                     </div>
                     <div className="vscode-setting-control">
-                      <select
-                        className="vscode-select"
-                        value={autoSave ? "on" : "off"}
-                        onChange={(e) =>
-                          onAutoSaveChange(e.target.value === "on")
-                        }
-                      >
-                        <option value="off">off</option>
-                        <option value="on">afterDelay (on)</option>
-                      </select>
+                      <label className="vscode-toggle" title="Auto Save">
+                        <input
+                          type="checkbox"
+                          title="Toggle Auto Save"
+                          aria-label="Toggle Auto Save"
+                          checked={autoSave}
+                          onChange={(e) => onAutoSaveChange(e.target.checked)}
+                        />
+                        <span className="vscode-toggle-slider"></span>
+                      </label>
                     </div>
                   </div>
                 )}
@@ -511,6 +510,7 @@ export default function SettingsModal({
                         <input
                           type="checkbox"
                           className="vscode-checkbox"
+                          title="Hot Reload"
                           checked={hotReload}
                           onChange={(e) => onHotReloadChange(e.target.checked)}
                         />
@@ -538,6 +538,7 @@ export default function SettingsModal({
                         <input
                           type="checkbox"
                           className="vscode-checkbox"
+                          title="Word Wrap"
                           checked={wordWrap}
                           onChange={(e) => onWordWrapChange(e.target.checked)}
                         />
@@ -569,6 +570,7 @@ export default function SettingsModal({
                     <div className="vscode-setting-control">
                       <select
                         className="vscode-select"
+                        title="Color Theme"
                         value={theme}
                         onChange={(e) => onThemeChange(e.target.value)}
                       >
@@ -682,6 +684,7 @@ export default function SettingsModal({
                         <input
                           type="checkbox"
                           className="vscode-checkbox"
+                          title="Show Usernames"
                           checked={showCollabUsernames}
                           onChange={(e) =>
                             onShowCollabUsernamesChange(e.target.checked)
@@ -713,6 +716,7 @@ export default function SettingsModal({
                         <input
                           type="range"
                           className="vscode-range"
+                          title="Username Opacity"
                           min={0}
                           max={100}
                           step={5}
@@ -736,8 +740,7 @@ export default function SettingsModal({
             <div className="vscode-settings-section">
               <h2 className="vscode-settings-section-title">Activity Log</h2>
               <div
-                className="vscode-setting-description"
-                style={{ marginBottom: 16 }}
+                className="vscode-setting-description activity-log-description"
               >
                 Your activity is tracked in the background — online/offline
                 status changes, app switching, and clipboard copies with
@@ -1022,54 +1025,49 @@ export default function SettingsModal({
             <div className="vscode-settings-section">
               <h2 className="vscode-settings-section-title">About</h2>
               
-              <div className="account-card" style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="account-card about-card">
+                <div className="about-header">
                   <img 
                     src={appIcon} 
                     alt="Sonar Code Editor" 
-                    style={{ 
-                      width: 72, height: 72, 
-                      borderRadius: 16, 
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                      objectFit: 'cover'
-                    }} 
+                    className="about-app-icon"
                   />
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>Sonar Code Editor</h3>
-                    <div style={{ color: 'var(--text-muted)', marginTop: 4, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <h3 className="about-title">Sonar Code Editor</h3>
+                    <div className="about-subtitle">
                       <span>Version 1.0.0-beta</span>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ height: 1, background: 'var(--divider)' }}></div>
+                <div className="about-divider"></div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                <div className="about-content">
+                  <div className="about-description">
                     Sonar is a collaborative, real-time code editor built for educational institutions and development teams. It provides seamless coding experiences with integrated monitoring and activity logging.
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                    <a href="https://github.com/rkvishwa/Sonar-Code-Editor" target="_blank" rel="noopener noreferrer" className="activity-log-btn secondary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px' }}>
+                  <div className="about-links">
+                    <a href="https://github.com/rkvishwa/Sonar-Code-Editor" target="_blank" rel="noopener noreferrer" className="activity-log-btn secondary about-link-btn">
                       <Github size={14} />
                       GitHub Repository
                     </a>
-                    <a href="https://sonar.knurdz.org" target="_blank" rel="noopener noreferrer" className="activity-log-btn secondary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px' }}>
+                    <a href="https://sonar.knurdz.org" target="_blank" rel="noopener noreferrer" className="activity-log-btn secondary about-link-btn">
                       <Globe size={14} />
                       Official Website
                     </a>
                   </div>
                 </div>
 
-                <div style={{ height: 1, background: 'var(--divider)', marginTop: '8px' }}></div>
+                <div className="about-divider spaced"></div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
+                <div className="about-footer">
                   <div>
-                    Released under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>MIT License</a>.
+                    Released under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="about-footer-link">MIT License</a>.
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div className="about-powered-by">
                     Powered by 
-                    <a href="https://knurdz.org" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <a href="https://knurdz.org" target="_blank" rel="noopener noreferrer" className="about-powered-link">
                       Knurdz <ExternalLink size={12} />
                     </a>
                   </div>

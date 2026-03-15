@@ -511,7 +511,7 @@ export function CollaborationProvider({
                 border-left-width: 2px;
                 border-left-style: solid;
               }
-              .yRemoteSelectionHead-${clientId}::after {
+              .yRemoteSelectionHead.yRemoteSelectionHead-${clientId}::after {
                 content: '${showUsernames ? name.replace(/'/g, "\\'") : " "}';
                 position: absolute;
                 top: -18px;

@@ -684,7 +684,7 @@ function IDEContent() {
   }, [tabs]);
 
   const openFile = useCallback(
-    async (filePath: string, fileName: string) => {
+    async (filePath: string, fileName: string, isPreview: boolean = true) => {
       const existing = tabsRef.current.find((t) => t.path === filePath);
       if (existing) {
         setActiveTabPath(filePath);
@@ -701,7 +701,7 @@ function IDEContent() {
             isDirty: false,
             language: "",
             type: "image",
-            isPreviewFile: true,
+            isPreviewFile: isPreview,
           };
         } else {
           // Read from local filesystem
@@ -713,10 +713,11 @@ function IDEContent() {
             content,
             isDirty: false,
             language: getLanguage(fileName),
-            isPreviewFile: true,
+            isPreviewFile: isPreview,
           };
         }
         setTabs((prev) => {
+          if (prev.some((t) => t.path === filePath)) return prev;
           const next = prev.filter((t) => !t.isPreviewFile || t.isDirty);
           return [...next, tab];
         });
@@ -894,7 +895,7 @@ function IDEContent() {
   );
 
   const handleFileCreated = useCallback(
-    async (fullPath: string, _name: string, savedContent?: string) => {
+    async (fullPath: string, _name: string, savedContent?: string, isUndo?: boolean) => {
       // If this file creation was explicitly triggered by a remote peer operation,
       // skip the watcher response entirely to prevent echo broadcasting and duplicate
       // Y.Text purges.
@@ -990,36 +991,38 @@ function IDEContent() {
       // Mark the tab as not-deleted AFTER seeding Y.Text.
       // If the tab was closed before the undo, open it afresh so the editor
       // syncs immediately — the user expects the file to reappear.
-      setTabs((prev) => {
-        const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
-        const existingIdx = prev.findIndex(
-          (t) => t.path.replace(/\\/g, "/").toLowerCase() === fNorm
-        );
-        if (existingIdx >= 0) {
-          // Tab exists (may be marked deleted) — just update it in place.
-          return prev.map((t) =>
-            t.path.replace(/\\/g, "/").toLowerCase() === fNorm
-              ? { ...t, isDeleted: false, content: restoredContent || t.content }
-              : t
+      if (isUndo) {
+        setTabs((prev) => {
+          const fNorm = fullPath.replace(/\\/g, "/").toLowerCase();
+          const existingIdx = prev.findIndex(
+            (t) => t.path.replace(/\\/g, "/").toLowerCase() === fNorm
           );
-        }
-        // Tab was closed before the undo — create it fresh and make it active.
-        if (restoredContent !== undefined) {
-          const newName = fullPath.split(/[\/\\]/).pop() || "";
-          const newTab: OpenTab = {
-            path: fullPath,
-            name: newName,
-            content: restoredContent,
-            isDirty: false,
-            language: getLanguage(newName),
-            isPreviewFile: false,
-          };
-          // setActiveTabPath is a stable React setter — safe to call here.
-          setActiveTabPath(fullPath);
-          return [...prev, newTab];
-        }
-        return prev;
-      });
+          if (existingIdx >= 0) {
+            // Tab exists (may be marked deleted) — just update it in place.
+            return prev.map((t) =>
+              t.path.replace(/\\/g, "/").toLowerCase() === fNorm
+                ? { ...t, isDeleted: false, content: restoredContent || t.content }
+                : t
+            );
+          }
+          // Tab was closed before the undo — create it fresh and make it active.
+          if (restoredContent !== undefined) {
+            const newName = fullPath.split(/[\/\\]/).pop() || "";
+            const newTab: OpenTab = {
+              path: fullPath,
+              name: newName,
+              content: restoredContent,
+              isDirty: false,
+              language: getLanguage(newName),
+              isPreviewFile: false,
+            };
+            // setActiveTabPath is a stable React setter — safe to call here.
+            setActiveTabPath(fullPath);
+            return [...prev, newTab];
+          }
+          return prev;
+        });
+      }
     },
     [],
   );
@@ -1252,7 +1255,10 @@ function IDEContent() {
         language: "",
         type: "preview",
       };
-      setTabs((prev) => [...prev, tab]);
+      setTabs((prev) => {
+        if (prev.some((t) => t.path === previewPath)) return prev;
+        return [...prev, tab];
+      });
       setActiveTabPath(previewPath);
     },
     [tabs],

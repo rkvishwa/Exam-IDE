@@ -226,7 +226,7 @@ function InlineCreateInput({
       {hasFolders ? (
         <span className="expand-icon"></span>
       ) : (
-        <span className="expand-icon" style={{ width: "4px" }}></span>
+        <span className="expand-icon expand-icon-empty"></span>
       )}
       <span className="file-icon">
         {type === "folder" ? (
@@ -238,6 +238,7 @@ function InlineCreateInput({
       <input
         ref={inputRef}
         className="inline-create-input"
+        title="Create item"
         value={value}
         placeholder={type === "folder" ? "Folder name" : "File name"}
         onChange={(e) => setValue(e.target.value)}
@@ -262,10 +263,10 @@ interface FileTreeNodeProps {
   onSetCreating: (item: CreatingItem | null) => void;
   selectedFolder: string | null;
   onSelectFolder: (path: string) => void;
-  onFileOpened: (path: string, name: string) => void;
+  onFileOpened: (path: string, name: string, isPreview?: boolean) => void;
   onFileDeleted: (path: string, type: "file" | "directory") => void;
   onFileRenamed?: (oldPath: string, newPath: string) => void;
-  onFileCreated?: (path: string, name: string, savedContent?: string) => void;
+  onFileCreated?: (path: string, name: string, savedContent?: string, isUndo?: boolean) => void;
   onFolderCreated?: (path: string) => void;
 }
 
@@ -373,7 +374,7 @@ function FileTreeNode({
         await window.electronAPI.fs.createFile(fullPath);
         await loadChildren();
         onFileCreated?.(fullPath, name);
-        onFileOpened(fullPath, name);
+        onFileOpened(fullPath, name, false);
       } else {
         await window.electronAPI.fs.createFolder(fullPath);
         await loadChildren();
@@ -420,7 +421,7 @@ function FileTreeNode({
         type: node.type,
         onRestored: () => {
             if (node.type === "file") {
-               onFileCreated?.(node.path, node.name, savedContent);
+               onFileCreated?.(node.path, node.name, savedContent, true);
             } else {
                onFolderCreated?.(node.path);
             }
@@ -598,7 +599,7 @@ function FileTreeNode({
             <span className="expand-icon"></span>
           )
         ) : (
-          <span className="expand-icon" style={{ width: "4px" }}></span>
+          <span className="expand-icon expand-icon-empty"></span>
         )}
         <span className="file-icon">{getIcon(node)}</span>
         {renaming ? (
@@ -606,6 +607,7 @@ function FileTreeNode({
             ref={renameInputRef}
             autoFocus
             className="rename-input"
+            title="Rename item"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onFocus={(e) => {
@@ -638,12 +640,12 @@ function FileTreeNode({
             <div className="context-menu-separator" />
             <div className="context-menu-item" onClick={startRename}>
               <span>Rename</span>
-              <span style={{ color: "var(--text-muted)" }}>F2</span>
+              <span className="context-menu-shortcut">F2</span>
             </div>
             <div className="context-menu-separator" />
               <div className="context-menu-item danger" onClick={handleDeleteMenuClick}>
                 <span>Delete</span>
-                <span style={{ color: "var(--text-muted)" }}>{isWindows ? "Del" : "⌘⌫"}</span>
+                <span className="context-menu-shortcut">{isWindows ? "Del" : "⌘⌫"}</span>
               </div>
             </div>,
             document.body,
@@ -728,11 +730,11 @@ interface FileTreeProps {
   activeFilePath: string | null;
   autoSave: boolean;
   onAutoSaveChange: (autoSave: boolean) => void;
-  onFileOpened?: (path: string, name: string) => void;
+  onFileOpened?: (path: string, name: string, isPreview?: boolean) => void;
   newFileTrigger?: number;
   onFileDeleted?: (path: string, type: "file" | "directory") => void;
   onFileRenamed?: (oldPath: string, newPath: string) => void;
-  onFileCreated?: (path: string, name: string, savedContent?: string) => void;
+  onFileCreated?: (path: string, name: string, savedContent?: string, isUndo?: boolean) => void;
   onFolderCreated?: (path: string) => void;
   refreshTrigger?: number;
 }
@@ -834,37 +836,17 @@ const FileTree = React.memo(function FileTree({
     return (
       <div className="file-tree-panel">
         <div className="tree-header">
-          <span
-            style={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              marginRight: "8px",
-            }}
-          >
+          <span className="tree-header-title">
             Explorer
           </span>
           <div className="tree-actions" />
         </div>
-        <div
-          style={{
-            padding: "20px",
-            textAlign: "center",
-            color: "var(--text-muted)",
-          }}
-        >
-          <p style={{ marginBottom: "10px" }}>No folder opened</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div className="empty-folder-container">
+          <p className="empty-folder-text">No folder opened</p>
+          <div className="empty-folder-actions">
             <button
               onClick={onOpenFolder}
-              style={{
-                padding: "6px 12px",
-                background: "var(--accent)",
-                color: "white",
-                borderRadius: "4px",
-                cursor: "pointer",
-                border: "none",
-              }}
+              className="empty-folder-btn"
             >
               Open Folder
             </button>
@@ -890,14 +872,7 @@ const FileTree = React.memo(function FileTree({
       }}
     >
       <div className="tree-header" title={workspaceRoot}>
-        <span
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            marginRight: "8px",
-          }}
-        >
+        <span className="tree-header-title">
           {workspaceRoot.split(/[/\\]/).pop()}
         </span>
         <div className="tree-actions">
@@ -993,7 +968,7 @@ const FileTree = React.memo(function FileTree({
                   await window.electronAPI.fs.createFile(fullPath);
                   loadRoot();
                   onFileCreated?.(fullPath, name);
-                  onFileOpened?.(fullPath, name);
+                  onFileOpened?.(fullPath, name, false);
                 } catch (err) {
                   console.error("Failed to create file at root:", err);
                   loadRoot();

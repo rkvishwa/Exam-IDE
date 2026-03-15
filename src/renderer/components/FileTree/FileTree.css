@@ -146,6 +146,10 @@
   color: var(--text-muted);
 }
 
+.expand-icon-empty {
+  width: 4px;
+}
+
 .file-icon {
   width: 16px;
   display: flex;
@@ -221,7 +225,43 @@
   margin: 4px 0;
 }
 
+.tree-header-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.empty-folder-container {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-folder-text {
+  margin-bottom: 10px;
+}
+
+.empty-folder-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-folder-btn {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+
 .context-menu-item.danger:hover {
   background: var(--danger, #ef4444);
   color: white;
+}
+
+.context-menu-shortcut {
+  color: var(--text-muted);
 }
