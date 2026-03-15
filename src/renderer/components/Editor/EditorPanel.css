@@ -10,7 +10,7 @@
 
 /* y-monaco remote cursor styles */
 .yRemoteSelection {
-  background-color: rgba(59, 130, 246, 0.3) !important;
+  background-color: rgba(var(--user-accent-rgb, 59, 130, 246), 0.3) !important;
   opacity: 0.7;
 }
 

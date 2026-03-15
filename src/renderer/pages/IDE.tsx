@@ -147,6 +147,9 @@ function IDEContent() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("ide-theme") || "system",
   );
+  const [accentColor, setAccentColor] = useState(
+    () => localStorage.getItem("ide-accent-color") || "#3b82f6",
+  );
   const [autoSave, setAutoSave] = useState(
     () => localStorage.getItem("ide-autosave") === "true",
   );
@@ -231,6 +234,21 @@ function IDEContent() {
   useEffect(() => {
     localStorage.setItem("ide-autosave", String(autoSave));
   }, [autoSave]);
+
+  useEffect(() => {
+    localStorage.setItem("ide-accent-color", accentColor);
+    const root = document.documentElement;
+    root.style.setProperty("--user-accent", accentColor);
+    root.style.setProperty("--user-accent-hover", accentColor);
+    
+    let r = 59, g = 130, b = 246; // default blue
+    if (accentColor.startsWith('#') && (accentColor.length === 7 || accentColor.length === 9)) {
+      r = parseInt(accentColor.slice(1, 3), 16);
+      g = parseInt(accentColor.slice(3, 5), 16);
+      b = parseInt(accentColor.slice(5, 7), 16);
+    }
+    root.style.setProperty("--user-accent-rgb", `${r}, ${g}, ${b}`);
+  }, [accentColor]);
 
   useEffect(() => {
     localStorage.setItem("ide-collab-usernames", String(showCollabUsernames));
@@ -1392,6 +1410,8 @@ function IDEContent() {
         onHotReloadChange={setHotReload}
         theme={theme}
         onThemeChange={setTheme}
+        accentColor={accentColor}
+        onAccentColorChange={setAccentColor}
         wordWrap={wordWrap}
         onWordWrapChange={setWordWrap}
         showCollabUsernames={showCollabUsernames}

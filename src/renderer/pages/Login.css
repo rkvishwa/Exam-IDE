@@ -1,11 +1,41 @@
-﻿.login-layout {
+.login-layout {
   display: flex;
   width: 100vw;
   height: 100vh;
+  
+  /* Preserve original cyan-blue theme for login page */
+  --bg-primary: #071018;
+  --bg-secondary: #040a16;
+  --bg-tertiary: #040a16;
+  --bg-hover: rgba(34, 211, 238, 0.1);
+  --bg-active: rgba(34, 211, 238, 0.2);
+  --border: rgba(34, 211, 238, 0.2);
+  --border-focus: rgba(34, 211, 238, 0.4);
+  --divider: rgba(255, 255, 255, 0.12);
+  --accent: #3781fc;
+  --accent-hover: #2963cc;
+  --accent-transparent: rgba(55, 129, 252, 0.15);
+  --grid-opacity: 0.008;
+
   background: var(--bg-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   overflow: hidden;
   color: var(--text-primary);
+}
+
+[data-theme="light"] .login-layout {
+  --bg-primary: #f7fbff;
+  --bg-secondary: #e9f3ff;
+  --bg-tertiary: #dfedfb;
+  --bg-hover: rgba(56, 189, 248, 0.1);
+  --bg-active: rgba(56, 189, 248, 0.2);
+  --border: rgba(34, 211, 238, 0.3);
+  --border-focus: rgba(34, 211, 238, 0.5);
+  --divider: rgba(0, 0, 0, 0.1);
+  --accent: #3781fc;
+  --accent-hover: #2963cc;
+  --accent-transparent: rgba(55, 129, 252, 0.15);
+  --grid-opacity: 0.015;
 }
 
 /* Left Hero Section */

@@ -1,30 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Modern Glassmorphism & Cyber-Blue dark theme based on DESIGN_THEME.md */
-  --bg-primary: #071018;
-  --bg-secondary: #040a16;
-  --bg-tertiary: #040a16;
-  --bg-hover: rgba(34, 211, 238, 0.1);
-  --bg-active: rgba(34, 211, 238, 0.2);
+  /* Black and Darkest Blue Theme */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #0a0a0a;
+  --bg-hover: rgba(var(--user-accent-rgb, 59, 130, 246), 0.1);
+  --bg-active: rgba(var(--user-accent-rgb, 59, 130, 246), 0.2);
   
-  --border: rgba(34, 211, 238, 0.2); /* cyan-400/20 */
-  --border-focus: rgba(34, 211, 238, 0.4);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(var(--user-accent-rgb, 59, 130, 246), 0.4);
   
-  --divider: rgba(255, 255, 255, 0.12);
+  --divider: rgba(255, 255, 255, 0.08);
 
   --text-primary: #fafafa;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
   
-  --accent: #3781fc; /* Extracted from new reference image */
-  --accent-hover: #2963cc;
-  --accent-transparent: rgba(55, 129, 252, 0.15);
+  --accent: var(--user-accent, #3b82f6);
+  --accent-hover: var(--user-accent-hover, #2563eb);
+  --accent-transparent: rgba(var(--user-accent-rgb, 59, 130, 246), 0.15);
   
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
-  --info: #6366f1;
+  --info: var(--user-accent, #3b82f6);
   
   --online: #10b981;
   --offline: #ef4444;
@@ -34,34 +34,34 @@
 }
 
 [data-theme="light"] {
-  --bg-primary: #f7fbff;
-  --bg-secondary: #e9f3ff;
-  --bg-tertiary: #dfedfb;
-  --bg-hover: rgba(56, 189, 248, 0.1);
-  --bg-active: rgba(56, 189, 248, 0.2);
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f7fc;
+  --bg-tertiary: #edf2f9;
+  --bg-hover: rgba(var(--user-accent-rgb, 59, 130, 246), 0.1);
+  --bg-active: rgba(var(--user-accent-rgb, 59, 130, 246), 0.2);
 
-  --border: rgba(34, 211, 238, 0.3); /* cyan-400/30 */
-  --border-focus: rgba(34, 211, 238, 0.5);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(var(--user-accent-rgb, 59, 130, 246), 0.4);
 
-  --divider: rgba(0, 0, 0, 0.1);
+  --divider: rgba(0, 0, 0, 0.08);
 
   --text-primary: #18181b;
   --text-secondary: #3f3f46;
   --text-muted: #52525b;
 
-  --accent: #3781fc;
-  --accent-hover: #2963cc;
-  --accent-transparent: rgba(55, 129, 252, 0.15);
+  --accent: var(--user-accent, #3b82f6);
+  --accent-hover: var(--user-accent-hover, #2563eb);
+  --accent-transparent: rgba(var(--user-accent-rgb, 59, 130, 246), 0.15);
 
-  --menu-bg: #e9f3ff;
-  --menu-border: rgba(34, 211, 238, 0.3);
-  --menu-hover: rgba(56, 189, 248, 0.2);
+  --menu-bg: #f4f7fc;
+  --menu-border: rgba(0, 0, 0, 0.08);
+  --menu-hover: rgba(var(--user-accent-rgb, 59, 130, 246), 0.15);
   --menu-text: #18181b;
 
   --success: #059669;
   --danger: #dc2626;
   --warning: #d97706;
-  --info: #4f46e5;
+  --info: var(--user-accent, #3b82f6);
   
   --online: #059669;
   --offline: #dc2626;

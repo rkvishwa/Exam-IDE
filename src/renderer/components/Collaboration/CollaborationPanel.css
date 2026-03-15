@@ -35,7 +35,7 @@
 }
 
 .collaboration-header .status-badge.client {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(var(--user-accent-rgb, 59, 130, 246), 0.15);
   color: var(--accent);
 }
 

@@ -83,7 +83,7 @@ const getEditorOptions = (wordWrap: boolean) => ({
 
 function getTabIcon(tab: OpenTab) {
   if (tab.type === "preview")
-    return <Monitor size={14} className="tab-icon" color="#3b82f6" />;
+    return <Monitor size={14} className="tab-icon" color="var(--accent)" />;
   if (tab.type === "image")
     return <FileImage size={14} className="tab-icon" color="#8b5cf6" />;
 
@@ -99,7 +99,7 @@ function getTabIcon(tab: OpenTab) {
     case "html":
       return <Code2 size={14} className="tab-icon" color="#ef4444" />;
     case "css":
-      return <Palette size={14} className="tab-icon" color="#3b82f6" />;
+      return <Palette size={14} className="tab-icon" color="var(--accent)" />;
     case "md":
       return <FileText size={14} className="tab-icon" color="#a1a1aa" />;
     case "png":
@@ -644,7 +644,26 @@ const EditorPanel = React.memo(function EditorPanel({
                     ? (getCollaborativeContent(tab.path) ?? tab.content)
                     : tab.content
                 }
-                theme={theme === "light" ? "vs-light" : "vs-dark"}
+                beforeMount={(monaco) => {
+                  monaco.editor.defineTheme('sonar-dark', {
+                    base: 'vs-dark',
+                    inherit: true,
+                    rules: [],
+                    colors: {
+                      'editor.background': '#000000',
+                      'editor.lineHighlightBackground': '#0a0a0a',
+                    }
+                  });
+                  monaco.editor.defineTheme('sonar-light', {
+                    base: 'vs',
+                    inherit: true,
+                    rules: [],
+                    colors: {
+                      'editor.background': '#ffffff',
+                    }
+                  });
+                }}
+                theme={theme === "light" ? "sonar-light" : "sonar-dark"}
                 options={getEditorOptions(wordWrap)}
                 onMount={(mountedEditor, mountedMonaco) => {
                   editorMapRef.current.set(tab.path, mountedEditor);

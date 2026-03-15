@@ -142,7 +142,7 @@
 }
 
 .inline-btn.active {
-  background-color: var(--accent-light, rgba(0, 122, 204, 0.2));
+  background-color: var(--accent-light, rgba(var(--user-accent-rgb, 59, 130, 246), 0.2));
   color: var(--accent);
 }
 

@@ -8,7 +8,7 @@
   height: 100vh;
   background: var(--bg-primary);
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.03), transparent 25%),
+    radial-gradient(circle at 15% 50%, rgba(var(--user-accent-rgb, 59, 130, 246), 0.03), transparent 25%),
     radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.03), transparent 25%);
   overflow: hidden;
   color: var(--text-primary);
@@ -59,7 +59,7 @@
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  filter: drop-shadow(0 0 8px rgba(var(--user-accent-rgb, 59, 130, 246), 0.6));
   height: 20px; /* Force wrapper height to precisely match SVG size */
   width: 20px; /* Force width too to make it square */
 }
@@ -195,7 +195,7 @@
 .stat-icon.neutral { color: var(--text-muted); background: rgba(255,255,255,0.03); }
 .stat-icon.online { color: var(--online); background: rgba(16, 185, 129, 0.1); }
 .stat-icon.offline { color: #f87171; background: rgba(239, 68, 68, 0.1); }
-.stat-icon.accent { color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+.stat-icon.accent { color: var(--accent); background: rgba(var(--user-accent-rgb, 59, 130, 246), 0.1); }
 
 .stat-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 

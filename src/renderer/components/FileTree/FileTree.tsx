@@ -80,7 +80,7 @@ function getIcon(node: FileNode) {
     case "html":
       return <Code2 size={14} color="#ef4444" />;
     case "css":
-      return <Palette size={14} color="#3b82f6" />;
+      return <Palette size={14} color="var(--accent)" />;
     case "md":
       return <FileText size={14} color="#a1a1aa" />;
     case "png":

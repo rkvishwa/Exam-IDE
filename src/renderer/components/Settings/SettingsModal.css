@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--bg-primary, #1e1e1e);
+  background-color: var(--bg-primary, #000000);
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -21,7 +21,7 @@
 .vscode-settings-header-tabs {
   display: flex;
   align-items: center;
-  background-color: var(--bg-secondary, #252526);
+  background-color: var(--bg-secondary, #0a0a0a);
   height: 35px;
   -webkit-app-region: drag;
   border-bottom: 1px solid var(--divider);
@@ -63,7 +63,7 @@
 }
 
 .vscode-settings-tab-close:hover {
-  background-color: var(--bg-hover, #2a2d2e);
+  background-color: var(--bg-hover, #18181b);
   opacity: 1;
 }
 
@@ -130,11 +130,15 @@
 }
 
 .vscode-settings-tree li:hover {
-  background-color: var(--bg-hover);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 .vscode-settings-tree li.active {
-  background-color: var(--bg-hover);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-left: 2px solid var(--accent);
+  padding-left: 32px; /* Adjust padding for border */
 }
 
 .vscode-settings-content {
@@ -194,8 +198,8 @@
   appearance: none;
   width: 220px;
   height: 6px;
-  background: var(--bg-tertiary, #2d2d2d);
-  border: 1px solid var(--border, #3c3c3c);
+  background: var(--bg-tertiary, #0a0a0a);
+  border: 1px solid var(--border, #202020);
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -212,21 +216,25 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--accent, #0078d4);
-  border: 2px solid var(--text-primary, #ccc);
+  background: var(--accent);
+  border: 2px solid #ffffff; /* White in dark theme */
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
+[data-theme="light"] .vscode-range::-webkit-slider-thumb {
+  border: 2px solid #ffffff; /* White in light theme */
+}
+
 .vscode-range:disabled::-webkit-slider-thumb {
   cursor: not-allowed;
-  background: var(--text-muted, #666);
-  border-color: var(--border, #3c3c3c);
+  background: var(--text-muted, #52525b);
+  border-color: var(--border, #202020);
   box-shadow: none;
 }
 
 .vscode-range:hover:not(:disabled) {
-  border-color: var(--accent, #0078d4);
+  border-color: var(--accent);
 }
 
 .vscode-range-value {
@@ -283,9 +291,14 @@
   transform: scale(0);
   transition: 120ms transform ease-in-out;
   box-shadow: inset 1em 1em var(--text-primary);
-  background-color: CanvasText;
+  background-color: var(--text-primary);
   transform-origin: center;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+[data-theme="light"] .vscode-checkbox::before {
+  box-shadow: inset 1em 1em #ffffff;
+  background-color: #ffffff;
 }
 
 .vscode-checkbox:checked::before {
@@ -300,6 +313,87 @@
 .vscode-checkbox:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 2px;
+}
+
+.vscode-color-picker {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vscode-color-picker::-webkit-color-swatch-wrapper {
+  padding: 1px;
+}
+
+.vscode-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.color-picker-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.color-presets {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.color-preset-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.color-preset-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-preset-btn.active {
+  border-color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.custom-color-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.custom-color-hex {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  width: 60px;
+}
+
+.reset-color-btn {
+  margin-left: 4px;
+}
+
+.activity-log-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Keyboard Shortcuts Table */
@@ -392,9 +486,9 @@
 }
 
 .activity-log-btn.primary {
-  background-color: var(--accent, #007acc);
+  background-color: var(--accent);
   color: #fff;
-  border-color: var(--accent, #007acc);
+  border-color: var(--accent);
 }
 
 .activity-log-btn.primary:hover {
@@ -414,8 +508,8 @@
 
 .activity-log-btn.danger {
   background-color: transparent;
-  color: #f44747;
-  border-color: #f44747;
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .activity-log-btn.danger:hover {
@@ -456,27 +550,27 @@
 }
 
 .activity-log-type--status_online {
-  color: #f44336;
+  color: var(--danger);
 }
 
 .activity-log-type--status_offline {
-  color: #4caf50;
+  color: var(--success);
 }
 
 .activity-log-type--app_blur {
-  color: #ff9800;
+  color: var(--warning);
 }
 
 .activity-log-type--app_focus {
-  color: var(--accent, #007acc);
+  color: var(--accent);
 }
 
 .activity-log-type--clipboard_copy {
-  color: #ab47bc;
+  color: #a855f7; /* Purple to match typical dark theme */
 }
 
 .activity-log-type--clipboard_paste_external {
-  color: #f44336;
+  color: var(--danger);
 }
 
 .activity-log-details {
@@ -579,7 +673,7 @@
 
 .account-error {
   font-size: 12px;
-  color: #f44747;
+  color: var(--danger);
 }
 
 .account-signout {
@@ -592,7 +686,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #4caf50;
+  color: var(--success);
 }
 
 /* Admin Password Form */
@@ -707,5 +801,5 @@
 
 .security-success {
   font-size: 12px;
-  color: #4caf50;
+  color: var(--success);
 }
