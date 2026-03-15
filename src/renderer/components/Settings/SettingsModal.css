@@ -121,7 +121,10 @@
 }
 
 .vscode-settings-tree li {
-  padding: 6px 14px 6px 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 24px;
   margin-bottom: 2px;
   cursor: pointer;
   font-size: 13px;
@@ -138,7 +141,13 @@
   background-color: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   border-left: 2px solid var(--accent);
-  padding-left: 32px; /* Adjust padding for border */
+  padding-left: 22px; /* Adjust padding for border */
+}
+
+.vscode-settings-divider {
+  height: 1px;
+  background-color: rgba(128, 128, 128, 0.25);
+  margin: 14px 14px 14px 24px;
 }
 
 .vscode-settings-content {
