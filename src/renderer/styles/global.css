@@ -1,23 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Modern sleek dark theme based on Vercel/Linear aesthetics */
-  --bg-primary: #09090b;
-  --bg-secondary: #121214;
-  --bg-tertiary: #18181b;
-  --bg-hover: #27272a;
-  --bg-active: #27272a;
+  /* Modern Glassmorphism & Cyber-Blue dark theme based on DESIGN_THEME.md */
+  --bg-primary: #071018;
+  --bg-secondary: #040a16;
+  --bg-tertiary: #040a16;
+  --bg-hover: rgba(34, 211, 238, 0.1);
+  --bg-active: rgba(34, 211, 238, 0.2);
   
-  --border: #27272a;
-  --border-focus: #3f3f46;
+  --border: rgba(34, 211, 238, 0.2); /* cyan-400/20 */
+  --border-focus: rgba(34, 211, 238, 0.4);
   
-  --text-primary: #f4f4f5;
+  --divider: rgba(255, 255, 255, 0.12);
+
+  --text-primary: #fafafa;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
   
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-transparent: rgba(59, 130, 246, 0.15);
+  --accent: #3781fc; /* Extracted from new reference image */
+  --accent-hover: #2963cc;
+  --accent-transparent: rgba(55, 129, 252, 0.15);
   
   --success: #10b981;
   --danger: #ef4444;
@@ -27,30 +29,34 @@
   --online: #10b981;
   --offline: #ef4444;
   --idle: #f59e0b;
+
+  --grid-opacity: 0.008;
 }
 
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --bg-tertiary: #e5e7eb;
-  --bg-hover: #e5e7eb;
-  --bg-active: #d1d5db;
+  --bg-primary: #f7fbff;
+  --bg-secondary: #e9f3ff;
+  --bg-tertiary: #dfedfb;
+  --bg-hover: rgba(56, 189, 248, 0.1);
+  --bg-active: rgba(56, 189, 248, 0.2);
 
-  --border: #e5e7eb;
-  --border-focus: #d1d5db;
+  --border: rgba(34, 211, 238, 0.3); /* cyan-400/30 */
+  --border-focus: rgba(34, 211, 238, 0.5);
 
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --divider: rgba(0, 0, 0, 0.1);
 
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-transparent: rgba(59, 130, 246, 0.15);
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted: #52525b;
 
-  --menu-bg: #ffffff;
-  --menu-border: #d1d5db;
-  --menu-hover: #0060c0;
-  --menu-text: #333333;
+  --accent: #3781fc;
+  --accent-hover: #2963cc;
+  --accent-transparent: rgba(55, 129, 252, 0.15);
+
+  --menu-bg: #e9f3ff;
+  --menu-border: rgba(34, 211, 238, 0.3);
+  --menu-hover: rgba(56, 189, 248, 0.2);
+  --menu-text: #18181b;
 
   --success: #059669;
   --danger: #dc2626;
@@ -60,6 +66,8 @@
   --online: #059669;
   --offline: #dc2626;
   --idle: #d97706;
+  
+  --grid-opacity: 0.015;
 }
 
 * {

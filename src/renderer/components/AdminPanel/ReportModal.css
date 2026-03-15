@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--divider);
   flex-shrink: 0;
   gap: 16px;
 }
@@ -153,7 +153,7 @@
   align-items: center;
   gap: 2px;
   padding: 10px 20px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--divider);
   flex-shrink: 0;
 }
 
@@ -740,14 +740,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--divider);
 }
 
 .clipboard-row {
   display: grid;
   grid-template-columns: 80px 110px 1fr;
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--divider);
   align-items: center;
   transition: background 0.1s;
 }
@@ -879,14 +879,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--divider);
 }
 
 .activity-log-row {
   display: grid;
   grid-template-columns: 90px 160px 1fr;
   padding: 9px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--divider);
   align-items: center;
   transition: background 0.1s;
 }

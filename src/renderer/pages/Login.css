@@ -22,6 +22,19 @@
   overflow: hidden;
 }
 
+.login-hero::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: 60px 60px;
+  background-image: 
+    linear-gradient(to right, var(--text-primary) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--text-primary) 1px, transparent 1px);
+  opacity: var(--grid-opacity);
+  z-index: 0;
+  pointer-events: none;
+}
+
 @media (max-width: 900px) {
   .login-hero {
     display: none;

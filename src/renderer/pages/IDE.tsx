@@ -804,6 +804,13 @@ function IDEContent() {
       try {
         const wsRoot = workspaceRootRef.current;
         if (collabActiveRef.current && wsRoot) {
+          // Clear Y.Text for the deleted file(s) so that stale content is
+          // never returned by getFileContent if the user later undoes the
+          // delete.  Without this, setFileContent in handleFileCreated would
+          // see non-empty Y.Text and skip writing the restored savedContent.
+          if (type === "file") {
+            setFileContentRef.current(deletedPath, "", wsRoot);
+          }
           const relativePath = toRelativePath(deletedPath, wsRoot);
           broadcastFileOpRef.current({
             type: "delete",
